@@ -33,6 +33,16 @@ class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
 
   def deletePost(req: DeletePostRequest): F[DeletePostResponse] = ???
 
+  def performAction(req: PerformActionRequest): F[PerformActionResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/posts/${req.post_id}/actions/${req.action_id}",
+      Method.Post,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  ////////////////////////////////////////////////
+
   def openDialog(req: OpenDialogRequest): F[Unit] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + "/actions/dialogs/open",
@@ -155,6 +165,7 @@ class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
       Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+
 }
 
 private case class StatusResponse(status: String) derives Codec.AsObject
