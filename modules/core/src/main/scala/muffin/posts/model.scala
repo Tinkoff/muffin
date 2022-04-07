@@ -6,7 +6,7 @@ import muffin.predef.*
 case class CreatePostRequest(
   channel_id: ChannelId,
   message: String,
-  props: Option[Props]
+  props: Option[Props] = None
   //    root_id:Option[MessageId] = None,
   //    file_ids: List[String] = Nil // TODO make Id
 ) derives Encoder.AsObject

@@ -4,17 +4,9 @@ ThisBuild / scalaVersion := "3.1.1"
 
 ThisBuild / organization := "space.littleinferno"
 
-
 lazy val root = (project in file("."))
-  .settings(
-    name := "muffin"
-  )
-  .dependsOn(
-    core,
-    client,
-    http,
-    `http-sttp`
-  )
+  .settings(name := "muffin")
+  .dependsOn(core, client, http, `http-sttp`)
 
 lazy val modules = file("modules")
 
@@ -36,18 +28,6 @@ lazy val `http-sttp` = project
 
 lazy val testing = project
   .in(modules / "testing")
-  .aggregate(
-    core,
-    client,
-    http,
-    `http-sttp`
-  )
-  .dependsOn(
-    core,
-    client,
-    http,
-    `http-sttp`
-  )
-  .settings(
-      publish / skip := true
-  )
+  .aggregate(core, client, http, `http-sttp`)
+  .dependsOn(core, client, http, `http-sttp`)
+  .settings(publish / skip := true)

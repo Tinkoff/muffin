@@ -25,11 +25,10 @@ object Application extends ZIOAppDefault {
     for {
       backend <- HttpClientZioBackend()
 
-      httpClient: HttpClient[Task] <- SttpClient[Task, Task](backend)
-      client = {
-        given a: HttpClient[Task] = httpClient
-        ApiClient[Task](ClientConfig("http://localhost:8065/api/v4", token))
-      }
+      given HttpClient[Task] <- SttpClient[Task, Task](backend)
+      client = ApiClient[Task](
+        ClientConfig("http://localhost:8065/api/v4", token)
+      )
 //      CreatePostResponse(message_id) <- client.createPost(
 //        CreatePostRequest(
 //          ChannelId("jf4165gyybybtjd1yxtb1asf9a"),
