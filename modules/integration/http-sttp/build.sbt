@@ -4,4 +4,4 @@ import Dependencies._
 
 
 
-libraryDependencies ++= sttp.core :: sttp.zio :: Nil
+libraryDependencies ++= sttp.core :: Nil

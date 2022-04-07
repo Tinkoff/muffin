@@ -3,7 +3,7 @@ package muffin.emoji
 import muffin.predef.*
 
 trait Emoji[F[_]] {
-  def create(req: CreateEmojiRequest): F[CreateEmojiResponse]
+  def createEmoji(req: CreateEmojiRequest): F[CreateEmojiResponse]
 
   def getEmojiList(req: GetEmojiListRequest): F[GetEmojiListResponse]
 
@@ -12,6 +12,8 @@ trait Emoji[F[_]] {
   def deleteEmoji(req: DeleteEmojiRequest): F[DeleteEmojiResponse]
 
   def getEmojiByName(req: GetEmojiNameRequest): F[GetEmojiNameResponse]
+
+  def getEmojiImage(req: GetEmojiImageRequest): F[Unit] = ??? // TODO
 
   def searchEmoji(req: SearchEmojiRequest): F[SearchEmojiResponse]
 

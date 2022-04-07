@@ -26,7 +26,7 @@ object process extends Libs {
     object sttp {
       val core = "com.softwaremill.sttp.client3" %% "core" % version.sttp
       val zio =
-        "com.softwaremill.sttp.client3" %% "async-http-client-backend-zio" % version.sttp
+        "com.softwaremill.sttp.client3" %% "httpclient-backend-zio" % version.sttp
     }
 
     object circe {

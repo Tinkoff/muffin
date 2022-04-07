@@ -1,7 +1,7 @@
 package muffin
 
 import cats.Applicative
-import io.circe.Codec
+import io.circe.{Codec, Json, JsonObject}
 import muffin.predef.*
 import muffin.{Body, HttpClient, Method}
 import cats.syntax.all.given
@@ -11,7 +11,6 @@ import muffin.emoji.*
 import muffin.posts.*
 import muffin.reactions.*
 
-
 case class ClientConfig(baseUrl: String, auth: String)
 
 class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
@@ -20,14 +19,13 @@ class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
     with Channels[F]
     with Emoji[F]
     with Reactions[F] {
-  def createPost(req: CreatePostRequest): F[CreatePostResponse] = {
+  def createPost(req: CreatePostRequest): F[CreatePostResponse] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + "/posts",
       Method.Post,
       Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
-  }
 
   def createPostEphemeral(req: CreatePostEphemeral): F[CreatePostResponse] = ???
 
@@ -35,78 +33,128 @@ class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
 
   def deletePost(req: DeletePostRequest): F[DeletePostResponse] = ???
 
-  def openDialog(req: OpenDialogRequest): F[Unit] = {
+  def openDialog(req: OpenDialogRequest): F[Unit] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + "/actions/dialogs/open",
       Method.Post,
       Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
-  }
 
-  def members(req: MembersRequest): F[List[ChannelMember]] = {
+  def members(req: MembersRequest): F[List[ChannelMember]] =
     summon[HttpClient[F]].request(
       cfg.baseUrl,
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
-  }
 
-  def create(req: CreateEmojiRequest): F[CreateEmojiResponse] = ???
+  def createEmoji(req: CreateEmojiRequest): F[CreateEmojiResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji",
+      Method.Post,
+      Body.Multipart(
+        MultipartElement.FileElement("image", req.image) ::
+          MultipartElement.StringElement(
+            "emoji",
+            Json
+              .fromJsonObject(
+                JsonObject(
+                  "creator_id" -> Json.fromString(req.creatorId.toString),
+                  "name" -> Json.fromString(req.emojiName)
+                )
+              )
+              .noSpaces
+          ) :: Nil
+      ),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def getEmojiList(req: GetEmojiListRequest): F[GetEmojiListResponse] = ???
+  def getEmojiList(req: GetEmojiListRequest): F[GetEmojiListResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji?page=${req.page}&per_page=${req.per_page}&sort=${req.sort}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def getEmoji(req: GetEmojiRequest): F[GetEmojiResponse] = ???
+  def getEmoji(req: GetEmojiRequest): F[GetEmojiResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji/${req.emoji_id}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def deleteEmoji(req: DeleteEmojiRequest): F[DeleteEmojiResponse] = ???
+  def deleteEmoji(req: DeleteEmojiRequest): F[DeleteEmojiResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji/name/${req.emoji_id}",
+      Method.Delete,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def getEmojiByName(req: GetEmojiNameRequest): F[GetEmojiNameResponse] = ???
+  def getEmojiByName(req: GetEmojiNameRequest): F[GetEmojiNameResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji/name/${req.name}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def searchEmoji(req: SearchEmojiRequest): F[SearchEmojiResponse] = ???
+  def searchEmoji(req: SearchEmojiRequest): F[SearchEmojiResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji/search",
+      Method.Post,
+      Body.Json(req),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
   def autocompleteEmoji(
-      req: AutocompleteEmojiRequest
-  ): F[AutocompleteEmojiResponse] = ???
+    req: AutocompleteEmojiRequest
+  ): F[AutocompleteEmojiResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/emoji/autocomplete?name=${req.name}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def createReaction(req: CreateReactionRequest): F[ReactionInfo] = {
+  def createReaction(req: CreateReactionRequest): F[ReactionInfo] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + "/reactions",
       Method.Post,
       Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
-  }
 
-  def getReactions(
-      req: GetListReactionsRequest
-  ): F[GetListReactionsResponse] = {
+  def getReactions(req: GetListReactionsRequest): F[GetListReactionsResponse] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + s"/posts/${req.post_id}/reactions",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
-  }
 
-  def removeReaction(req: RemoveReactionRequest): F[RemoveReactionResponse] = {
-    summon[HttpClient[F]].request[RemoveReactionRequest, StatusResponse](
-      cfg.baseUrl + s"/users/${req.user_id}/posts/${req.post_id}/reactions/${req.emoji_name}",
-      Method.Delete,
-      Body.Empty,
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    ).map(_.status == "ok")
-  }
+  def removeReaction(req: RemoveReactionRequest): F[RemoveReactionResponse] =
+    summon[HttpClient[F]]
+      .request[RemoveReactionRequest, StatusResponse](
+        cfg.baseUrl + s"/users/${req.user_id}/posts/${req.post_id}/reactions/${req.emoji_name}",
+        Method.Delete,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+      .map(_.status == "ok")
 
-  def bulkReactions(req: BulkReactionsRequest): F[Map[String, List[ReactionInfo]]] = {
+  def bulkReactions(
+    req: BulkReactionsRequest
+  ): F[Map[String, List[ReactionInfo]]] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + s"/posts/ids/reactions",
       Method.Post,
       Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
-  }
 }
 
-
-private case class StatusResponse(status:String)  derives Codec.AsObject
+private case class StatusResponse(status: String) derives Codec.AsObject

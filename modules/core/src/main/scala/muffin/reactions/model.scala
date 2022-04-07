@@ -4,9 +4,18 @@ import io.circe.{Codec, Encoder}
 
 import muffin.predef.*
 
-case class ReactionRequest(user_id:UserId, post_id:MessageId, emoji_name:String) derives Encoder.AsObject
+case class ReactionRequest(
+  user_id: UserId,
+  post_id: MessageId,
+  emoji_name: String
+) derives Encoder.AsObject
 
-case class ReactionInfo(user_id:UserId, post_id:MessageId, emoji_name:String, create_at:Long)   derives Codec.AsObject
+case class ReactionInfo(
+  user_id: UserId,
+  post_id: MessageId,
+  emoji_name: String,
+  create_at: Long
+) derives Codec.AsObject
 
 type CreateReactionRequest = ReactionRequest
 type CreateReactionResponse = ReactionInfo

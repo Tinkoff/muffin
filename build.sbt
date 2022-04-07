@@ -49,6 +49,5 @@ lazy val testing = project
     `http-sttp`
   )
   .settings(
-    libraryDependencies += Dependencies.zioCats,
-    publish / skip := true
+      publish / skip := true
   )
