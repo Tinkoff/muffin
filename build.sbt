@@ -6,7 +6,7 @@ ThisBuild / organization := "space.littleinferno"
 
 lazy val root = (project in file("."))
   .settings(name := "muffin")
-  .dependsOn(core, client, http, `http-sttp`)
+  .dependsOn(core, client, http, `http-sttp`, app)
 
 lazy val modules = file("modules")
 
@@ -20,6 +20,10 @@ lazy val client = project
   .in(modules / "client")
   .dependsOn(core, http)
 
+lazy val app = project
+  .in(modules / "app")
+  .dependsOn(core, client, http)
+
 lazy val integration = modules / "integration"
 
 lazy val `http-sttp` = project
@@ -28,6 +32,8 @@ lazy val `http-sttp` = project
 
 lazy val testing = project
   .in(modules / "testing")
-  .aggregate(core, client, http, `http-sttp`)
-  .dependsOn(core, client, http, `http-sttp`)
+  .aggregate(core, client, http, `http-sttp`, app)
+  .dependsOn(core, client, http, `http-sttp`, app)
   .settings(publish / skip := true)
+
+ThisBuild / scalacOptions += "-source:future"

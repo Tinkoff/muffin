@@ -33,15 +33,12 @@ trait Posts[F[_]] {
 
   def searchTeamPosts(): F[Unit] = ???
 
-  def pinPost(): F[Unit] = ???
+  def pinPost(req: PinPostRequest): F[PinPostResponse] = ???
 
-  def unpinChannel(): F[Unit] = ???
+  def unpinChannel(req: UnpinPostRequest): F[UnpinPostResponse] = ???
 
   def performAction(req: PerformActionRequest): F[PerformActionResponse]
 
-  def getPostsByIds(): F[Unit] = ???
+  def getPostsByIds(req: GetPostsByIdsRequest): F[GetPostsByIdsResponse] = ???
 
 }
-
-case class PerformActionRequest(post_id: MessageId, action_id: String)
-type PerformActionResponse = Boolean

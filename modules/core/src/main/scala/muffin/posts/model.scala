@@ -2,16 +2,38 @@ package muffin.posts
 
 import io.circe.{Codec, Decoder, Encoder, Json, JsonObject}
 import muffin.predef.*
+import muffin.reactions.ReactionInfo
+
+case class Post(
+  id: MessageId,
+//  create_at: Long,
+//  update_at: Long,
+//  delete_at: Long,
+//  edit_at: Long,
+//  user_id: UserId,
+//  channel_id: ChannelId,
+//  root_id: MessageId,
+//  original_id: MessageId,
+//  message: String,
+//  `type`: String,
+//  props: Option[Props] = None,
+//  hashtag: Option[String],
+//  file_ids: List[String],
+//  pending_post_id: Option[String],
+//  metadata: PostMetadata
+) derives Codec.AsObject
+
+case class PostMetadata(reactions: Option[ReactionInfo]) derives Codec.AsObject
 
 case class CreatePostRequest(
   channel_id: ChannelId,
   message: String,
-  props: Option[Props] = None
-  //    root_id:Option[MessageId] = None,
-  //    file_ids: List[String] = Nil // TODO make Id
+  props: Option[Props] = None,
+  root_id: Option[MessageId] = None,
+  file_ids: List[String] = Nil // TODO make Id
 ) derives Encoder.AsObject
 
-case class CreatePostResponse(id: MessageId) derives Codec.AsObject
+type CreatePostResponse = Post
 
 case class CreatePostEphemeral(user_id: UserId, post: CreatePostRequest)
     derives Encoder.AsObject
@@ -87,3 +109,15 @@ enum DataSource derives Encoder.AsObject:
   case Channels, Users
 
 case class SelectOption(text: String, value: String) derives Encoder.AsObject
+
+type PinPostRequest = MessageId
+type PinPostResponse = Boolean
+
+type UnpinPostRequest = MessageId
+type UnpinPostResponse = Boolean
+
+case class PerformActionRequest(post_id: MessageId, action_id: String)
+type PerformActionResponse = Boolean
+
+type GetPostsByIdsRequest = List[MessageId]
+type GetPostsByIdsResponse = List[Unit] //TODO

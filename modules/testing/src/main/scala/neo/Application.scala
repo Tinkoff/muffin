@@ -25,35 +25,45 @@ object Application extends ZIOAppDefault {
     for {
       backend <- HttpClientZioBackend()
 
-      given HttpClient[Task] <- SttpClient[Task, Task](backend)
-      client = ApiClient[Task](
-        ClientConfig("http://localhost:8065/api/v4", token)
+      http <- SttpClient[Task, Task](backend)
+      client = {
+        given h: HttpClient[Task] = http
+        ApiClient[Task](ClientConfig("http://localhost:8065/api/v4", token))
+      }
+
+      CreatePostResponse(message_id) <- client.createPost(
+        CreatePostRequest(
+          ChannelId("jf4165gyybybtjd1yxtb1asf9a"),
+          "qwe",
+          Some(
+            Props(
+              Attachment(
+                "attachment",
+                text = Some("Вложение"),
+                actions = List(
+                  Button(
+                    "update",
+                    "update",
+                    Integration(
+                      "https://neo-mm.requestcatcher.com/qwe",
+                      JsonObject(
+                        "action" -> Json.fromString("super"),
+                        "qwe" -> Json.fromJsonObject(
+                          JsonObject("abs" -> Json.fromBoolean(true))
+                        )
+                      )
+                    )
+                  )
+                )
+              ) :: Nil
+            )
+          )
+        )
       )
-//      CreatePostResponse(message_id) <- client.createPost(
-//        CreatePostRequest(
-//          ChannelId("jf4165gyybybtjd1yxtb1asf9a"),
-//          "qwe",
-//          Some(
-//            Props(
-//              Attachment(
-//                "attachment",
-//                text = Some("Вложение")
-////            actions = List(
-////              Button(
-////                "update",
-////                "update",
-////                Integration("https://neo-mm.requestcatcher.com", JsonObject(
-////                  "action"-> Json.fromString("update_duper"),
-//////                  "qwe" -> Json.fromJsonObject(JsonObject(
-//////                    "abs"-> Json.fromBoolean(true)
-//////                  ))
-////                ))
-////              )
-////            )
-//              ) :: Nil
-//            )
-//          )
-//        )
+
+
+//      _ <- client.performAction(
+//        PerformActionRequest(message_id, "update_duper")
 //      )
 
 //      fileContent = {
@@ -83,7 +93,7 @@ object Application extends ZIOAppDefault {
 //      res <- client.createEmoji(CreateEmojiRequest(new File("C:\\Users\\danil\\Desktop\\neo.jpg"), "keanu", neoId))
 //      _ = println(res)
 
-      _ <- emoji(client)
+//      _ <- emoji(client)
 //      _ <- reactions(client, message_id)
 
     } yield ()
