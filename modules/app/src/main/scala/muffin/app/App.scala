@@ -1,6 +1,12 @@
 package muffin.app
 
+import cats.{Applicative, Monad}
+import io.circe.{Decoder, Json}
 import muffin.predef.*
+
+import scala.collection.mutable
+import scala.reflect.ClassTag
+import cats.syntax.all.given
 
 case class CommandContext(
   channelId: ChannelId,
@@ -14,25 +20,63 @@ case class CommandContext(
   userName: String
 )
 
+case class DialogContext(
+)
+
+case class ActionContext(action: Json)
+
 sealed trait AppResponse
 
-//channel_id=jf4165gyybybtjd1yxtb1asf9a
-//channel_name=off-topic
-//command=%2Fkek
-//response_url=http%3A%2F%2Flocalhost%3A8065%2Fhooks%2Fcommands%2Fnnmhhozqafd9ifk17eozwjqkqw
-//team_domain=test
-//team_id=ww39dn9jejy8jjkuooysc18crh
-//text=
-//token=njkhjqngpfgnpeozd4eikexmxe
-//trigger_id=NTE1cmZodWt3cDhiOGozMW1haW1tM3RyYWg6NGlzYXllcmNydGJqM2VhODVjMzdhYjc2OHc6MTY0OTQyMDEzNjM3MDpNRVlDSVFDM09oRFlxcldDeWhFeWw4YlliZGJMMEIzYVQzQTg2bGlFdG9mY3JjdEw3Z0loQUpKbHRTc1k5VG9mamZpNEVRSmpFdXhvSlBVcCsydTNTS1NVL2J3VXVHYkc%3D
-//user_id=4isayercrtbj3ea85c37ab768w
-//user_name=danil
-
-class App[F[_]] {
-
-  def command(commandName: String)(
-    action: CommandContext => F[AppResponse]
-  ): App[F] =
-    ???
+object AppResponse {
+  case class Ok() extends AppResponse
 
 }
+
+class App[F[_]: Monad](val ctx: AppContext[F]) {
+
+  type CommandActions = (AppContext[F], CommandContext) => F[AppResponse]
+
+  type DialogActions = (AppContext[F], DialogContext) => F[AppResponse]
+
+  type EventActions = (AppContext[F], ActionContext) => F[AppResponse]
+
+  private val commands: mutable.Map[String, CommandActions] = mutable.Map.empty
+
+  private val dialogs: mutable.Map[String, DialogActions] = mutable.Map.empty
+
+  private val events: mutable.Map[String, EventActions] = mutable.Map.empty
+
+  def command(name: String)(action: CommandActions): App[F] =
+    commands += name -> action
+    this
+
+  def dialog(name: String)(action: DialogActions): App[F] =
+    dialogs += name -> action
+    this
+
+  def actions[T](
+    name: String
+  )(action: EventActions): App[F] = {
+    events += name -> action
+    this
+  }
+
+
+
+
+  def routeAction(ac:Any): F[AppResponse] = {
+
+//      commands.get("").map(action => action(ctx, CommandContext(???)))
+//
+//    dialogs.get("").map(action => action(ctx, CommandContext(???)))
+//
+//    events.get("").map(action => action(ctx, CommandContext(???)))
+
+    ???
+  }
+
+
+
+}
+
+object App {}

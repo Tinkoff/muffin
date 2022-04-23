@@ -1,12 +1,13 @@
 package muffin
 
 import io.circe.{Json, JsonObject}
+import muffin.app.App
 import muffin.http.SttpClient
-import muffin.ApiClient
 import muffin.emoji.*
 import muffin.posts.*
 import muffin.predef.*
 import muffin.reactions.*
+import muffin.DefaultApp
 import sttp.client3.httpclient.zio.HttpClientZioBackend
 import zio.{Task, ZIOAppDefault}
 import zio.interop.catz.given
@@ -23,44 +24,48 @@ object Application extends ZIOAppDefault {
 
   val run =
     for {
-      backend <- HttpClientZioBackend()
+      app: App[Task] <- DefaultApp(ClientConfig("http://localhost:8065/api/v4", token))
+      application = app
+        .command("/start") { (ctx, command) =>
+          ???
+        }
+        .actions("action") { (ctx, action) =>
+          ???
+        }
+        .actions("second") { (ctx, action) =>
+          ???
+        }
 
-      http <- SttpClient[Task, Task](backend)
-      client = {
-        given h: HttpClient[Task] = http
-        ApiClient[Task](ClientConfig("http://localhost:8065/api/v4", token))
-      }
 
-      CreatePostResponse(message_id) <- client.createPost(
-        CreatePostRequest(
-          ChannelId("jf4165gyybybtjd1yxtb1asf9a"),
-          "qwe",
-          Some(
-            Props(
-              Attachment(
-                "attachment",
-                text = Some("Вложение"),
-                actions = List(
-                  Button(
-                    "update",
-                    "update",
-                    Integration(
-                      "https://neo-mm.requestcatcher.com/qwe",
-                      JsonObject(
-                        "action" -> Json.fromString("super"),
-                        "qwe" -> Json.fromJsonObject(
-                          JsonObject("abs" -> Json.fromBoolean(true))
-                        )
-                      )
-                    )
-                  )
-                )
-              ) :: Nil
-            )
-          )
-        )
-      )
-
+//      CreatePostResponse(message_id) <- app.ctx.client.createPost(
+//        CreatePostRequest(
+//          ChannelId("jf4165gyybybtjd1yxtb1asf9a"),
+//          "qwe",
+//          Some(
+//            Props(
+//              Attachment(
+//                "attachment",
+//                text = Some("Вложение"),
+//                actions = List(
+//                  Button(
+//                    "update",
+//                    "update",
+//                    Integration(
+//                      "https://neo-mm.requestcatcher.com/qwe",
+//                      JsonObject(
+//                        "action" -> Json.fromString("super"),
+//                        "qwe" -> Json.fromJsonObject(
+//                          JsonObject("abs" -> Json.fromBoolean(true))
+//                        )
+//                      )
+//                    )
+//                  )
+//                )
+//              ) :: Nil
+//            )
+//          )
+//        )
+//      )
 
 //      _ <- client.performAction(
 //        PerformActionRequest(message_id, "update_duper")

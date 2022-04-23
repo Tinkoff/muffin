@@ -22,7 +22,6 @@ object ChannelId {
   given decoder: Decoder[ChannelId] = Decoder.decodeString.map(identity)
 }
 
-opaque type Id = Long
 
 opaque type MessageId = String
 

@@ -7,6 +7,7 @@ ThisBuild / organization := "space.littleinferno"
 lazy val root = (project in file("."))
   .settings(name := "muffin")
   .dependsOn(core, client, http, `http-sttp`, app)
+  .aggregate(core, client, http, `http-sttp`, app)
 
 lazy val modules = file("modules")
 
