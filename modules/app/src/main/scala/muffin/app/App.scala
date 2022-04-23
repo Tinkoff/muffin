@@ -1,7 +1,7 @@
 package muffin.app
 
 import cats.{Applicative, Monad}
-import io.circe.{Decoder, Json}
+import io.circe.{Codec, Decoder, Json}
 import muffin.predef.*
 
 import scala.collection.mutable
@@ -25,7 +25,7 @@ case class DialogContext(
 
 case class ActionContext(action: Json)
 
-sealed trait AppResponse
+sealed trait AppResponse derives Codec.AsObject
 
 object AppResponse {
   case class Ok() extends AppResponse
@@ -54,28 +54,15 @@ class App[F[_]: Monad](val ctx: AppContext[F]) {
     dialogs += name -> action
     this
 
-  def actions[T](
-    name: String
-  )(action: EventActions): App[F] = {
+  def actions[T](name: String)(action: EventActions): App[F] = {
     events += name -> action
     this
   }
 
-
-
-
-  def routeAction(ac:Any): F[AppResponse] = {
-
-//      commands.get("").map(action => action(ctx, CommandContext(???)))
-//
-//    dialogs.get("").map(action => action(ctx, CommandContext(???)))
-//
-//    events.get("").map(action => action(ctx, CommandContext(???)))
-
-    ???
-  }
-
-
+  def handleCommand(name: String, commandCtx: CommandContext): F[AppResponse] =
+    commands.get(name) match
+      case Some(action) => action(ctx, commandCtx)
+      case None         => AppResponse.Ok().pure[F]
 
 }
 

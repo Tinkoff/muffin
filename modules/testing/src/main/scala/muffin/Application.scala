@@ -1,7 +1,7 @@
 package muffin
 
 import io.circe.{Json, JsonObject}
-import muffin.app.App
+import muffin.app.{App, AppResponse}
 import muffin.http.SttpClient
 import muffin.emoji.*
 import muffin.posts.*
@@ -13,6 +13,7 @@ import zio.{Task, ZIOAppDefault}
 import zio.interop.catz.given
 
 import java.io.File
+import zio.interop.catz.implicits.given
 
 object Application extends ZIOAppDefault {
 
@@ -24,18 +25,27 @@ object Application extends ZIOAppDefault {
 
   val run =
     for {
-      app: App[Task] <- DefaultApp(ClientConfig("http://localhost:8065/api/v4", token))
-      application = app
-        .command("/start") { (ctx, command) =>
-          ???
-        }
-        .actions("action") { (ctx, action) =>
-          ???
-        }
-        .actions("second") { (ctx, action) =>
-          ???
-        }
+      app: App[Task] <- DefaultApp(
+        ClientConfig("http://localhost:8065/api/v4", token)
+      )
 
+      _ = app.command("kek") { (ctx, action) =>
+
+        println(action)
+        Task(AppResponse.Ok())
+      }
+
+      _ <- DefaultServer(app).useForever
+//      application = app
+//        .command("/start") { (ctx, command) =>
+//          ???
+//        }
+//        .actions("action") { (ctx, action) =>
+//          ???
+//        }
+//        .actions("second") { (ctx, action) =>
+//          ???
+//        }
 
 //      CreatePostResponse(message_id) <- app.ctx.client.createPost(
 //        CreatePostRequest(

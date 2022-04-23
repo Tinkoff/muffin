@@ -6,14 +6,27 @@ object process {
   object version {
     val sttp = "3.5.1"
     val circe = "0.14.1"
+    val tapir = "1.0.0-M7"
+    val http4s ="0.23.11"
   }
 
   trait Deps {
-
     object sttp {
       val core = "com.softwaremill.sttp.client3" %% "core" % version.sttp
       val zio =
         "com.softwaremill.sttp.client3" %% "httpclient-backend-zio" % version.sttp
+    }
+
+    object tapir {
+      val core = "com.softwaremill.sttp.tapir" %% "tapir-core" % version.tapir
+      val http4s =
+        "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % version.tapir
+      val circe =
+        "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % version.tapir
+    }
+
+    object http4s {
+      val ember  = "org.http4s" %% "http4s-ember-server" % version.http4s
     }
 
     object circe {

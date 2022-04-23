@@ -1,2 +1,9 @@
+import Dependencies._
 
-libraryDependencies ++= Dependencies.zioCats :: Dependencies.sttp.zio :: Nil
+libraryDependencies ++= zioCats ::
+  sttp.zio ::
+  tapir.core ::
+  tapir.http4s ::
+  tapir.circe ::
+  http4s.ember ::
+  Nil
