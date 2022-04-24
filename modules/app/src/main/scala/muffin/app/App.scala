@@ -23,7 +23,19 @@ case class CommandContext(
 case class DialogContext(
 )
 
-case class ActionContext(action: Json)
+case class ActionContext(
+  user_id: String,
+  user_name: String,
+  channel_id: String,
+  channel_name: String,
+  team_id: String,
+  team_domain: String,
+  post_id: String,
+  trigger_id: String,
+  data_source: String,
+  `type`: String,
+  context: Json
+) derives Codec.AsObject
 
 sealed trait AppResponse derives Codec.AsObject
 
@@ -62,6 +74,11 @@ class App[F[_]: Monad](val ctx: AppContext[F]) {
   def handleCommand(name: String, commandCtx: CommandContext): F[AppResponse] =
     commands.get(name) match
       case Some(action) => action(ctx, commandCtx)
+      case None         => AppResponse.Ok().pure[F]
+
+  def handleAction(name: String, actionCtx: ActionContext): F[AppResponse] =
+    events.get(name) match
+      case Some(action) => action(ctx, actionCtx)
       case None         => AppResponse.Ok().pure[F]
 
 }

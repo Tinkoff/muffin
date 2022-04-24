@@ -17,7 +17,7 @@ import zio.interop.catz.implicits.given
 
 object Application extends ZIOAppDefault {
 
-  val token = "kmzmwtonitgjixkeuewe69r8zh"
+  val token = "yxu1ybk3zjydpp5km9zy3mt4ka"
 
   val neoId = UserId("96qoqoeifjy33qqeriphy6n8pr")
 
@@ -27,6 +27,36 @@ object Application extends ZIOAppDefault {
     for {
       app: App[Task] <- DefaultApp(
         ClientConfig("http://localhost:8065/api/v4", token)
+      )
+
+      CreatePostResponse(message_id) <- app.ctx.client.createPost(
+        CreatePostRequest(
+          ChannelId("8otforyp3igapnoodtga8ho5iy"),
+          "qwe",
+          Some(
+            Props(
+              Attachment(
+                "attachment",
+                text = Some("Вложение"),
+                actions = List(
+                  Button(
+                    "update",
+                    "update",
+                    Integration(
+                      "http://host.docker.internal:8080/commands",
+                      JsonObject(
+                        "action" -> Json.fromString("super"),
+                        "qwe" -> Json.fromJsonObject(
+                          JsonObject("abs" -> Json.fromBoolean(true))
+                        )
+                      )
+                    )
+                  )
+                )
+              ) :: Nil
+            )
+          )
+        )
       )
 
       _ = app.command("kek") { (ctx, action) =>
@@ -47,35 +77,7 @@ object Application extends ZIOAppDefault {
 //          ???
 //        }
 
-//      CreatePostResponse(message_id) <- app.ctx.client.createPost(
-//        CreatePostRequest(
-//          ChannelId("jf4165gyybybtjd1yxtb1asf9a"),
-//          "qwe",
-//          Some(
-//            Props(
-//              Attachment(
-//                "attachment",
-//                text = Some("Вложение"),
-//                actions = List(
-//                  Button(
-//                    "update",
-//                    "update",
-//                    Integration(
-//                      "https://neo-mm.requestcatcher.com/qwe",
-//                      JsonObject(
-//                        "action" -> Json.fromString("super"),
-//                        "qwe" -> Json.fromJsonObject(
-//                          JsonObject("abs" -> Json.fromBoolean(true))
-//                        )
-//                      )
-//                    )
-//                  )
-//                )
-//              ) :: Nil
-//            )
-//          )
-//        )
-//      )
+//
 
 //      _ <- client.performAction(
 //        PerformActionRequest(message_id, "update_duper")
