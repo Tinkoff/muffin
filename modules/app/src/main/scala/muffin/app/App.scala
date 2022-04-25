@@ -66,7 +66,7 @@ class App[F[_]: Monad](val ctx: AppContext[F]) {
     dialogs += name -> action
     this
 
-  def actions[T](name: String)(action: EventActions): App[F] = {
+  def actions(name: String)(action: EventActions): App[F] = {
     events += name -> action
     this
   }

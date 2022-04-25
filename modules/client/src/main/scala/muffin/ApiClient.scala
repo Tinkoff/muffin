@@ -11,7 +11,7 @@ import muffin.emoji.*
 import muffin.posts.*
 import muffin.reactions.*
 
-case class ClientConfig(baseUrl: String, auth: String)
+case class ClientConfig(baseUrl: String, auth: String, userId: UserId)
 
 class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
     extends Posts[F]
@@ -19,6 +19,9 @@ class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
     with Channels[F]
     with Emoji[F]
     with Reactions[F] {
+
+  def userChannel(userId: UserId): ChannelId = ChannelId(s"${userId}__${cfg.userId}")
+
   def createPost(req: CreatePostRequest): F[CreatePostResponse] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + "/posts",

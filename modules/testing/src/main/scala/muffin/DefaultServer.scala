@@ -74,12 +74,3 @@ object DefaultServer {
       .build
 
 }
-//.in(stringBody).out(plainBody[Int])
-//
-//def countCharacters(s: String): IO[Either[Unit, Int]] =
-//  IO.pure(Right[Unit, Int](s.length))
-//
-//val countCharactersEndpoint: PublicEndpoint[String, Unit, Int, Any] =
-//
-//val countCharactersRoutes: HttpRoutes[IO] =
-//  Http4sServerInterpreter[IO]().toRoutes(countCharactersEndpoint.serverLogic(countCharacters _))
