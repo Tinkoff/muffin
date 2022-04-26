@@ -30,17 +30,27 @@ class SttpClient[F[_]: MonadThrow](backend: SttpBackend[F, Any])
         Uri.unsafeParse(url)
       )
       .mapResponse(
-        _.flatMap(
+        _.map(a=>{
+          println(a)
+          a
+        }).flatMap(
           parse(_)
             .flatMap(_.as[Out])
             .left
             .map(_.getMessage)
         )
+          .left.map(
+            a=> {
+              println(a)
+              a
+            }
+          )
       )
       .headers(headers)
 
     (body match {
       case b: Body.Json[In] =>
+        println(b.as)
         backend.send(
           req
             .body(b.as, "UTF-8")
@@ -58,7 +68,8 @@ class SttpClient[F[_]: MonadThrow](backend: SttpBackend[F, Any])
             .header("Content-Type", "multipart/form-data")
         )
       case Body.Empty => backend.send(req)
-    }).map(_.body).flatMap {
+    })
+      .map(_.body).flatMap {
       case Left(value)  => MonadThrow[F].raiseError(new Exception(value))
       case Right(value) => value.pure[F]
     }

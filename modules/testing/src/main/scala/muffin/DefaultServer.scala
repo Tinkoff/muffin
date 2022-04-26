@@ -6,7 +6,13 @@ import sttp.tapir.*
 import sttp.tapir.given
 import sttp.tapir.json.circe.*
 import io.circe.Json
-import muffin.app.{ActionContext, App, AppResponse, CommandContext}
+import muffin.app.{
+  ActionContext,
+  AppResponse,
+  CommandContext,
+  DialogContext,
+  Mattermost
+}
 import org.http4s.server.Router
 import sttp.tapir.server.http4s.{Http4sServerInterpreter, Http4sServerOptions}
 import org.http4s.ember.server.*
@@ -21,14 +27,21 @@ import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
 import sttp.tapir.server.interceptor.reject.RejectHandler
 import sttp.tapir.server.model.ValuedEndpointOutput
 
+import cats.syntax.all.given
+
 object DefaultServer {
 
   given Schema[AppResponse] = Schema.derived
 
   given Schema[ActionContext] = Schema.derived
 
-  def commands[F[_]: Async](app: App[F]) = endpoint.post
-    .in("kek")
+  given Schema[DialogContext] = Schema.derived
+
+  given Schema[UserId] = Schema.schemaForString.map(UserId(_).some)(_.toString)
+  given Schema[ChannelId] = Schema.schemaForString.map(ChannelId(_).some)(_.toString)
+
+  def commands[F[_]: Async](app: Mattermost[F]) = endpoint.post
+    .in("commands")
     .in(paths)
     .in(formBody[Map[String, String]])
     .out(jsonBody[AppResponse])
@@ -49,7 +62,7 @@ object DefaultServer {
       )
     }
 
-  def actions[F[_]: Async](app: App[F]) = endpoint.post
+  def actions[F[_]: Async](app: Mattermost[F]) = endpoint.post
     .in("commands")
     .in(paths)
     .in(jsonBody[ActionContext])
@@ -59,13 +72,23 @@ object DefaultServer {
       app.handleAction(segments.last, param)
     }
 
-  private def server[F[_]: Async](app: App[F]) =
+  def dialogs[F[_]: Async](app: Mattermost[F]) = endpoint.post
+    .in("dialogs")
+    .in(paths)
+    .in(jsonBody[DialogContext])
+    .out(jsonBody[AppResponse])
+    .serverLogicSuccess { case (segments, param) =>
+      println(param)
+      app.handleDialog(segments.last, param)
+    }
+
+  private def server[F[_]: Async](app: Mattermost[F]) =
     Router(
       "/" -> Http4sServerInterpreter[F]()
-        .toRoutes(List(commands(app), actions(app)))
+        .toRoutes(List(commands(app), actions(app), dialogs(app)))
     ).orNotFound
 
-  def apply(app: App[Task])(using Runtime[Clock]) =
+  def apply(app: Mattermost[Task])(using Runtime[Clock]) =
     EmberServerBuilder
       .default[Task]
       .withHost(ipv4"127.0.0.1")

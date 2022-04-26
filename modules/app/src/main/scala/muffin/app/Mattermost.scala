@@ -21,7 +21,13 @@ case class CommandContext(
 )
 
 case class DialogContext(
-)
+  callback_id: String,
+  state: String,
+  user_id: UserId,
+  channel_id: ChannelId,
+  team_id: String,
+  submission: Map[String, String]
+) derives Codec.AsObject
 
 case class ActionContext(
   user_id: String,
@@ -44,7 +50,7 @@ object AppResponse {
 
 }
 
-class App[F[_]: Monad](val ctx: AppContext[F]) {
+class Mattermost[F[_]: Monad](val ctx: AppContext[F]) {
 
   type CommandActions = (AppContext[F], CommandContext) => F[AppResponse]
 
@@ -58,15 +64,15 @@ class App[F[_]: Monad](val ctx: AppContext[F]) {
 
   private val events: mutable.Map[String, EventActions] = mutable.Map.empty
 
-  def command(name: String)(action: CommandActions): App[F] =
+  def command(name: String)(action: CommandActions): Mattermost[F] =
     commands += name -> action
     this
 
-  def dialog(name: String)(action: DialogActions): App[F] =
+  def dialog(name: String)(action: DialogActions): Mattermost[F] =
     dialogs += name -> action
     this
 
-  def actions(name: String)(action: EventActions): App[F] = {
+  def actions(name: String)(action: EventActions): Mattermost[F] = {
     events += name -> action
     this
   }
@@ -81,6 +87,11 @@ class App[F[_]: Monad](val ctx: AppContext[F]) {
       case Some(action) => action(ctx, actionCtx)
       case None         => AppResponse.Ok().pure[F]
 
+  def handleDialog(name: String, dialogCtx: DialogContext): F[AppResponse] =
+    dialogs.get(name) match
+      case Some(action) => action(ctx, dialogCtx)
+      case None         => AppResponse.Ok().pure[F]
+
 }
 
-object App {}
+object Mattermost {}

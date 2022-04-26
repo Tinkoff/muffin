@@ -1,6 +1,6 @@
 package muffin
 
-import cats.Applicative
+import cats.Monad
 import io.circe.{Codec, Json, JsonObject}
 import muffin.predef.*
 import muffin.{Body, HttpClient, Method}
@@ -13,7 +13,7 @@ import muffin.reactions.*
 
 case class ClientConfig(baseUrl: String, auth: String, userId: UserId)
 
-class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
+class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     extends Posts[F]
     with Dialogs[F]
     with Channels[F]
@@ -47,12 +47,12 @@ class ApiClient[F[_]: HttpClient: Applicative](cfg: ClientConfig)
   ////////////////////////////////////////////////
 
   def openDialog(req: OpenDialogRequest): F[Unit] =
-    summon[HttpClient[F]].request(
+    summon[HttpClient[F]].request[OpenDialogRequest, Json](
       cfg.baseUrl + "/actions/dialogs/open",
       Method.Post,
       Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
-    )
+    ).map(a=> println(a))
 
   def members(req: MembersRequest): F[List[ChannelMember]] =
     summon[HttpClient[F]].request(
