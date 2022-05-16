@@ -6,13 +6,7 @@ import sttp.tapir.*
 import sttp.tapir.given
 import sttp.tapir.json.circe.*
 import io.circe.Json
-import muffin.app.{
-  ActionContext,
-  AppResponse,
-  CommandContext,
-  DialogContext,
-  Mattermost
-}
+import muffin.app.{ActionContext, AppResponse, CommandContext, DialogContext, DialogSubmissionValue, Mattermost}
 import org.http4s.server.Router
 import sttp.tapir.server.http4s.{Http4sServerInterpreter, Http4sServerOptions}
 import org.http4s.ember.server.*
@@ -26,7 +20,6 @@ import sttp.tapir.server.interceptor.RequestResult
 import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
 import sttp.tapir.server.interceptor.reject.RejectHandler
 import sttp.tapir.server.model.ValuedEndpointOutput
-
 import cats.syntax.all.given
 
 object DefaultServer {
@@ -36,6 +29,8 @@ object DefaultServer {
   given Schema[ActionContext] = Schema.derived
 
   given Schema[DialogContext] = Schema.derived
+
+  given Schema[DialogSubmissionValue] = Schema.derived
 
   given Schema[UserId] = Schema.schemaForString.map(UserId(_).some)(_.toString)
   given Schema[ChannelId] = Schema.schemaForString.map(ChannelId(_).some)(_.toString)

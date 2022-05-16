@@ -5,7 +5,7 @@ import muffin.predef.*
 import muffin.reactions.ReactionInfo
 
 case class Post(
-  id: MessageId,
+  id: MessageId
 //  create_at: Long,
 //  update_at: Long,
 //  delete_at: Long,
@@ -42,8 +42,8 @@ opaque type GetPostRequest = MessageId
 
 case class GetPostResponse(message: String) derives Codec.AsObject
 
-opaque type DeletePostRequest = MessageId
-opaque type DeletePostResponse = Boolean
+type DeletePostRequest = MessageId
+type DeletePostResponse = Unit
 
 case class Props(attachments: List[Attachment] = Nil) derives Encoder.AsObject
 
@@ -78,7 +78,8 @@ case class Button(
   id: String,
   name: String,
   integration: Integration,
-  style: Option[Style] = None
+  style: Option[Style] = None,
+  `type`: "button" = "button"
 ) derives Encoder.AsObject // extends MessageAction
 
 //case class Select(
@@ -102,8 +103,12 @@ object Integration {
     )
 }
 
-enum Style derives Encoder.AsObject:
+enum Style:
   case Good, Warning, Danger, Default, Primary, Success
+
+object Style {
+  given Encoder[Style] = (s: Style) => Json.fromString(s.toString.toLowerCase)
+}
 
 enum DataSource derives Encoder.AsObject:
   case Channels, Users
@@ -121,3 +126,12 @@ type PerformActionResponse = Boolean
 
 type GetPostsByIdsRequest = List[MessageId]
 type GetPostsByIdsResponse = List[Unit] //TODO
+
+case class PatchPostRequest(
+  post_id: MessageId,
+  is_pinned: Option[Boolean] = None,
+  message: Option[String] = None,
+  props: Option[Props] = None,
+  root_id: Option[MessageId] = None,
+  file_ids: Option[List[String]] = None // TODO make Id
+) derives Encoder.AsObject

@@ -19,11 +19,11 @@ trait Posts[F[_]] {
 
   def deletePost(req: DeletePostRequest): F[DeletePostResponse]
 
-  def updatePost(): F[Unit] = ???
+  def updatePost(req: PatchPostRequest): F[Unit]
 
   def markUnreadFrom(): F[Unit] = ???
 
-  def patchPost(): F[Unit] = ???
+  def patchPost(req: PatchPostRequest): F[CreatePostResponse]
 
   def getThread(): F[Unit] = ???
 

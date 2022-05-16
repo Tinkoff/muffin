@@ -1,7 +1,7 @@
 package muffin
 
 import cats.Monad
-import io.circe.{Codec, Json, JsonObject}
+import io.circe.{Codec, Encoder, Json, JsonObject}
 import muffin.predef.*
 import muffin.{Body, HttpClient, Method}
 import cats.syntax.all.given
@@ -13,14 +13,19 @@ import muffin.reactions.*
 
 case class ClientConfig(baseUrl: String, auth: String, userId: UserId)
 
+case class CreateDirectPostRequest(
+  message: String,
+  props: Option[Props] = None,
+  root_id: Option[MessageId] = None,
+  file_ids: List[String] = Nil // TODO make Id
+) derives Encoder.AsObject
+
 class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     extends Posts[F]
     with Dialogs[F]
     with Channels[F]
     with Emoji[F]
     with Reactions[F] {
-
-  def userChannel(userId: UserId): ChannelId = ChannelId(s"${userId}__${cfg.userId}")
 
   def createPost(req: CreatePostRequest): F[CreatePostResponse] =
     summon[HttpClient[F]].request(
@@ -30,11 +35,72 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
+  def createPost(
+    userId: UserId,
+    req: CreateDirectPostRequest
+  ): F[CreatePostResponse] =
+    for {
+      info <- direct(userId :: cfg.userId :: Nil)
+      res <- createPost(
+        CreatePostRequest(
+          info.id,
+          req.message,
+          req.props,
+          req.root_id,
+          req.file_ids
+        )
+      )
+    } yield res
+
+  def createPost(
+    userIds: List[UserId],
+    req: CreateDirectPostRequest
+  ): F[CreatePostResponse] =
+    for {
+      info <- direct(cfg.userId :: userIds)
+      res <- createPost(
+        CreatePostRequest(
+          info.id,
+          req.message,
+          req.props,
+          req.root_id,
+          req.file_ids
+        )
+      )
+    } yield res
+
   def createPostEphemeral(req: CreatePostEphemeral): F[CreatePostResponse] = ???
 
   def getPost(req: GetPostRequest): F[GetPostResponse] = ???
 
-  def deletePost(req: DeletePostRequest): F[DeletePostResponse] = ???
+  def deletePost(req: DeletePostRequest): F[DeletePostResponse] =
+    summon[HttpClient[F]]
+      .request[DeletePostRequest, Json](
+        cfg.baseUrl + s"posts/$req",
+        Method.Delete,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+      .map(a => println(a))
+
+  def updatePost(req: PatchPostRequest): F[Unit] =
+    summon[HttpClient[F]]
+      .request(
+        cfg.baseUrl + s"/posts/${req.post_id}",
+        Method.Put,
+        Body.Json(req),
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+  def patchPost(req: PatchPostRequest): F[CreatePostResponse] =
+    summon[HttpClient[F]]
+      .request(
+        cfg.baseUrl + s"/posts/${req.post_id}/patch",
+        Method.Put,
+        Body.Json(req),
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
 
   def performAction(req: PerformActionRequest): F[PerformActionResponse] =
     summon[HttpClient[F]].request(
@@ -47,18 +113,28 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
   ////////////////////////////////////////////////
 
   def openDialog(req: OpenDialogRequest): F[Unit] =
-    summon[HttpClient[F]].request[OpenDialogRequest, Json](
-      cfg.baseUrl + "/actions/dialogs/open",
-      Method.Post,
-      Body.Json(req),
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    ).map(a=> println(a))
+    summon[HttpClient[F]]
+      .request[OpenDialogRequest, Json](
+        cfg.baseUrl + "/actions/dialogs/open",
+        Method.Post,
+        Body.Json(req),
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+      .map(a => println(a))
 
   def members(req: MembersRequest): F[List[ChannelMember]] =
     summon[HttpClient[F]].request(
-      cfg.baseUrl,
+      cfg.baseUrl + s"/channels/${req.channelId}/members", // TODO pagination
       Method.Get,
       Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def direct(req: CreateDirectChannelRequest): F[ChannelInfo] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + "/channels/direct",
+      Method.Post,
+      Body.Json(req),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 

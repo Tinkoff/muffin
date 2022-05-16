@@ -1,6 +1,5 @@
 package muffin.channels
-import io.circe.Decoder
-
+import io.circe.{Codec, Decoder}
 import muffin.predef.*
 
 case class MembersRequest(
@@ -10,12 +9,16 @@ case class MembersRequest(
 )
 
 case class ChannelMember(
-  channelId: ChannelId,
-  userId: UserId,
+  channel_id: ChannelId,
+  user_id: UserId,
   roles: String,
   last_viewed_at: Long, // TODO timestamp
-  msgCount: Option[Int],
-  mentionCount: Option[Int],
+  msg_count: Option[Int],
+  mention_count: Option[Int],
   //                          notifyProps:
-  lastUpdateAt: Option[Long] // TODO timestamp
+  last_update_at: Option[Long] // TODO timestamp
 ) derives Decoder
+
+type CreateDirectChannelRequest = List[UserId]
+
+case class ChannelInfo(id: ChannelId) derives Codec.AsObject

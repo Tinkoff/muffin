@@ -48,7 +48,7 @@ object Application extends ZIOAppDefault {
           .as(ctx.ok)
       }
 
-      _ = app.dialog("superdialog") { (ctx, action) =>
+      _ = app.dialog("coffee") { (ctx, action) =>
         ctx.client
           .createPost(CreatePostRequest(action.channel_id, action.submission.toString()))
           .as(ctx.ok)

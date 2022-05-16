@@ -25,6 +25,7 @@ class SttpClient[F[_]: MonadThrow](backend: SttpBackend[F, Any])
         method match {
           case Method.Get    => SMethod.GET
           case Method.Post   => SMethod.POST
+          case Method.Put    => SMethod.PUT
           case Method.Delete => SMethod.DELETE
         },
         Uri.unsafeParse(url)

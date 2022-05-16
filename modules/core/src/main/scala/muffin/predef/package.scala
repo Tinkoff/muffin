@@ -4,6 +4,13 @@ import io.circe.{Decoder, Encoder, Json}
 
 opaque type Login = String
 
+object Login {
+  def apply(login: String): Login = login
+
+  given encoder: Encoder[Login] = Encoder.encodeString.contramap(identity)
+  given decoder: Decoder[Login] = Decoder.decodeString.map(identity)
+}
+
 opaque type UserId = String
 
 object UserId {

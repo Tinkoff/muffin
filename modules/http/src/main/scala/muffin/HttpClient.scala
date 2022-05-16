@@ -31,4 +31,4 @@ object MultipartElement {
 }
 
 enum Method:
-  case Get, Post, Delete
+  case Get, Post, Delete, Put
