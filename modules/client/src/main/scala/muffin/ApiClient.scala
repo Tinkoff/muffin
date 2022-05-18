@@ -10,6 +10,7 @@ import muffin.dialogs.*
 import muffin.emoji.*
 import muffin.posts.*
 import muffin.reactions.*
+import muffin.users.*
 
 case class ClientConfig(baseUrl: String, auth: String, userId: UserId)
 
@@ -25,7 +26,8 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     with Dialogs[F]
     with Channels[F]
     with Emoji[F]
-    with Reactions[F] {
+    with Reactions[F]
+    with Users[F] {
 
   def createPost(req: CreatePostRequest): F[CreatePostResponse] =
     summon[HttpClient[F]].request(
@@ -100,7 +102,6 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
         Body.Json(req),
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
-
 
   def performAction(req: PerformActionRequest): F[PerformActionResponse] =
     summon[HttpClient[F]].request(
@@ -242,6 +243,16 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
       cfg.baseUrl + s"/posts/ids/reactions",
       Method.Post,
       Body.Json(req),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def userByUsername(
+    req: GetUserByUsernameRequest
+  ): F[GetUserByUsernameResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/usernames/$req",
+      Method.Get,
+      Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 

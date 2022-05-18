@@ -66,13 +66,13 @@ case class Attachment(
   footer: Option[String] = None,
   footer_icon: Option[String] = None, // TODO Make URL
 
-  actions: List[Button] = Nil
+  actions: List[MessageAction] = Nil
 ) derives Encoder.AsObject
 
 case class AttachmentField(title: String, value: String, short: Boolean = false)
     derives Encoder.AsObject
 
-//sealed trait MessageAction  derives Encoder.AsObject
+sealed trait MessageAction  derives Encoder.AsObject
 
 case class Button(
   id: String,
@@ -80,15 +80,15 @@ case class Button(
   integration: Integration,
   style: Option[Style] = None,
   `type`: "button" = "button"
-) derives Encoder.AsObject // extends MessageAction
+) extends MessageAction
 
-//case class Select(
-//    id:String,
-//    name:String,
-//    integration: Integration,
-//    options: List[SelectOption] = Nil,
-//    dataSource: Option[DataSource] = None
-//                 )extends MessageAction
+case class Select(
+  id: String,
+  name: String,
+  integration: Integration,
+  options: List[SelectOption] = Nil,
+  dataSource: Option[DataSource] = None
+) extends MessageAction
 
 case class Integration(url: String, context: JsonObject) {
   def access[T: Decoder]: Decoder.Result[T] = Json.fromJsonObject(context).as[T]

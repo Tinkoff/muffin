@@ -32,6 +32,9 @@ type GetUsersByUsernameResponse = List[User]
 type GetUserRequest = UserId
 type GetUserResponse = User
 
+type GetUserByUsernameRequest = String
+type GetUserByUsernameResponse = User
+
 case class User(
   id: UserId,
   create_at: Long,
