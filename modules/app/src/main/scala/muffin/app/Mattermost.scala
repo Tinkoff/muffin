@@ -9,6 +9,7 @@ import scala.reflect.ClassTag
 import cats.syntax.all.given
 import io.circe.Decoder.Result
 import muffin.app
+import muffin.posts.Attachment
 
 case class CommandContext(
   channelId: ChannelId,
@@ -104,9 +105,15 @@ sealed trait AppResponse derives Codec.AsObject
 object AppResponse {
   case class Ok() extends AppResponse
 
+  case class Message(
+    text: String,
+    response_type: String,
+    attachments: List[Attachment]
+  ) extends AppResponse
+
 }
 
-class Mattermost[F[_]: Monad](val ctx: AppContext[F]) {
+class Mattermost[F[_]: Monad](val ctx: AppContext[F], serviceUrl: String) {
 
   type CommandActions = (AppContext[F], CommandContext) => F[AppResponse]
 
@@ -114,11 +121,11 @@ class Mattermost[F[_]: Monad](val ctx: AppContext[F]) {
 
   type EventActions = (AppContext[F], ActionContext) => F[AppResponse]
 
-  private val commands: mutable.Map[String, CommandActions] = mutable.Map.empty
+  val commands: mutable.Map[String, CommandActions] = mutable.Map.empty
 
-  private val dialogs: mutable.Map[String, DialogActions] = mutable.Map.empty
+  val dialogs: mutable.Map[String, DialogActions] = mutable.Map.empty
 
-  private val events: mutable.Map[String, EventActions] = mutable.Map.empty
+  val events: mutable.Map[String, EventActions] = mutable.Map.empty
 
   def command(name: String)(action: CommandActions): Mattermost[F] =
     commands += name -> action
@@ -132,6 +139,15 @@ class Mattermost[F[_]: Monad](val ctx: AppContext[F]) {
     events += name -> action
     this
   }
+
+  def command(name: String): String =
+    serviceUrl + s"/commands/$name"
+
+  def dialog(name: String): String =
+    serviceUrl + s"/dialogs/$name"
+
+  def actions(name: String): String =
+    serviceUrl + s"/actions/$name"
 
   def handleCommand(name: String, commandCtx: CommandContext): F[AppResponse] =
     commands.get(name) match

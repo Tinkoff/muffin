@@ -1,6 +1,7 @@
 package muffin.posts
 
-import io.circe.{Codec, Decoder, Encoder, Json, JsonObject}
+import io.circe.Decoder.Result
+import io.circe.{Codec, Decoder, Encoder, HCursor, Json, JsonObject}
 import muffin.predef.*
 import muffin.reactions.ReactionInfo
 
@@ -27,7 +28,7 @@ case class PostMetadata(reactions: Option[ReactionInfo]) derives Codec.AsObject
 
 case class CreatePostRequest(
   channel_id: ChannelId,
-  message: String,
+  message: Option[String] = None,
   props: Option[Props] = None,
   root_id: Option[MessageId] = None,
   file_ids: List[String] = Nil // TODO make Id
@@ -67,12 +68,12 @@ case class Attachment(
   footer_icon: Option[String] = None, // TODO Make URL
 
   actions: List[MessageAction] = Nil
-) derives Encoder.AsObject
+) derives Codec.AsObject
 
 case class AttachmentField(title: String, value: String, short: Boolean = false)
-    derives Encoder.AsObject
+    derives Codec.AsObject
 
-sealed trait MessageAction  derives Encoder.AsObject
+sealed trait MessageAction  derives Codec.AsObject
 
 case class Button(
   id: String,
@@ -101,6 +102,9 @@ object Integration {
       "url" -> Json.fromString(obj.url),
       "context" -> Json.fromJsonObject(obj.context)
     )
+
+  given decoder: Decoder[Integration] = new Decoder[Integration]:
+    override def apply(c: HCursor): Result[Integration] = Right(Integration("", JsonObject.empty))
 }
 
 enum Style:
@@ -108,12 +112,13 @@ enum Style:
 
 object Style {
   given Encoder[Style] = (s: Style) => Json.fromString(s.toString.toLowerCase)
+  given Decoder[Style] = (c: HCursor) => c.as[String].map(s => Style.valueOf(s))
 }
 
-enum DataSource derives Encoder.AsObject:
+enum DataSource derives Codec.AsObject:
   case Channels, Users
 
-case class SelectOption(text: String, value: String) derives Encoder.AsObject
+case class SelectOption(text: String, value: String) derives Codec.AsObject
 
 type PinPostRequest = MessageId
 type PinPostResponse = Boolean

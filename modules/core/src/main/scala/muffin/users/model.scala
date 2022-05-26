@@ -1,5 +1,6 @@
 package muffin.users
 
+import io.circe.Codec
 import muffin.predef.*
 
 case class GetUsersRequest(
@@ -57,4 +58,4 @@ case class User(
   //    timezone
   terms_of_service_id: String,
   terms_of_service_create_at: Long
-)
+) derives Codec.AsObject

@@ -12,10 +12,10 @@ import muffin.posts.*
 import muffin.reactions.*
 import muffin.users.*
 
-case class ClientConfig(baseUrl: String, auth: String, userId: UserId)
+case class ClientConfig(baseUrl: String, auth: String, botName: String)
 
 case class CreateDirectPostRequest(
-  message: String,
+  message: Option[String] = None,
   props: Option[Props] = None,
   root_id: Option[MessageId] = None,
   file_ids: List[String] = Nil // TODO make Id
@@ -28,6 +28,8 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     with Emoji[F]
     with Reactions[F]
     with Users[F] {
+
+  def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 
   def createPost(req: CreatePostRequest): F[CreatePostResponse] =
     summon[HttpClient[F]].request(
@@ -42,7 +44,8 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     req: CreateDirectPostRequest
   ): F[CreatePostResponse] =
     for {
-      info <- direct(userId :: cfg.userId :: Nil)
+      id <- botId
+      info <- direct(userId :: id :: Nil)
       res <- createPost(
         CreatePostRequest(
           info.id,
@@ -59,7 +62,8 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     req: CreateDirectPostRequest
   ): F[CreatePostResponse] =
     for {
-      info <- direct(cfg.userId :: userIds)
+      id <- botId
+      info <- direct(id :: userIds)
       res <- createPost(
         CreatePostRequest(
           info.id,

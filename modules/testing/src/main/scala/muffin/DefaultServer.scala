@@ -21,10 +21,12 @@ import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
 import sttp.tapir.server.interceptor.reject.RejectHandler
 import sttp.tapir.server.model.ValuedEndpointOutput
 import cats.syntax.all.given
+import muffin.posts.*
 
 object DefaultServer {
 
   given Schema[AppResponse] = Schema.derived
+  given Schema[Attachment] = Schema.string[Attachment]
 
   given Schema[ActionContext] = Schema.derived
 
