@@ -1,7 +1,15 @@
 package muffin.app
 
 import cats.{Applicative, Monad}
-import io.circe.{Codec, Decoder, DecodingFailure, Encoder, HCursor, Json}
+import io.circe.{
+  Codec,
+  Decoder,
+  DecodingFailure,
+  Encoder,
+  FailedCursor,
+  HCursor,
+  Json
+}
 import muffin.predef.*
 
 import scala.collection.mutable
@@ -10,6 +18,9 @@ import cats.syntax.all.given
 import io.circe.Decoder.Result
 import muffin.app
 import muffin.posts.Attachment
+
+import scala.quoted.*
+import io.circe.syntax.*
 
 case class CommandContext(
   channelId: ChannelId,
@@ -100,17 +111,37 @@ case class ActionContext(
   context: Json
 ) derives Codec.AsObject
 
-sealed trait AppResponse derives Codec.AsObject
+enum ResponseType:
+  case Ephemeral, InChannel
+
+object ResponseType {
+  given encoder: Encoder[ResponseType] = {
+    case Ephemeral => Encoder.encodeString("ephemeral")
+    case InChannel => Encoder.encodeString("in_channel")
+  }
+}
+
+sealed trait AppResponse
 
 object AppResponse {
-  case class Ok() extends AppResponse
+  case class Ok() extends AppResponse derives Codec.AsObject
 
   case class Message(
     text: String,
     response_type: String,
     attachments: List[Attachment]
   ) extends AppResponse
+      derives Codec.AsObject
 
+  given Encoder[AppResponse] =
+    case value: Ok      => value.asJson
+    case value: Message => value.asJson
+
+  given Decoder[AppResponse] = new Decoder[AppResponse]:
+    override def apply(c: HCursor): Result[AppResponse] =
+      c.downField("text") match
+        case cursor: FailedCursor =>  Right(AppResponse.Ok())
+        case _                    => Right(AppResponse.Message("", "", Nil))
 }
 
 class Mattermost[F[_]: Monad](val ctx: AppContext[F], serviceUrl: String) {

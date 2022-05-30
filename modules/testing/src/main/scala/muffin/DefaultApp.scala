@@ -21,5 +21,5 @@ object DefaultApp {
 
       ctx = AppContext(client)
 
-    } yield new Mattermost(ctx)
+    } yield new Mattermost(ctx, "")
 }

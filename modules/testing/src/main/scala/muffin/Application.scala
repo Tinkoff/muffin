@@ -1,7 +1,7 @@
 package muffin
 
 import io.circe.{Json, JsonObject}
-import muffin.app.{AppResponse, Mattermost}
+import muffin.app.*
 import muffin.http.SttpClient
 import muffin.emoji.*
 import muffin.posts.*
@@ -16,16 +16,22 @@ import zio.interop.catz.given
 import java.io.File
 import zio.interop.catz.implicits.given
 
+case class A() {
+  def x: Int = 0
+}
+
+case class B() {
+  def x: Int = 0
+}
+
 object Application extends ZIOAppDefault {
 
   val token = "ayxxty8s1jy6mcsnsp9octpqqe"
 
-  val botId = UserId("jbrahfps57f458qsdth6urbsnw")
-
   val run =
     for {
       app: Mattermost[Task] <- DefaultApp(
-        ClientConfig("http://localhost:8065/api/v4", token, botId)
+        ClientConfig("http://localhost:8065/api/v4", token, "name")
       )
 
       _ = app.command("kek") { (ctx, action) =>
