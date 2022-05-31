@@ -1,6 +1,6 @@
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.9-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.1.1"
+ThisBuild / scalaVersion := "3.2.0-RC1-bin-20220530-d6e3d12-NIGHTLY"
 
 ThisBuild / organization := "space.littleinferno"
 
@@ -8,6 +8,7 @@ lazy val root = (project in file("."))
   .settings(name := "muffin")
   .dependsOn(core, client, http, `http-sttp`, app)
   .aggregate(core, client, http, `http-sttp`, app)
+
 
 lazy val modules = file("modules")
 

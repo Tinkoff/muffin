@@ -12,7 +12,12 @@ import muffin.posts.*
 import muffin.reactions.*
 import muffin.users.*
 
-case class ClientConfig(baseUrl: String, auth: String, botName: String)
+case class ClientConfig(
+  baseUrl: String,
+  auth: String,
+  botName: String,
+  serviceUrl: String
+)
 
 case class CreateDirectPostRequest(
   message: Option[String] = None,
@@ -28,6 +33,15 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     with Emoji[F]
     with Reactions[F]
     with Users[F] {
+
+  def command(name: String): String =
+    cfg.serviceUrl + s"/commands/$name"
+
+  def dialog(name: String): String =
+    cfg.serviceUrl + s"/dialogs/$name"
+
+  def actions(name: String): String =
+    cfg.serviceUrl + s"/actions/$name"
 
   def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 

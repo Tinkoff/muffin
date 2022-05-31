@@ -6,7 +6,7 @@ import sttp.tapir.*
 import sttp.tapir.given
 import sttp.tapir.json.circe.*
 import io.circe.Json
-import muffin.app.{ActionContext, AppResponse, CommandContext, DialogContext, DialogSubmissionValue, Mattermost}
+import muffin.app.*
 import org.http4s.server.Router
 import sttp.tapir.server.http4s.{Http4sServerInterpreter, Http4sServerOptions}
 import org.http4s.ember.server.*
@@ -14,7 +14,7 @@ import zio.{Clock, Runtime, Task}
 import zio.interop.catz.given
 import org.http4s.implicits.given
 import com.comcast.ip4s.*
-import muffin.predef.{ChannelId, UserId}
+import muffin.predef.*
 import sttp.monad.MonadError
 import sttp.tapir.server.interceptor.RequestResult
 import sttp.tapir.server.interceptor.log.{DefaultServerLog, ServerLog}
@@ -25,10 +25,13 @@ import muffin.posts.*
 
 object DefaultServer {
 
+  given Schema[ResponseType] = Schema.derived
+
   given Schema[AppResponse] = Schema.derived
   given Schema[Attachment] = Schema.string[Attachment]
 
-  given Schema[ActionContext] = Schema.derived
+  given Schema[RawAction] = Schema.derived
+
 
   given Schema[DialogContext] = Schema.derived
 
@@ -36,8 +39,11 @@ object DefaultServer {
 
   given Schema[UserId] = Schema.schemaForString.map(UserId(_).some)(_.toString)
   given Schema[ChannelId] = Schema.schemaForString.map(ChannelId(_).some)(_.toString)
+  given Schema[Login] = Schema.schemaForString.map(Login(_).some)(_.toString)
+  given Schema[MessageId] = Schema.schemaForString.map(MessageId(_).some)(_.toString)
 
-  def commands[F[_]: Async](app: Mattermost[F]) = endpoint.post
+
+  def commands[F[_]: Async](app: Router[F]) = endpoint.post
     .in("commands")
     .in(paths)
     .in(formBody[Map[String, String]])
@@ -59,33 +65,31 @@ object DefaultServer {
       )
     }
 
-  def actions[F[_]: Async](app: Mattermost[F]) = endpoint.post
+  def actions[F[_]: Async](app: Router[F]) = endpoint.post
     .in("commands")
     .in(paths)
-    .in(jsonBody[ActionContext])
+    .in(jsonBody[RawAction])
     .out(jsonBody[AppResponse])
     .serverLogicSuccess { case (segments, param) =>
-      println(param)
       app.handleAction(segments.last, param)
     }
 
-  def dialogs[F[_]: Async](app: Mattermost[F]) = endpoint.post
+  def dialogs[F[_]: Async](app: Router[F]) = endpoint.post
     .in("dialogs")
     .in(paths)
     .in(jsonBody[DialogContext])
     .out(jsonBody[AppResponse])
     .serverLogicSuccess { case (segments, param) =>
-      println(param)
       app.handleDialog(segments.last, param)
     }
 
-  private def server[F[_]: Async](app: Mattermost[F]) =
+  private def server[F[_]: Async](app: Router[F]) =
     Router(
       "/" -> Http4sServerInterpreter[F]()
         .toRoutes(List(commands(app), actions(app), dialogs(app)))
     ).orNotFound
 
-  def apply(app: Mattermost[Task])(using Runtime[Clock]) =
+  def apply(app: Router[Task])(using Runtime[Clock]) =
     EmberServerBuilder
       .default[Task]
       .withHost(ipv4"127.0.0.1")
