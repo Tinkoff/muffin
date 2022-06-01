@@ -266,7 +266,7 @@ object RouterBuilder {
             handler.asTerm
               .select(getMethod[headClass](names.head))
               .appliedTo(name, action) ::
-              summonCommandCases[F, tailClass](names.tail, name, action)
+              summonDialogCases[F, tailClass](names.tail, name, action)
           case _ =>
             report.errorAndAbort(s"Could not summon ${Type.show[headClass]}")
         }
@@ -358,7 +358,7 @@ object RouterBuilder {
           cls,
           "handleCommand",
           commandMethods,
-          summonCommandCases[F, ActionClasses](_, _, _)
+          summonCommandCases[F, CommandClasses](_, _, _)
         ) ::
         makeMethod(
           cls,

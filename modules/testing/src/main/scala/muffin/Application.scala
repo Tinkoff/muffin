@@ -21,8 +21,8 @@ import zio.interop.catz.implicits.given
 
 case class A(str: String) derives Codec.AsObject
 
-class Handler[F[_]: MonadThrow](client: ApiClient[F]) {
-  def kek(name:String, action: CommandContext): F[AppResponse] =
+class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
+  def kekA(name:String, action: CommandContext): F[AppResponse] =
     client
       .openDialog(
         OpenDialogRequest(
@@ -41,7 +41,47 @@ class Handler[F[_]: MonadThrow](client: ApiClient[F]) {
       )
       .map(_ => AppResponse.Ok())
 
-  def action(name:String, dialog: Action[A]): F[AppResponse] =
+  def actionA(name:String, dialog: Action[A]): F[AppResponse] =
+    client
+      .openDialog(
+        OpenDialogRequest(
+          dialog.triggerId,
+          client.dialog("superdialog"),
+          Dialog(
+            "id",
+            "title",
+            "intoduction",
+            List(Text("display", "name")),
+            Some("submit submit"),
+            true,
+            "State"
+          )
+        )
+      )
+      .map(_ => AppResponse.Ok())
+}
+
+class HandlerB[F[_]: MonadThrow](client: ApiClient[F]) {
+  def kekB(name:String, action: CommandContext): F[AppResponse] =
+    client
+      .openDialog(
+        OpenDialogRequest(
+          action.triggerId,
+          client.dialog("superdialog"),
+          Dialog(
+            "id",
+            "title",
+            "intoduction",
+            List(Text("display", "name")),
+            Some("submit submit"),
+            true,
+            "State"
+          )
+        )
+      )
+      .map(_ => AppResponse.Ok())
+
+  def actionB(name:String, dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
         OpenDialogRequest(
@@ -79,11 +119,13 @@ object Application extends ZIOAppDefault {
 
 
       router = {
-        given Handler[Task] = new Handler[Task](app)
+        given HandlerA[Task] = new HandlerA[Task](app)
+        given HandlerB[Task] = new HandlerB[Task](app)
 
         RouterBuilder[Task]
-          .command[Handler[Task], "kek"]
-          .action[Handler[Task], A, "action"]
+          .command[HandlerA[Task], "kekA"]
+          .action[HandlerA[Task], A, "actionA"]
+          .action[HandlerB[Task], A, "actionB"]
           .build
       }
 
