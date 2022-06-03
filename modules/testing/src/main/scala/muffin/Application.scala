@@ -22,7 +22,7 @@ import zio.interop.catz.implicits.given
 case class A(str: String) derives Codec.AsObject
 
 class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
-  def kekA(name:String, action: CommandContext): F[AppResponse] =
+  def kekA(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
         OpenDialogRequest(
@@ -41,7 +41,7 @@ class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
       )
       .map(_ => AppResponse.Ok())
 
-  def actionA(name:String, dialog: Action[A]): F[AppResponse] =
+  def actionA(dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
         OpenDialogRequest(
@@ -62,7 +62,7 @@ class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
 }
 
 class HandlerB[F[_]: MonadThrow](client: ApiClient[F]) {
-  def kekB(name:String, action: CommandContext): F[AppResponse] =
+  def kekB(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
         OpenDialogRequest(
@@ -81,7 +81,7 @@ class HandlerB[F[_]: MonadThrow](client: ApiClient[F]) {
       )
       .map(_ => AppResponse.Ok())
 
-  def actionB(name:String, dialog: Action[A]): F[AppResponse] =
+  def actionB(dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
         OpenDialogRequest(
@@ -118,7 +118,8 @@ object Application extends ZIOAppDefault {
 
 
 
-      router = {
+
+      router <- {
         given HandlerA[Task] = new HandlerA[Task](app)
         given HandlerB[Task] = new HandlerB[Task](app)
 
@@ -126,7 +127,8 @@ object Application extends ZIOAppDefault {
           .command[HandlerA[Task], "kekA"]
           .action[HandlerA[Task], A, "actionA"]
           .action[HandlerB[Task], A, "actionB"]
-          .build
+
+          .build[Task]
       }
 
       _ <- DefaultServer(router).useForever

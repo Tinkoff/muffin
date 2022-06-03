@@ -63,28 +63,25 @@ case class RawAction(
   `type`: String,
   context: Json
 ) derives Codec.AsObject {
-  def asTyped[F[_], T](name: String)(implicit
+  def asTyped[F[_], T](using
     monad: MonadThrow[F],
     decoder: Decoder[T]
-  ): F[(String, Action[T])] =
+  ): F[Action[T]] =
     MonadThrow[F]
       .fromEither(context.as[T])
       .map(action =>
-        (
-          name,
-          Action(
-            user_id,
-            user_name,
-            channel_id,
-            channel_name,
-            team_id,
-            team_domain,
-            post_id,
-            trigger_id,
-            data_source,
-            `type`,
-            action
-          )
+        Action(
+          user_id,
+          user_name,
+          channel_id,
+          channel_name,
+          team_id,
+          team_domain,
+          post_id,
+          trigger_id,
+          data_source,
+          `type`,
+          action
         )
       )
 }
