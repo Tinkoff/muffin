@@ -13,21 +13,21 @@ import muffin.reactions.*
 import muffin.users.*
 
 case class ClientConfig(
-  baseUrl: String,
-  auth: String,
-  botName: String,
-  serviceUrl: String
-)
+                         baseUrl: String,
+                         auth: String,
+                         botName: String,
+                         serviceUrl: String
+                       )
 
 case class CreateDirectPostRequest(
-  message: Option[String] = None,
-  props: Option[Props] = None,
-  root_id: Option[MessageId] = None,
-  file_ids: List[String] = Nil // TODO make Id
-) derives Encoder.AsObject
+                                    message: Option[String] = None,
+                                    props: Option[Props] = None,
+                                    root_id: Option[MessageId] = None,
+                                    file_ids: List[String] = Nil // TODO make Id
+                                  ) derives Encoder.AsObject
 
-class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
-    extends Posts[F]
+class ApiClient[F[_] : HttpClient : Monad](cfg: ClientConfig)
+  extends Posts[F]
     with Dialogs[F]
     with Channels[F]
     with Emoji[F]
@@ -54,9 +54,9 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     )
 
   def createPost(
-    userId: UserId,
-    req: CreateDirectPostRequest
-  ): F[CreatePostResponse] =
+                  userId: UserId,
+                  req: CreateDirectPostRequest
+                ): F[CreatePostResponse] =
     for {
       id <- botId
       info <- direct(userId :: id :: Nil)
@@ -72,9 +72,9 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     } yield res
 
   def createPost(
-    userIds: List[UserId],
-    req: CreateDirectPostRequest
-  ): F[CreatePostResponse] =
+                  userIds: List[UserId],
+                  req: CreateDirectPostRequest
+                ): F[CreatePostResponse] =
     for {
       id <- botId
       info <- direct(id :: userIds)
@@ -157,6 +157,15 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
+  def getChannelByName(team: String, name: String): F[ChannelInfo] = {
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/teams/${team}/channels/name/${name}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+  }
+
   def createEmoji(req: CreateEmojiRequest): F[CreateEmojiResponse] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + s"/emoji",
@@ -219,8 +228,8 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     )
 
   def autocompleteEmoji(
-    req: AutocompleteEmojiRequest
-  ): F[AutocompleteEmojiResponse] =
+                         req: AutocompleteEmojiRequest
+                       ): F[AutocompleteEmojiResponse] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + s"/emoji/autocomplete?name=${req.name}",
       Method.Get,
@@ -255,8 +264,8 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
       .map(_.status == "ok")
 
   def bulkReactions(
-    req: BulkReactionsRequest
-  ): F[Map[String, List[ReactionInfo]]] =
+                     req: BulkReactionsRequest
+                   ): F[Map[String, List[ReactionInfo]]] =
     summon[HttpClient[F]].request(
       cfg.baseUrl + s"/posts/ids/reactions",
       Method.Post,
@@ -265,10 +274,10 @@ class ApiClient[F[_]: HttpClient: Monad](cfg: ClientConfig)
     )
 
   def userByUsername(
-    req: GetUserByUsernameRequest
-  ): F[GetUserByUsernameResponse] =
+                      req: GetUserByUsernameRequest
+                    ): F[GetUserByUsernameResponse] =
     summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/users/usernames/$req",
+      cfg.baseUrl + s"/users/username/$req",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")

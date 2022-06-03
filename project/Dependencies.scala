@@ -36,6 +36,10 @@ object process {
     }
 
     val zioCats = "dev.zio" %% "zio-interop-cats" % "3.3.0-RC2"
+
+    object fs2 {
+      val core = "co.fs2" %% "fs2-core" % "3.2.7"
+    }
     //    lazy val enumeratum  = "com.beachape"               %% "enumeratum"        % version.enumeratum
 //    lazy val ficus       = "com.iheart"                 %% "ficus"             % version.ficus excludeAll ficusExclude
 //    lazy val quicklens   = "com.softwaremill.quicklens" %% "quicklens"         % version.quicklens

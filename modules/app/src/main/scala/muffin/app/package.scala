@@ -63,9 +63,10 @@ case class RawAction(
   `type`: String,
   context: Json
 ) derives Codec.AsObject {
-  def asTyped[F[_], T](
-    name: String
-  )(implicit monad: MonadThrow[F], decoder: Decoder[T]): F[(String, Action[T])] =
+  def asTyped[F[_], T](name: String)(implicit
+    monad: MonadThrow[F],
+    decoder: Decoder[T]
+  ): F[(String, Action[T])] =
     MonadThrow[F]
       .fromEither(context.as[T])
       .map(action =>
@@ -121,12 +122,13 @@ object DialogSubmissionValue {
   case class Num(value: Long) extends DialogSubmissionValue
   case class Bool(value: Boolean) extends DialogSubmissionValue
 
-  given Decoder[DialogSubmissionValue] = (c: HCursor) =>
-    c.value.asNumber
-      .flatMap(_.toLong.map(Num(_)))
-      .orElse(c.value.asBoolean.map(Bool(_)))
-      .orElse(c.value.asString.map(Str(_)))
-      .toRight(DecodingFailure("Can't decode submission", c.history))
+  given Decoder[Option[DialogSubmissionValue]] = (c: HCursor) =>
+    Right(
+      c.value.asNumber
+        .flatMap(_.toLong.map(Num(_)))
+        .orElse(c.value.asBoolean.map(Bool(_)))
+        .orElse(c.value.asString.map(Str(_)))
+    )
 
   given Encoder[DialogSubmissionValue] =
     case Str(value)  => Json.fromString(value)
@@ -161,6 +163,8 @@ object DialogSubmissionExtractor {
   given DialogSubmissionExtractor[Int] = partial(_) {
     case DialogSubmissionValue.Num(value) =>
       value.toInt.some
+    case DialogSubmissionValue.Str(value) if value.toIntOption.isDefined =>
+      value.toIntOption
   }
 }
 
@@ -170,9 +174,9 @@ case class DialogContext(
   user_id: UserId,
   channel_id: ChannelId,
   team_id: String,
-  submission: Map[String, DialogSubmissionValue],
+  submission: Map[String, Option[DialogSubmissionValue]],
   cancelled: Boolean
 ) derives Codec.AsObject {
   def submission[T: DialogSubmissionExtractor](key: String): Option[T] =
-    submission.get(key).flatMap(summon[DialogSubmissionExtractor[T]].get(_))
+    submission.get(key).flatten.flatMap(summon[DialogSubmissionExtractor[T]].get(_))
 }
