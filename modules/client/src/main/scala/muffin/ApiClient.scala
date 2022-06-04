@@ -1,6 +1,7 @@
 package muffin
 
 import cats.Monad
+import cats.effect.Concurrent
 import io.circe.{Codec, Encoder, Json, JsonObject}
 import muffin.predef.*
 import muffin.{Body, HttpClient, Method}
@@ -11,6 +12,7 @@ import muffin.emoji.*
 import muffin.posts.*
 import muffin.reactions.*
 import muffin.users.*
+import fs2.*
 
 case class ClientConfig(
                          baseUrl: String,
@@ -26,7 +28,7 @@ case class CreateDirectPostRequest(
                                     file_ids: List[String] = Nil // TODO make Id
                                   ) derives Encoder.AsObject
 
-class ApiClient[F[_] : HttpClient : Monad](cfg: ClientConfig)
+class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   extends Posts[F]
     with Dialogs[F]
     with Channels[F]
@@ -143,11 +145,22 @@ class ApiClient[F[_] : HttpClient : Monad](cfg: ClientConfig)
 
   def members(req: MembersRequest): F[List[ChannelMember]] =
     summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/channels/${req.channelId}/members", // TODO pagination
+      cfg.baseUrl + s"/channels/${req.channelId}/members?page=${req.page}&per_page=${req.per_page}",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+
+  def members(channelId: ChannelId, perPage: Int): F[List[ChannelMember]] = {
+    Stream
+      .unfoldEval(0) { page =>
+        members(MembersRequest(channelId, page, perPage))
+          .map(list => if (list.isEmpty) None else Some((list, page + 1)))
+      }
+      .flatMap(Stream.emits)
+      .compile
+      .toList
+  }
 
   def direct(req: CreateDirectChannelRequest): F[ChannelInfo] =
     summon[HttpClient[F]].request(

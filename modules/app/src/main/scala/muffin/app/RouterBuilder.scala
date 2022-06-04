@@ -192,7 +192,7 @@ object RouterBuilder {
                 name,
                 names.zip(cases(names, name, action)).map { case (name, body) =>
                   CaseDef(Literal(StringConstant(name)), None, body)
-                } :+ CaseDef(defaultPattern, None, '{${unexpectedBody}.apply(${name.asExprOf[String]}, ${action.asExprOf[T]})}.asTerm)
+                } //:+ CaseDef(defaultPattern, None, '{${unexpectedBody}.apply(${name.asExprOf[String]}, ${action.asExprOf[T]})}.asTerm)
               )
             else
               Expr
@@ -209,7 +209,7 @@ object RouterBuilder {
                   )
                 )
 
-          Some(Block(Nil, body).changeOwner(symbol))
+          Some(Block(Nil, body))//.changeOwner(symbol))
         case _ =>
           report.errorAndAbort(s"Invalid generated signature $methodName")
       }

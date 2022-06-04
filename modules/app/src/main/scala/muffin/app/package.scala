@@ -63,7 +63,7 @@ case class RawAction(
   `type`: String,
   context: Json
 ) derives Codec.AsObject {
-  def asTyped[F[_], T](using
+  def asTyped[F[_], T](implicit
     monad: MonadThrow[F],
     decoder: Decoder[T]
   ): F[Action[T]] =

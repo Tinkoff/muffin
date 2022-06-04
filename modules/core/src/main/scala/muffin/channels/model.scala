@@ -4,8 +4,8 @@ import muffin.predef.*
 
 case class MembersRequest(
   channelId: ChannelId,
-  page: Option[Int],
-  per_page: Option[Int]
+  page: Int,
+  per_page: Int
 )
 
 case class ChannelMember(
