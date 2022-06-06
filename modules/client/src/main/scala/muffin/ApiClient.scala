@@ -13,6 +13,7 @@ import muffin.posts.*
 import muffin.reactions.*
 import muffin.users.*
 import fs2.*
+import muffin.ApiClient.params
 
 case class ClientConfig(
                          baseUrl: String,
@@ -151,15 +152,13 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def members(channelId: ChannelId, perPage: Int): F[List[ChannelMember]] = {
+  def members(channelId: ChannelId, perPage: Int): Stream[F, ChannelMember] = {
     Stream
       .unfoldEval(0) { page =>
         members(MembersRequest(channelId, page, perPage))
           .map(list => if (list.isEmpty) None else Some((list, page + 1)))
       }
       .flatMap(Stream.emits)
-      .compile
-      .toList
   }
 
   def direct(req: CreateDirectChannelRequest): F[ChannelInfo] =
@@ -286,6 +285,38 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
+  def users(req: GetUsersRequest): F[GetUsersResponse] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/posts/ids/reactions${
+        params(
+          "page" -> req.page.toString,
+          "per_page" -> req.per_page.toString,
+          "in_team" -> req.in_team.toString,
+          "not_in_team" -> req.not_in_team.toString,
+          "in_channel" -> req.in_channel.toString,
+          "not_in_channel" -> req.not_in_channel.toString,
+          "in_group" -> req.in_group.toString,
+          "group_constrained" -> req.group_constrained.toString,
+          "without_team" -> req.without_team.toString,
+          "active" -> req.active.toString,
+          "inactive" -> req.inactive.toString,
+          "role" -> req.role.toString
+        )
+      }",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def usersStream(req: GetUsersRequest): Stream[F, GetUsersResponse] = {
+    Stream
+      .unfoldEval(0) { page =>
+        users(req.copy(page=page.some))
+          .map(list => if (list.isEmpty) None else Some((list, page + 1)))
+      }
+      .flatMap(Stream.emits)
+  }
+
   def userByUsername(
                       req: GetUserByUsernameRequest
                     ): F[GetUserByUsernameResponse] =
@@ -297,5 +328,12 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
 }
+
+object ApiClient {
+  private def params(params: (String, String)*): String = {
+    params.toMap.map(p => s"${p._1}=${p._2}").mkString("?", "&", "")
+  }
+}
+
 
 private case class StatusResponse(status: String) derives Codec.AsObject

@@ -10,7 +10,7 @@ trait Channels[F[_]] {
 
   def members(req: MembersRequest): F[List[ChannelMember]]
 
-  def members(channelId: ChannelId, perPage: Int = 200): F[List[ChannelMember]]
+  def members(channelId: ChannelId, perPage: Int = 200): Stream[F, ChannelMember]
 
   def direct(req: CreateDirectChannelRequest): F[ChannelInfo]
 

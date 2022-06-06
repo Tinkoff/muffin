@@ -4,22 +4,22 @@ import io.circe.Codec
 import muffin.predef.*
 
 case class GetUsersRequest(
-                            page: Option[Int],
-                            per_page: Option[Int],
-                            in_team: Option[String],
-                            not_in_team: Option[String],
-                            in_channel: Option[String],
-                            not_in_channel: Option[String],
-                            in_group: Option[String],
-                            group_constrained: Option[Boolean],
-                            without_team: Option[Boolean],
-                            active: Option[Boolean],
-                            inactive: Option[Boolean],
-                            role: Option[String],
+                            page: Option[Int] = None,
+                            per_page: Option[Int] = None,
+                            in_team: Option[String] = None,
+                            not_in_team: Option[String] = None,
+                            in_channel: Option[String] = None,
+                            not_in_channel: Option[String] = None,
+                            in_group: Option[String] = None,
+                            group_constrained: Option[Boolean] = None,
+                            without_team: Option[Boolean] = None,
+                            active: Option[Boolean] = None,
+                            inactive: Option[Boolean] = None,
+                            role: Option[String] = None,
                             //    sort
-                            roles: Option[List[String]],
-                            channel_roles: Option[List[String]],
-                            team_roles: Option[List[String]]
+                            roles: Option[List[String]] = None,
+                            channel_roles: Option[List[String]] = None,
+                            team_roles: Option[List[String]] = None
                           )
 
 type GetUsersResponse = List[User]

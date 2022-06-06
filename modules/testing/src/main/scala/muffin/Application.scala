@@ -127,7 +127,7 @@ object Application extends ZIOAppDefault {
           .command[HandlerA[Task], "kekA"]
           .action[HandlerA[Task], A, "actionA"]
           .action[HandlerB[Task], A, "actionB"]
-
+          .unexpected((name, action) => Task.succeed(AppResponse.Ok()))
           .build[Task]
       }
 
