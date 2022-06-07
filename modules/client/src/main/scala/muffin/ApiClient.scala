@@ -14,6 +14,8 @@ import muffin.reactions.*
 import muffin.users.*
 import fs2.*
 import muffin.ApiClient.params
+import muffin.preferences.*
+import muffin.status.*
 
 case class ClientConfig(
                          baseUrl: String,
@@ -35,7 +37,9 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     with Channels[F]
     with Emoji[F]
     with Reactions[F]
-    with Users[F] {
+    with Users[F]
+    with Preferences[F]
+    with Status[F] {
 
   def command(name: String): String =
     cfg.serviceUrl + s"/commands/$name"
@@ -311,7 +315,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   def usersStream(req: GetUsersRequest): Stream[F, User] = {
     Stream
       .unfoldEval(0) { page =>
-        users(req.copy(page=page.some))
+        users(req.copy(page = page.some))
           .map(list => if (list.isEmpty) None else Some((list, page + 1)))
       }
       .flatMap(Stream.emits)
@@ -327,6 +331,90 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
+  //  Preferences
+  def getUserPreferences(userId: UserId): F[List[Preference]] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/$userId/preferences",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def getUserPreferences(userId: UserId, category: String): F[List[Preference]] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/$userId/preferences/${category}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def getUserPreference(userId: UserId, category: String, name: String): F[Preference] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/$userId/preferences/${category}/name/${name}",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def saveUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/${userId}/preferences",
+      Method.Put,
+      Body.Json(preferences),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def deleteUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/${userId}/preferences/delete",
+      Method.Post,
+      Body.Json(preferences),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+  //  Preferences
+
+
+  // Status
+  def getUserStatus(userId: UserId): F[UserStatus] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/${userId}/status",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def getUserStatuses(users: List[UserId]): F[List[UserId]] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/status/ids",
+      Method.Post,
+      Body.Json(users),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def updateUserStatus(userId: UserId, statusUser: StatusUser): F[Unit] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/$userId/status/custom",
+      Method.Put,
+      Body.Json(Json.obj("user_id" -> Json.fromString(userId), "status" -> statusUser.asJson)),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def updateCustomStatus(userId: UserId, customStatus: CustomStatus): F[Unit] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/${userid}/status/custom",
+      Method.Put,
+      Body.Json(customStatus),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def unsetCustomStatus(userId: UserId): F[Unit] =
+    summon[HttpClient[F]].request(
+      cfg.baseUrl + s"/users/${userid}/status/custom",
+      Method.Delete,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+  // Status
 }
 
 object ApiClient {

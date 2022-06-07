@@ -1,8 +1,10 @@
-ThisBuild / version := "0.1.21-SNAPSHOT"
+ThisBuild / version := "0.1.23-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.2.0-RC1-bin-20220530-d6e3d12-NIGHTLY"
 
 ThisBuild / organization := "space.littleinferno"
+
+ThisBuild / scalaOutputVersion := "3.1.2"
 
 lazy val root = (project in file("."))
   .settings(name := "muffin")
@@ -10,7 +12,14 @@ lazy val root = (project in file("."))
   .aggregate(core, client, http, `http-sttp`, app)
 
 
-lazy val modules = file("modules")
+
+ThisBuild / publishMavenStyle := true
+ThisBuild / publishTo         := (s"Tinkoff Releases" at s"https://nexus.tcsbank.ru/repository/api-snapshot").some
+
+//ThisBuild / publishConfiguration := (ThisBuild / publishConfiguration).value.withOverwrite(true)
+
+
+  lazy val modules = file("modules")
 
 lazy val http = project
   .in(modules / "http")
@@ -39,3 +48,8 @@ lazy val testing = project
   .settings(publish / skip := true)
 
 ThisBuild / scalacOptions += "-source:future"
+ThisBuild / scalacOptions += "-explain"
+
+ThisBuild / credentials ++= Option(Path.userHome / ".ivy2" / ".credentials")
+  .filter(_.exists)
+  .map(Credentials.apply)

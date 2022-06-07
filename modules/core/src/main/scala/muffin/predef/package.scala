@@ -20,6 +20,24 @@ object UserId {
   given decoder: Decoder[UserId] = Decoder.decodeString.map(identity)
 }
 
+opaque type GroupId = String
+
+object GroupId {
+  def apply(id: String): GroupId = id
+
+  given encoder: Encoder[GroupId] = Encoder.encodeString.contramap(identity)
+  given decoder: Decoder[GroupId] = Decoder.decodeString.map(identity)
+}
+
+opaque type TeamId = String
+
+object TeamId {
+  def apply(id: String): TeamId = id
+
+  given encoder: Encoder[TeamId] = Encoder.encodeString.contramap(identity)
+  given decoder: Decoder[TeamId] = Decoder.decodeString.map(identity)
+}
+
 opaque type ChannelId = String
 
 object ChannelId {
