@@ -41,6 +41,8 @@ class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
       )
       .map(_ => AppResponse.Ok())
 
+  def acc(action: RawAction):F[AppResponse] = ???
+  
   def actionA(dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
@@ -61,7 +63,7 @@ class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
       .map(_ => AppResponse.Ok())
 }
 
-class HandlerB[F[_]: MonadThrow](client: ApiClient[F]) {
+class HandlerB[F[_] : MonadThrow](client: ApiClient[F]) {
   def kekB(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
@@ -125,6 +127,7 @@ object Application extends ZIOAppDefault {
 
         RouterBuilder[Task]
           .command[HandlerA[Task], "kekA"]
+          .rawAction[HandlerA[Task], "acc"]
           .action[HandlerA[Task], A, "actionA"]
           .action[HandlerB[Task], A, "actionB"]
           .unexpected((name, action) => Task.succeed(AppResponse.Ok()))

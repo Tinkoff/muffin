@@ -85,6 +85,29 @@ case class RawAction(
         )
       )
 }
+//
+//case class RawDialogAction(
+//  callback_id: String,
+//  state: String,
+//  user_id: UserId,
+//  channel_id: ChannelId,
+//  team_id: String,
+//  cancelled: Boolean,
+//  submission: Json
+//) derives Codec.AsObject
+//
+//
+//case class DialogAction[T](
+//  callback_id: String,
+//  state: String,
+//  user_id: UserId,
+//  channel_id: ChannelId,
+//  team_id: String,
+//  cancelled: Boolean,
+//  submission: T
+//)
+//
+
 
 case class Action[T](
   userId: UserId,

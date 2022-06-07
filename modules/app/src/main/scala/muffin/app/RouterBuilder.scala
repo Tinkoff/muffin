@@ -31,6 +31,18 @@ class RouterBuilder[F[_]: MonadThrow,
       DialogMethods
     ](unexpectedAction, unexpectedCommand, unexpectedDialog)
 
+  def rawAction[ActionClass, ActionMethod <: Singleton] =
+    new RouterBuilder[
+      F,
+      ActionClass *: ActionClasses,
+      RawAction *: ActionCallbacks,
+      ActionMethod *: ActionMethods,
+      CommandClasses,
+      CommandMethods,
+      DialogClasses,
+      DialogMethods
+    ](unexpectedAction, unexpectedCommand, unexpectedDialog)
+
   def command[CommandClass, CommandMethod <: Singleton] =
     new RouterBuilder[
       F,
@@ -235,21 +247,26 @@ object RouterBuilder {
           case (Some(handler), Some(decoder), Some(monad)) =>
             val method = getMethod[headClass](names.head)
 
-            '{
-              ${ monad }.flatMap(${ action.asExprOf[RawAction] }
-                .asTyped[F, headCallback](${ monad }, ${ decoder }))(action =>
-                ${
-                  handler.asTerm
-                    .select(method)
-                    .appliedTo('{ action }.asTerm)
-                    .asExprOf[F[AppResponse]]
-                }
+            (if(TypeRepr.of[headCallback] =:= TypeRepr.of[RawAction])
+              handler.asTerm
+                .select(method)
+                .appliedTo(action)
+            else
+              '{
+                ${ monad }.flatMap(${ action.asExprOf[RawAction] }
+                  .asTyped[F, headCallback](${ monad }, ${ decoder }))(action =>
+                  ${
+                    handler.asTerm
+                      .select(method)
+                      .appliedTo('{ action }.asTerm)
+                      .asExprOf[F[AppResponse]]
+                  }
+                )
+              }.asTerm) :: summonActionCases[F, tailClass, tailCallback](
+                names.tail,
+                name,
+                action
               )
-            }.asTerm :: summonActionCases[F, tailClass, tailCallback](
-              names.tail,
-              name,
-              action
-            )
 
           case (_, _, _) =>
             report.errorAndAbort(

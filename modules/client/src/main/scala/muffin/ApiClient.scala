@@ -308,7 +308,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def usersStream(req: GetUsersRequest): Stream[F, GetUsersResponse] = {
+  def usersStream(req: GetUsersRequest): Stream[F, User] = {
     Stream
       .unfoldEval(0) { page =>
         users(req.copy(page=page.some))
