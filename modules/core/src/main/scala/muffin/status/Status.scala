@@ -1,11 +1,12 @@
 package muffin.status
 
+import muffin.codec.Decode
 import muffin.predef.*
 
 trait Status[F[_]] {
   def getUserStatus(userId: UserId): F[UserStatus]
 
-  def getUserStatuses(users: List[UserId]): F[List[UserId]]
+  def getUserStatuses(users: List[UserId]): F[List[UserStatus]]
 
   def updateUserStatus(userId: UserId, statusUser: StatusUser): F[Unit]
 

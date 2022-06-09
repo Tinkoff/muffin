@@ -4,7 +4,8 @@ import cats.Monad
 import cats.effect.Concurrent
 import io.circe.{Codec, Encoder, Json, JsonObject}
 import muffin.predef.*
-import muffin.{Body, HttpClient, Method}
+import muffin.http.*
+import muffin.http.given
 import cats.syntax.all.given
 import muffin.channels.*
 import muffin.dialogs.*
@@ -14,8 +15,11 @@ import muffin.reactions.*
 import muffin.users.*
 import fs2.*
 import muffin.ApiClient.params
+import muffin.codec.*
 import muffin.preferences.*
 import muffin.status.*
+
+import java.time.*
 
 case class ClientConfig(
                          baseUrl: String,
@@ -31,7 +35,7 @@ case class CreateDirectPostRequest(
                                     file_ids: List[String] = Nil // TODO make Id
                                   ) derives Encoder.AsObject
 
-class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
+class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From], cfg: ClientConfig)(codec: MuffinCodec[To, From])(using ZoneId)
   extends Posts[F]
     with Dialogs[F]
     with Channels[F]
@@ -40,6 +44,11 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     with Users[F]
     with Preferences[F]
     with Status[F] {
+
+  import codec.{given, *}
+  import ApiClient.*
+
+  private given To[NonJson] = assert(true).asInstanceOf[Nothing] // should never call
 
   def command(name: String): String =
     cfg.serviceUrl + s"/commands/$name"
@@ -53,7 +62,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 
   def createPost(req: CreatePostRequest): F[CreatePostResponse] =
-    summon[HttpClient[F]].request(
+    http.request(
       cfg.baseUrl + "/posts",
       Method.Post,
       Body.Json(req),
@@ -100,18 +109,17 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
 
   def getPost(req: GetPostRequest): F[GetPostResponse] = ???
 
-  def deletePost(req: DeletePostRequest): F[DeletePostResponse] =
-    summon[HttpClient[F]]
-      .request[DeletePostRequest, Json](
+  def deletePost(req: DeletePostRequest): F[Unit] =
+    http
+      .request[DeletePostRequest, Unit](
         cfg.baseUrl + s"posts/$req",
         Method.Delete,
         Body.Empty,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
-      .map(a => println(a))
 
   def updatePost(req: PatchPostRequest): F[Unit] =
-    summon[HttpClient[F]]
+    http
       .request(
         cfg.baseUrl + s"/posts/${req.post_id}",
         Method.Put,
@@ -120,7 +128,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       )
 
   def patchPost(req: PatchPostRequest): F[CreatePostResponse] =
-    summon[HttpClient[F]]
+    http
       .request(
         cfg.baseUrl + s"/posts/${req.post_id}/patch",
         Method.Put,
@@ -129,7 +137,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       )
 
   def performAction(req: PerformActionRequest): F[PerformActionResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, PerformActionResponse](
       cfg.baseUrl + s"/posts/${req.post_id}/actions/${req.action_id}",
       Method.Post,
       Body.Empty,
@@ -139,7 +147,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   ////////////////////////////////////////////////
 
   def openDialog(req: OpenDialogRequest): F[Unit] =
-    summon[HttpClient[F]]
+    http
       .request[OpenDialogRequest, Json](
         cfg.baseUrl + "/actions/dialogs/open",
         Method.Post,
@@ -149,7 +157,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
       .map(a => println(a))
 
   def members(req: MembersRequest): F[List[ChannelMember]] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, List[ChannelMember]](
       cfg.baseUrl + s"/channels/${req.channelId}/members?page=${req.page}&per_page=${req.per_page}",
       Method.Get,
       Body.Empty,
@@ -166,7 +174,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   }
 
   def direct(req: CreateDirectChannelRequest): F[ChannelInfo] =
-    summon[HttpClient[F]].request(
+    http.request(
       cfg.baseUrl + "/channels/direct",
       Method.Post,
       Body.Json(req),
@@ -174,8 +182,8 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getChannelByName(team: String, name: String): F[ChannelInfo] = {
-    summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/teams/${team}/channels/name/${name}",
+    http.request[NonJson, ChannelInfo](
+      cfg.baseUrl + s"/teams/$team/channels/name/${name}",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
@@ -183,7 +191,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   }
 
   def createEmoji(req: CreateEmojiRequest): F[CreateEmojiResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, CreateEmojiResponse](
       cfg.baseUrl + s"/emoji",
       Method.Post,
       Body.Multipart(
@@ -204,7 +212,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getEmojiList(req: GetEmojiListRequest): F[GetEmojiListResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, GetEmojiListResponse](
       cfg.baseUrl + s"/emoji?page=${req.page}&per_page=${req.per_page}&sort=${req.sort}",
       Method.Get,
       Body.Empty,
@@ -212,7 +220,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getEmoji(req: GetEmojiRequest): F[GetEmojiResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, GetEmojiResponse](
       cfg.baseUrl + s"/emoji/${req.emoji_id}",
       Method.Get,
       Body.Empty,
@@ -220,7 +228,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def deleteEmoji(req: DeleteEmojiRequest): F[DeleteEmojiResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, DeleteEmojiResponse](
       cfg.baseUrl + s"/emoji/name/${req.emoji_id}",
       Method.Delete,
       Body.Empty,
@@ -228,7 +236,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getEmojiByName(req: GetEmojiNameRequest): F[GetEmojiNameResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, GetEmojiResponse](
       cfg.baseUrl + s"/emoji/name/${req.name}",
       Method.Get,
       Body.Empty,
@@ -236,7 +244,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def searchEmoji(req: SearchEmojiRequest): F[SearchEmojiResponse] =
-    summon[HttpClient[F]].request(
+    http.request(
       cfg.baseUrl + s"/emoji/search",
       Method.Post,
       Body.Json(req),
@@ -246,7 +254,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   def autocompleteEmoji(
                          req: AutocompleteEmojiRequest
                        ): F[AutocompleteEmojiResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, AutocompleteEmojiResponse](
       cfg.baseUrl + s"/emoji/autocomplete?name=${req.name}",
       Method.Get,
       Body.Empty,
@@ -254,7 +262,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def createReaction(req: CreateReactionRequest): F[ReactionInfo] =
-    summon[HttpClient[F]].request(
+    http.request(
       cfg.baseUrl + "/reactions",
       Method.Post,
       Body.Json(req),
@@ -262,7 +270,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getReactions(req: GetListReactionsRequest): F[GetListReactionsResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, GetListReactionsResponse](
       cfg.baseUrl + s"/posts/${req.post_id}/reactions",
       Method.Get,
       Body.Empty,
@@ -270,7 +278,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def removeReaction(req: RemoveReactionRequest): F[RemoveReactionResponse] =
-    summon[HttpClient[F]]
+    http
       .request[RemoveReactionRequest, StatusResponse](
         cfg.baseUrl + s"/users/${req.user_id}/posts/${req.post_id}/reactions/${req.emoji_name}",
         Method.Delete,
@@ -282,7 +290,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   def bulkReactions(
                      req: BulkReactionsRequest
                    ): F[Map[String, List[ReactionInfo]]] =
-    summon[HttpClient[F]].request(
+    http.request(
       cfg.baseUrl + s"/posts/ids/reactions",
       Method.Post,
       Body.Json(req),
@@ -290,7 +298,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def users(req: GetUsersRequest): F[GetUsersResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, GetUsersResponse](
       cfg.baseUrl + s"/posts/ids/reactions${
         params(
           "page" -> req.page.toString,
@@ -324,7 +332,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
   def userByUsername(
                       req: GetUserByUsernameRequest
                     ): F[GetUserByUsernameResponse] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, GetUserByUsernameResponse](
       cfg.baseUrl + s"/users/username/$req",
       Method.Get,
       Body.Empty,
@@ -333,7 +341,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
 
   //  Preferences
   def getUserPreferences(userId: UserId): F[List[Preference]] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, List[Preference]](
       cfg.baseUrl + s"/users/$userId/preferences",
       Method.Get,
       Body.Empty,
@@ -341,7 +349,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getUserPreferences(userId: UserId, category: String): F[List[Preference]] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, List[Preference]](
       cfg.baseUrl + s"/users/$userId/preferences/${category}",
       Method.Get,
       Body.Empty,
@@ -349,7 +357,7 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def getUserPreference(userId: UserId, category: String, name: String): F[Preference] =
-    summon[HttpClient[F]].request(
+    http.request[NonJson, Preference](
       cfg.baseUrl + s"/users/$userId/preferences/${category}/name/${name}",
       Method.Get,
       Body.Empty,
@@ -357,67 +365,75 @@ class ApiClient[F[_] : HttpClient : Concurrent](cfg: ClientConfig)
     )
 
   def saveUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] =
-    summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/users/${userId}/preferences",
+    http.request(
+      cfg.baseUrl + s"/users/$userId/preferences",
       Method.Put,
       Body.Json(preferences),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def deleteUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] =
-    summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/users/${userId}/preferences/delete",
+  def deleteUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] = {
+    http.request(
+      cfg.baseUrl + s"/users/$userId/preferences/delete",
       Method.Post,
       Body.Json(preferences),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+  }
+
   //  Preferences
 
 
   // Status
-  def getUserStatus(userId: UserId): F[UserStatus] =
-    summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/users/${userId}/status",
+  def getUserStatus(userId: UserId): F[UserStatus] = {
+    http.request[NonJson, UserStatus](
+      cfg.baseUrl + s"/users/$userId/status",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+  }
 
-  def getUserStatuses(users: List[UserId]): F[List[UserId]] =
-    summon[HttpClient[F]].request(
+  def getUserStatuses(users: List[UserId]): F[List[UserStatus]] = {
+    http.request(
       cfg.baseUrl + s"/users/status/ids",
       Method.Post,
       Body.Json(users),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+  }
 
   def updateUserStatus(userId: UserId, statusUser: StatusUser): F[Unit] =
-    summon[HttpClient[F]].request(
+    http.request(
       cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Put,
-      Body.Json(Json.obj("user_id" -> Json.fromString(userId), "status" -> statusUser.asJson)),
+      Body.Json(UpdateUserStatusRequest(userId, statusUser)),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def updateCustomStatus(userId: UserId, customStatus: CustomStatus): F[Unit] =
-    summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/users/${userid}/status/custom",
+  def updateCustomStatus(userId: UserId, customStatus: CustomStatus): F[Unit] = {
+    http.request(
+      cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Put,
       Body.Json(customStatus),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+  }
 
-  def unsetCustomStatus(userId: UserId): F[Unit] =
-    summon[HttpClient[F]].request(
-      cfg.baseUrl + s"/users/${userid}/status/custom",
+  def unsetCustomStatus(userId: UserId): F[Unit] = {
+    http.request[NonJson, Unit](
+      cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Delete,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+  }
   // Status
 }
 
 object ApiClient {
+  private case class NonJson()
+
   private def params(params: (String, String)*): String = {
     params.toMap.map(p => s"${p._1}=${p._2}").mkString("?", "&", "")
   }

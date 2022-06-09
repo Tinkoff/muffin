@@ -8,21 +8,21 @@ ThisBuild / scalaOutputVersion := "3.1.2"
 
 lazy val root = (project in file("."))
   .settings(name := "muffin")
-  .dependsOn(core, client, http, `http-sttp`, app)
-  .aggregate(core, client, http, `http-sttp`, app)
+  .dependsOn(core, client, http, app)
+  .aggregate(core, client, http, `http-sttp`, app, `circe-interop`, `zio-json-interop`)
 
 
 
 ThisBuild / publishMavenStyle := true
-ThisBuild / publishTo         := (s"Tinkoff Releases" at s"https://nexus.tcsbank.ru/repository/api-snapshot").some
 
 //ThisBuild / publishConfiguration := (ThisBuild / publishConfiguration).value.withOverwrite(true)
 
 
-  lazy val modules = file("modules")
+lazy val modules = file("modules")
 
 lazy val http = project
   .in(modules / "http")
+  .dependsOn(core)
 
 lazy val core = project
   .in(modules / "core")
@@ -41,10 +41,18 @@ lazy val `http-sttp` = project
   .in(integration / "http-sttp")
   .dependsOn(http)
 
+lazy val `circe-interop` = project
+  .in(integration / "circe-interop")
+  .dependsOn(core)
+
+lazy val `zio-json-interop` = project
+  .in(integration / "zio-json-interop")
+  .dependsOn(core)
+
 lazy val testing = project
   .in(modules / "testing")
-  .aggregate(core, client, http, `http-sttp`, app)
-  .dependsOn(core, client, http, `http-sttp`, app)
+  .aggregate(core, client, http, `http-sttp`, app, `circe-interop`, `zio-json-interop`)
+  .dependsOn(core, client, http, `http-sttp`, app, `circe-interop`, `zio-json-interop`)
   .settings(publish / skip := true)
 
 ThisBuild / scalacOptions += "-source:future"

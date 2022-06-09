@@ -21,7 +21,7 @@ import zio.interop.catz.implicits.given
 
 case class A(str: String) derives Codec.AsObject
 
-class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
+class HandlerA[F[_]: MonadThrow](client: CirceApi[F]) {
   def kekA(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
@@ -42,7 +42,7 @@ class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
       .map(_ => AppResponse.Ok())
 
   def acc(action: RawAction):F[AppResponse] = ???
-  
+
   def actionA(dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
@@ -63,7 +63,7 @@ class HandlerA[F[_]: MonadThrow](client: ApiClient[F]) {
       .map(_ => AppResponse.Ok())
 }
 
-class HandlerB[F[_] : MonadThrow](client: ApiClient[F]) {
+class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
   def kekB(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
@@ -109,7 +109,7 @@ object Application extends ZIOAppDefault {
 
   val run =
     for {
-      app: ApiClient[Task] <- DefaultApp(
+      app: CirceApi[Task] <- DefaultApp(
         ClientConfig(
           "http://localhost:8065/api/v4",
           token,

@@ -1,11 +1,14 @@
-package muffin
+package muffin.http
 
-import io.circe.{Decoder, Encoder}
+import io.circe.parser.parse
 import io.circe.syntax.given
-import java.io.File
+import io.circe.{Decoder, Encoder}
 
-trait HttpClient[F[_]] {
-  def request[In, Out: Decoder](
+import java.io.File
+import muffin.codec.*
+
+trait HttpClient[F[_], To[_], From[_]] {
+  def request[In: To,  Out: From](
     url: String,
     method: Method,
     body: Body[In] = Body.Empty,
@@ -18,9 +21,7 @@ sealed trait Body[+T]
 object Body:
   case object Empty extends Body[Nothing]
 
-  case class Json[T: Encoder](value: T) extends Body[T] {
-    def as: String = value.asJson.dropNullValues.noSpaces
-  }
+  case class Json[T](value: T) extends Body[T]
 
   case class Multipart(parts: List[MultipartElement]) extends Body[Nothing]
 
