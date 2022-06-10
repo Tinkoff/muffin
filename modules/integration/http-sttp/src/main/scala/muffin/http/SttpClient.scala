@@ -28,6 +28,7 @@ class SttpClient[F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any]
           case Method.Post => SMethod.POST
           case Method.Put => SMethod.PUT
           case Method.Delete => SMethod.DELETE
+          case Method.Patch => SMethod.PATCH
         },
         Uri.unsafeParse(url)
       )

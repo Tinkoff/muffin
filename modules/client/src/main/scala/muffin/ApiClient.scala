@@ -18,6 +18,7 @@ import muffin.ApiClient.params
 import muffin.codec.*
 import muffin.insights.*
 import muffin.preferences.*
+import muffin.roles.{RoleInfo, Roles}
 import muffin.status.*
 
 import java.time.*
@@ -45,7 +46,8 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     with Users[F]
     with Preferences[F]
     with Status[F]
-    with Insights[F] {
+    with Insights[F]
+    with Roles[F] {
 
   import codec.{given, *}
   import ApiClient.*
@@ -438,7 +440,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/reactions?time_range=$timeRange&page=$page",
-        Method.Delete,
+        Method.Get,
         Body.Empty,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
@@ -456,7 +458,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/users/$userId/top/reactions?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
-        Method.Delete,
+        Method.Get,
         Body.Empty,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
@@ -474,7 +476,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/channels?time_range=$timeRange&page=$page",
-        Method.Delete,
+        Method.Get,
         Body.Empty,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
@@ -492,7 +494,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/users/$userId/top/channels?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
-        Method.Delete,
+        Method.Get,
         Body.Empty,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
@@ -507,6 +509,47 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
   }
   // Insights
 
+  //  Roles
+  def getAllRoles: F[List[RoleInfo]] =
+    http.request[NonJson, List[RoleInfo]](
+      cfg.baseUrl + s"/roles",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+  
+  def getRoleById(id: String): F[RoleInfo] =
+    http.request[NonJson, RoleInfo](
+      cfg.baseUrl + s"/roles/$id",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def getRoleByName(name: String): F[RoleInfo] =
+    http.request[NonJson, RoleInfo](
+      cfg.baseUrl + s"/roles/name/$name",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def updateRole(id: String, permissions: List[String]): F[RoleInfo] =
+    http.request(
+      cfg.baseUrl + s"/roles/$id/patch",
+      Method.Patch,
+      Body.Json(permissions),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def getRoles(names: List[String]): F[List[RoleInfo]] =
+    http.request(
+      cfg.baseUrl + s"/roles/names",
+      Method.Post,
+      Body.Json(names),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+  //  Roles
 }
 
 object ApiClient {

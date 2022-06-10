@@ -32,4 +32,4 @@ object MultipartElement {
 }
 
 enum Method:
-  case Get, Post, Delete, Put
+  case Get, Post, Delete, Put, Patch

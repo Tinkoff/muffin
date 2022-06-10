@@ -10,6 +10,7 @@ import muffin.predef.*
 import muffin.insights.*
 import cats.syntax.all.given
 import io.circe.Decoder.Result
+import muffin.roles.RoleInfo
 
 import java.time.*
 
@@ -167,5 +168,13 @@ object codec extends MuffinCodec[Encoder, Decoder] {
       items <- c.downField("items").as[List[T]]
     } yield ListWrapper(hasNext, items)
 
-
+  given RoleInfoDecode: Decoder[RoleInfo] = (c: HCursor) =>
+    for {
+      id <- c.downField("id").as[String]
+      name <- c.downField("name").as[String]
+      displayName <- c.downField("display_name").as[String]
+      description <- c.downField("description").as[String]
+      permissions <- c.downField("permissions").as[List[String]]
+      schemeManaged <- c.downField("scheme_managed").as[Boolean]
+    } yield RoleInfo(id, name, displayName, description, permissions, schemeManaged)
 }

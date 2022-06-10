@@ -3,6 +3,7 @@ package muffin.codec
 import muffin.insights.*
 import muffin.status.*
 import muffin.preferences.*
+import muffin.roles.RoleInfo
 
 import java.time.*
 
@@ -60,4 +61,8 @@ trait MuffinCodec[To[_], From[_]] {
 
   given ListWrapperDecode[T: From]: From[ListWrapper[T]]
   //Insights
+
+  //Roles
+  given RoleInfoDecode: From[RoleInfo]
+  //Roles
 }
