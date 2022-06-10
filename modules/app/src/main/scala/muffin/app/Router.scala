@@ -2,8 +2,8 @@ package muffin.app
 
 import io.circe.Json
 
-trait Router[F[_]] {
-  def handleAction(actionName: String, context: RawAction): F[AppResponse]
+trait Router[F[_], R] {
+  def handleAction(actionName: String, context: RawAction[R]): F[AppResponse]
 
   def handleCommand(actionName: String, context: CommandContext): F[AppResponse]
 

@@ -8,6 +8,7 @@ import muffin.predef.*
 import scala.collection.immutable.List
 
 import predef.*
+import fs2.Stream
 
 trait Posts[F[_]] {
 
@@ -29,7 +30,7 @@ trait Posts[F[_]] {
 
   def getFlaggedPosts(): F[Unit] = ???
 
-  def getPostsForChannel(): F[Unit] = ???
+//  def getPostsForChannel(channelId: ChannelId, modifiers: Option[SearchPostModifiers]): Stream[F, Post]
 
   def searchTeamPosts(): F[Unit] = ???
 

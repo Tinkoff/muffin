@@ -18,9 +18,9 @@ Status
 |---------------------|:------:|
 | Users               |   ❎    |        
 | Bots                |   ❎    |
-| Teams               |   ❎    |     
-| Channels            |   ❎    | 
-| Posts               |   ❎    |
+| Teams               |   ❇️    |     
+| Channels            |   ❇️    | 
+| Posts               |   ❇️    |
 | Threads             |   ❎    |
 | Files               |   ❎    |
 | Uploads             |   ❎    |

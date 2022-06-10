@@ -2,7 +2,7 @@ package muffin
 
 import cats.MonadThrow
 import io.circe.{Json, JsonObject}
-import io.circe.{Json, JsonObject, Codec}
+import io.circe.{Codec, Json, JsonObject}
 import muffin.app.{DialogSubmissionValue, *}
 import muffin.http.SttpClient
 import muffin.emoji.*
@@ -14,6 +14,7 @@ import muffin.dialogs.*
 import sttp.client3.httpclient.zio.HttpClientZioBackend
 import zio.{Task, ZIOAppDefault}
 import cats.syntax.all.given
+import muffin.codec.RawDecode
 import zio.interop.catz.given
 
 import java.io.File
@@ -21,7 +22,7 @@ import zio.interop.catz.implicits.given
 
 case class A(str: String) derives Codec.AsObject
 
-class HandlerA[F[_]: MonadThrow](client: CirceApi[F]) {
+class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
   def kekA(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
@@ -41,7 +42,7 @@ class HandlerA[F[_]: MonadThrow](client: CirceApi[F]) {
       )
       .map(_ => AppResponse.Ok())
 
-  def acc(action: RawAction):F[AppResponse] = ???
+  def acc(action: RawAction[Json]): F[AppResponse] = ???
 
   def actionA(dialog: Action[A]): F[AppResponse] =
     client
@@ -105,6 +106,8 @@ class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
 
 object Application extends ZIOAppDefault {
 
+  import muffin.interop.circe.codec.given
+
   val token = "ayxxty8s1jy6mcsnsp9octpqqe"
 
   val run =
@@ -122,7 +125,7 @@ object Application extends ZIOAppDefault {
         given HandlerA[Task] = new HandlerA[Task](app)
         given HandlerB[Task] = new HandlerB[Task](app)
 
-        RouterBuilder[Task]
+        RouterBuilder[Task, Json]
           .command[HandlerA[Task], "kekA"]
           .rawAction[HandlerA[Task], "acc"]
           .action[HandlerA[Task], A, "actionA"]

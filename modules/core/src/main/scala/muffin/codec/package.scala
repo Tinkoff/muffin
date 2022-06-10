@@ -12,15 +12,23 @@ trait Encode[A] {
   def apply(obj: A): String
 }
 
-trait Decode[A] {
-  def apply(str: String): Either[Throwable, A]
+trait RawDecode[R, T] {
+  def apply(from: R): Either[Throwable, T]
 }
 
+type Decode[T] = RawDecode[String, T]
 
-trait MuffinCodec[To[_], From[_]] {
+
+trait MuffinCodec[R, To[_], From[_]] {
   given CirceTo[A: io.circe.Encoder]: To[A]
 
   given CirceFrom[A: io.circe.Decoder]: From[A]
+
+  given RawFrom[T: From]: RawDecode[R, T]
+  
+  given EncodeTo[A: To]: Encode[A]
+
+  given DecodeFrom[A: From]: Decode[A]
 
   given ListTo[A: To]: To[List[A]]
 

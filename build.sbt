@@ -14,6 +14,7 @@ lazy val root = (project in file("."))
 
 
 ThisBuild / publishMavenStyle := true
+ThisBuild / publishTo         := (s"Tinkoff Releases" at s"https://nexus.tcsbank.ru/repository/api-snapshot").some
 
 //ThisBuild / publishConfiguration := (ThisBuild / publishConfiguration).value.withOverwrite(true)
 

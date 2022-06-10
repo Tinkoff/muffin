@@ -1,16 +1,16 @@
 package muffin.app
 
+import cats.arrow.FunctionK
 import muffin.predef.*
-
 import io.circe.Json
 import io.circe.Decoder.Result
 import io.circe.DecodingFailure
 import io.circe.{Codec, Decoder, Encoder, FailedCursor, HCursor}
 import io.circe.syntax.given
 import muffin.posts.Attachment
-
-import cats.MonadThrow
+import cats.{MonadThrow, ~>}
 import cats.syntax.all.given
+import muffin.codec.{Decode, RawDecode}
 
 enum ResponseType:
   case Ephemeral, InChannel
@@ -50,25 +50,25 @@ object AppResponse {
       case _               => c.as[Message]
 }
 
-case class RawAction(
+case class RawAction[R](
   user_id: UserId,
   user_name: Login,
   channel_id: ChannelId,
   channel_name: String,
-  team_id: String,
+  team_id: TeamId,
   team_domain: String,
   post_id: MessageId,
   trigger_id: String,
   data_source: String,
   `type`: String,
-  context: Json
-) derives Codec.AsObject {
+  context: R
+) {
   def asTyped[F[_], T](implicit
     monad: MonadThrow[F],
-    decoder: Decoder[T]
-  ): F[Action[T]] =
+    decoder: RawDecode[R, T]
+  ): F[Action[T]] = {
     MonadThrow[F]
-      .fromEither(context.as[T])
+      .fromEither(decoder(context))
       .map(action =>
         Action(
           user_id,
@@ -84,6 +84,7 @@ case class RawAction(
           action
         )
       )
+  }
 }
 //
 //case class RawDialogAction(
@@ -114,7 +115,7 @@ case class Action[T](
   userName: Login,
   channelId: ChannelId,
   channelName: String,
-  teamId: String,
+  teamId: TeamId,
   teamDomain: String,
   postId: MessageId,
   triggerId: String,
@@ -128,7 +129,7 @@ case class CommandContext(
   channelName: String,
   responseUrl: String, // TODO URL
   teamDomain: String,
-  teamId: String, // TODO ID,
+  teamId: TeamId,
   text: Option[String],
   triggerId: String,
   userId: UserId,

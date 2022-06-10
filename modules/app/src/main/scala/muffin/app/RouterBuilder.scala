@@ -1,12 +1,10 @@
 package muffin.app
 
 import scala.quoted.*
-
-import io.circe.Decoder
-
 import cats.{Applicative, MonadThrow}
+import muffin.codec.RawDecode
 
-class RouterBuilder[F[_]: MonadThrow,
+class RouterBuilder[F[_] : MonadThrow, R,
   ActionClasses <: Tuple,
   ActionCallbacks <: Tuple,
   ActionMethods <: Tuple,
@@ -14,7 +12,7 @@ class RouterBuilder[F[_]: MonadThrow,
   CommandMethods <: Tuple,
   DialogClasses <: Tuple,
   DialogMethods <: Tuple] private(
-                                   unexpectedAction: (String, RawAction) => F[AppResponse],
+                                   unexpectedAction: (String, RawAction[R]) => F[AppResponse],
                                    unexpectedCommand: (String, CommandContext) => F[AppResponse],
                                    unexpectedDialog: (String, DialogContext) => F[AppResponse]
                                  ) {
@@ -22,6 +20,7 @@ class RouterBuilder[F[_]: MonadThrow,
   def action[ActionClass, ActionCallback, ActionMethod <: Singleton] =
     new RouterBuilder[
       F,
+      R,
       ActionClass *: ActionClasses,
       ActionCallback *: ActionCallbacks,
       ActionMethod *: ActionMethods,
@@ -34,8 +33,9 @@ class RouterBuilder[F[_]: MonadThrow,
   def rawAction[ActionClass, ActionMethod <: Singleton] =
     new RouterBuilder[
       F,
+      R,
       ActionClass *: ActionClasses,
-      RawAction *: ActionCallbacks,
+      RawAction[R] *: ActionCallbacks,
       ActionMethod *: ActionMethods,
       CommandClasses,
       CommandMethods,
@@ -46,6 +46,7 @@ class RouterBuilder[F[_]: MonadThrow,
   def command[CommandClass, CommandMethod <: Singleton] =
     new RouterBuilder[
       F,
+      R,
       ActionClasses,
       ActionCallbacks,
       ActionMethods,
@@ -58,6 +59,7 @@ class RouterBuilder[F[_]: MonadThrow,
   def dialog[DialogClass, DialogMethod <: Singleton] =
     new RouterBuilder[
       F,
+      R,
       ActionClasses,
       ActionCallbacks,
       ActionMethods,
@@ -68,12 +70,13 @@ class RouterBuilder[F[_]: MonadThrow,
     ](unexpectedAction, unexpectedCommand, unexpectedDialog)
 
   def unexpected(
-                  unexpectedAction: (String, RawAction) => F[AppResponse] = RouterBuilder.defaultInvalidError,
+                  unexpectedAction: (String, RawAction[R]) => F[AppResponse] = RouterBuilder.defaultInvalidError,
                   unexpectedCommand: (String, CommandContext) => F[AppResponse] = RouterBuilder.defaultInvalidError,
                   unexpectedDialog: (String, DialogContext) => F[AppResponse] = RouterBuilder.defaultInvalidError,
                 ) =
     new RouterBuilder[
       F,
+      R,
       ActionClasses,
       ActionCallbacks,
       ActionMethods,
@@ -83,10 +86,11 @@ class RouterBuilder[F[_]: MonadThrow,
       DialogMethods
     ](unexpectedAction, unexpectedCommand, unexpectedDialog)
 
-  inline def build[G[_]]: G[Router[F]] = ${
+  inline def build[G[_]]: G[Router[F, R]] = ${
     RouterBuilder.generator[
     F,
     G,
+    R,
     ActionClasses,
     ActionCallbacks,
     ActionMethods,
@@ -100,8 +104,9 @@ class RouterBuilder[F[_]: MonadThrow,
 }
 
 object RouterBuilder {
-  def apply[F[_]: MonadThrow]: RouterBuilder[
+  def apply[F[_] : MonadThrow, R]: RouterBuilder[
     F,
+    R,
     EmptyTuple,
     EmptyTuple,
     EmptyTuple,
@@ -111,6 +116,7 @@ object RouterBuilder {
     EmptyTuple
   ] = new RouterBuilder[
     F,
+    R,
     EmptyTuple,
     EmptyTuple,
     EmptyTuple,
@@ -118,12 +124,12 @@ object RouterBuilder {
     EmptyTuple,
     EmptyTuple,
     EmptyTuple
-  ](defaultInvalidError[F, RawAction], defaultInvalidError[F, CommandContext], defaultInvalidError[F, DialogContext])
+  ](defaultInvalidError[F, RawAction[R]], defaultInvalidError[F, CommandContext], defaultInvalidError[F, DialogContext])
 
   private def defaultInvalidError[F[_] : MonadThrow, T]: (String, T) => F[AppResponse] = (_, _) => MonadThrow[F].pure(AppResponse.Ok())
 
   private def summonNames[Method <: Tuple](method: Method)(using
-    Quotes
+                                                           Quotes
   ): List[String] =
     method match
       case (head: String) *: tail =>
@@ -135,8 +141,8 @@ object RouterBuilder {
       case EmptyTuple => Nil
 
   private def getMethod[T](
-    name: String
-  )(using q: Quotes)(using Type[T]): q.reflect.Symbol = {
+                            name: String
+                          )(using q: Quotes)(using Type[T]): q.reflect.Symbol = {
     import q.reflect.*
     TypeTree
       .of[T]
@@ -176,9 +182,9 @@ object RouterBuilder {
     names: List[String],
     cases: (
       List[String],
-      q.reflect.Term,
-      q.reflect.Term
-    ) => List[q.reflect.Term],
+        q.reflect.Term,
+        q.reflect.Term
+      ) => List[q.reflect.Term],
     unexpectedBody: Expr[(String, T) => F[AppResponse]]
   )(using Type[F], Type[T]) = {
     import q.reflect.*
@@ -228,10 +234,11 @@ object RouterBuilder {
     )
   }
 
-  def summonActionCases[F[_], Class <: Tuple, Callback <: Tuple](using
+  def summonActionCases[F[_], R, Class <: Tuple, Callback <: Tuple](using
     q: Quotes
   )(names: List[String], name: q.reflect.Term, action: q.reflect.Term)(using
     Type[F],
+    Type[R],
     Type[Class],
     Type[Callback]
   ): List[q.reflect.Term] = {
@@ -241,19 +248,20 @@ object RouterBuilder {
       case ('[headClass *: tailClass], '[headCallback *: tailCallback]) =>
         (
           Expr.summon[headClass],
-          Expr.summon[Decoder[headCallback]],
           Expr.summon[MonadThrow[F]]
         ) match {
-          case (Some(handler), Some(decoder), Some(monad)) =>
+          case (Some(handler), Some(monad)) =>
             val method = getMethod[headClass](names.head)
 
-            (if(TypeRepr.of[headCallback] =:= TypeRepr.of[RawAction])
+            (if(TypeRepr.of[headCallback] =:= TypeRepr.of[RawAction[R]])
               handler.asTerm
                 .select(method)
                 .appliedTo(action)
-            else
+            else {
+              val decoder = Expr.summon[RawDecode[R, headCallback]].getOrElse(report.errorAndAbort( s"Could not summon ${Type.show[RawDecode[R, headCallback]]}"))
+
               '{
-                ${ monad }.flatMap(${ action.asExprOf[RawAction] }
+                ${ monad }.flatMap(${ action.asExprOf[RawAction[R]] }
                   .asTyped[F, headCallback](${ monad }, ${ decoder }))(action =>
                   ${
                     handler.asTerm
@@ -262,16 +270,16 @@ object RouterBuilder {
                       .asExprOf[F[AppResponse]]
                   }
                 )
-              }.asTerm) :: summonActionCases[F, tailClass, tailCallback](
+              }.asTerm
+               }
+               ) :: summonActionCases[F, R, tailClass, tailCallback](
                 names.tail,
                 name,
                 action
               )
-
-          case (_, _, _) =>
+          case (_, _) =>
             report.errorAndAbort(
-              s"Could not summon ${Type.show[headClass]} or ${Type
-                  .show[Decoder[headCallback]]} or ${Type.show[MonadThrow[F]]}"
+              s"Could not summon ${Type.show[headClass]} or ${Type.show[MonadThrow[F]]}"
             )
         }
       case _ => Nil
@@ -324,7 +332,7 @@ object RouterBuilder {
     }
   }
 
-  def generator[F[_], G[_],
+  def generator[F[_], G[_], R,
     ActionClasses <: Tuple,
     ActionCallbacks <: Tuple,
     ActionMethods <: Tuple,
@@ -332,13 +340,14 @@ object RouterBuilder {
     CommandMethods <: Tuple,
     DialogClasses <: Tuple,
     DialogMethods <: Tuple](
-      unexpectedAction: Expr[(String, RawAction) => F[AppResponse]],
+      unexpectedAction: Expr[(String, RawAction[R]) => F[AppResponse]],
       unexpectedCommand: Expr[(String, CommandContext) => F[AppResponse]],
       unexpectedDialog: Expr[(String, DialogContext) => F[AppResponse]]
     )(
     using
     Type[F],
     Type[G],
+    Type[R],
     Type[ActionClasses],
     Type[ActionCallbacks],
     Type[ActionMethods],
@@ -347,7 +356,7 @@ object RouterBuilder {
     Type[DialogClasses],
     Type[DialogMethods],
     Quotes
-  ): Expr[G[Router[F]]] = {
+  ): Expr[G[Router[F, R]]] = {
     import quotes.reflect.*
 
     val actionMethods: List[String] = Type
@@ -377,7 +386,7 @@ object RouterBuilder {
         cls,
         "handleAction",
         ("actionName" -> TypeRepr.of[String]) ::
-          ("context" -> TypeRepr.of[RawAction]) :: Nil,
+          ("context" -> TypeRepr.of[RawAction[R]]) :: Nil,
         TypeRepr.of[F[AppResponse]]
       ) ::
         defineMethod(
@@ -401,18 +410,18 @@ object RouterBuilder {
       "__Router__",
       parents = List(
         TypeTree.of[Object].tpe,
-        TypeTree.of[Router].tpe.appliedTo(TypeRepr.of[F])
+        TypeTree.of[Router].tpe.appliedTo(List(TypeRepr.of[F], TypeRepr.of[R]))
       ),
       routerMethods,
       selfType = None
     )
 
     val methods =
-      makeMethod[F, RawAction](
+      makeMethod[F, RawAction[R]](
         cls,
         "handleAction",
         actionMethods,
-        summonActionCases[F, ActionClasses, ActionCallbacks](_, _, _),
+        summonActionCases[F, R, ActionClasses, ActionCallbacks](_, _, _),
         unexpectedAction
       ) ::
         makeMethod[F, CommandContext](
@@ -433,7 +442,7 @@ object RouterBuilder {
 
     val clsDef = ClassDef(
       cls,
-      List(TypeTree.of[Object], TypeTree.of[Router[F]]),
+      List(TypeTree.of[Object], TypeTree.of[Router[F, R]]),
       body = methods
     )
 
@@ -443,10 +452,10 @@ object RouterBuilder {
 
     val newCls = Typed(
       New(TypeIdent(cls)).select(cls.primaryConstructor).appliedToNone,
-      TypeTree.of[Router[F]]
+      TypeTree.of[Router[F, R]]
     )
 
-    val block = Block(List(clsDef), '{${monad}.pure(${newCls.asExprOf[Router[F]]})}.asTerm).asExprOf[G[Router[F]]]
+    val block = Block(List(clsDef), '{${monad}.pure(${newCls.asExprOf[Router[F, R]]})}.asTerm).asExprOf[G[Router[F, R]]]
 
 //    report.error(block.asTerm.show)
 

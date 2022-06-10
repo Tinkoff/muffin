@@ -1,6 +1,5 @@
 package muffin.status
 
-import muffin.codec.Decode
 import muffin.predef.*
 
 trait Status[F[_]] {

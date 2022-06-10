@@ -1,18 +1,18 @@
 package muffin.insights
 
-import muffin.predef.ChannelId
+import muffin.predef.*
 
 
 case class ReactionInsight(emojiName: String, count: Long)
 
 
 case class ChannelInsight(
-                           id: ChannelId,
-                           channelType: String,
-                           name: String,
-                           teamId: String,
-                           messageCount: Long
-                         )
+  id: ChannelId,
+  channelType: String,
+  name: String,
+  teamId: TeamId,
+  messageCount: Long
+)
 
 enum TimeRange:
   case Today

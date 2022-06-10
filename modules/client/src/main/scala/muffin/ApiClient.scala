@@ -37,7 +37,7 @@ case class CreateDirectPostRequest(
                                     file_ids: List[String] = Nil // TODO make Id
                                   ) derives Encoder.AsObject
 
-class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From], cfg: ClientConfig)(codec: MuffinCodec[To, From])(using ZoneId)
+class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From], cfg: ClientConfig)(codec: MuffinCodec[_, To, From])(using ZoneId)
   extends Posts[F]
     with Dialogs[F]
     with Channels[F]
@@ -52,7 +52,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
   import codec.{given, *}
   import ApiClient.*
 
-  private given To[NonJson] = assert(true).asInstanceOf[Nothing] // should never call
+  private given To[NonJson] = assert(false).asInstanceOf[Nothing] // should never call
 
   def command(name: String): String =
     cfg.serviceUrl + s"/commands/$name"
@@ -168,26 +168,26 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def members(channelId: ChannelId, perPage: Int): Stream[F, ChannelMember] = {
+  def members(channelId: ChannelId): Stream[F, ChannelMember] = {
     Stream
       .unfoldEval(0) { page =>
-        members(MembersRequest(channelId, page, perPage))
+        members(MembersRequest(channelId, page, 200))
           .map(list => if (list.isEmpty) None else Some((list, page + 1)))
       }
       .flatMap(Stream.emits)
   }
 
-  def direct(req: CreateDirectChannelRequest): F[ChannelInfo] =
+  def direct(userIds: List[UserId]): F[ChannelInfo] =
     http.request(
       cfg.baseUrl + "/channels/direct",
       Method.Post,
-      Body.Json(req),
+      Body.Json(userIds),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def getChannelByName(team: String, name: String): F[ChannelInfo] = {
+  def getChannelByName(teamId: TeamId, name: String): F[ChannelInfo] = {
     http.request[NonJson, ChannelInfo](
-      cfg.baseUrl + s"/teams/$team/channels/name/${name}",
+      cfg.baseUrl + s"/teams/$teamId/channels/name/$name",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
@@ -436,7 +436,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
 
 
   // Insights
-  def getTopReactions(teamId: String, timeRange: TimeRange): Stream[F, ReactionInsight] = {
+  def getTopReactions(teamId: TeamId, timeRange: TimeRange): Stream[F, ReactionInsight] = {
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/reactions?time_range=$timeRange&page=$page",
@@ -454,7 +454,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
       .flatMap(Stream.emits)
   }
 
-  def getTopReactions(userId: UserId, timeRange: TimeRange, teamId: Option[String]): Stream[F, ReactionInsight] = {
+  def getTopReactions(userId: UserId, timeRange: TimeRange, teamId: Option[TeamId]): Stream[F, ReactionInsight] = {
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/users/$userId/top/reactions?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
@@ -472,7 +472,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
       .flatMap(Stream.emits)
   }
 
-  def getTopChannels(teamId: String, timeRange: TimeRange): Stream[F, ChannelInsight] = {
+  def getTopChannels(teamId: TeamId, timeRange: TimeRange): Stream[F, ChannelInsight] = {
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/channels?time_range=$timeRange&page=$page",
@@ -490,7 +490,7 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
       .flatMap(Stream.emits)
   }
 
-  def getTopChannels(userId: UserId, timeRange: TimeRange, teamId: Option[String]): Stream[F, ChannelInsight] = {
+  def getTopChannels(userId: UserId, timeRange: TimeRange, teamId: Option[TeamId]): Stream[F, ChannelInsight] = {
     def single(page: Int) =
       http.request[NonJson, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/users/$userId/top/channels?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",

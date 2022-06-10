@@ -6,14 +6,14 @@ import io.circe.parser.parse
 import muffin.http.{Body, HttpClient, Method, MultipartElement}
 import sttp.client3.*
 import sttp.client3.given
-import sttp.model.{Header, Method as SMethod, Uri}
+import sttp.model.{Header, Uri, Method as SMethod}
 import io.circe.syntax.given
 import cats.syntax.all.given
 import muffin.codec.{Decode, Encode}
 import java.io.File
 
 
-class SttpClient[F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any])(fk: From ~> Decode, tk: To ~> Encode)
+class SttpClient[F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any])(using tk: To ~> Encode, fk: From ~> Decode)
   extends HttpClient[F, To, From] {
   def request[In: To, Out: From](
                               url: String,
@@ -63,6 +63,6 @@ class SttpClient[F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any]
 }
 
 object SttpClient {
-  def apply[I[_] : Applicative, F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any])(fk: From ~> Decode, tk: To ~> Encode): I[SttpClient[F, To, From]] =
-    new SttpClient[F, To, From](backend)(fk, tk).pure[I]
+  def apply[I[_] : Applicative, F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any])(using tk: To ~> Encode, fk: From ~> Decode): I[SttpClient[F, To, From]] =
+    new SttpClient[F, To, From](backend).pure[I]
 }

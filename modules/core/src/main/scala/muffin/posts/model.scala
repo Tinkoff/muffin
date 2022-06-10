@@ -6,6 +6,8 @@ import io.circe.syntax.given
 import muffin.predef.*
 import muffin.reactions.ReactionInfo
 
+import java.time.LocalDateTime
+
 case class Post(
                  id: MessageId
                  //  create_at: Long,
@@ -104,19 +106,7 @@ object MessageAction {
     }
 }
 
-case class Integration(url: String, context: JsonObject) {
-  def access[T: Decoder]: Decoder.Result[T] = Json.fromJsonObject(context).as[T]
-}
-
-object Integration {
-  given Encoder[Integration] = obj =>
-    Json.obj(
-      "url" -> Json.fromString(obj.url),
-      "context" -> Json.fromJsonObject(obj.context)
-    )
-
-  given Decoder[Integration] = (c: HCursor) => Right(Integration("", JsonObject.empty))
-}
+case class Integration(url: String, context: String) derives Codec.AsObject
 
 enum Style:
   case Good, Warning, Danger, Default, Primary, Success
@@ -146,10 +136,15 @@ type GetPostsByIdsRequest = List[MessageId]
 type GetPostsByIdsResponse = List[Unit] //TODO
 
 case class PatchPostRequest(
-                             post_id: MessageId,
-                             is_pinned: Option[Boolean] = None,
-                             message: Option[String] = None,
-                             props: Option[Props] = None,
-                             root_id: Option[MessageId] = None,
-                             file_ids: Option[List[String]] = None // TODO make Id
-                           ) derives Encoder.AsObject
+  post_id: MessageId,
+  is_pinned: Option[Boolean] = None,
+  message: Option[String] = None,
+  props: Option[Props] = None,
+  root_id: Option[MessageId] = None,
+  file_ids: Option[List[String]] = None // TODO make Id
+) derives Encoder.AsObject
+
+
+enum SearchPostModifiers:
+  case Since(since: LocalDateTime)
+  case BeforeAfter(beforeId: Option[MessageId], afterId: Option[MessageId])

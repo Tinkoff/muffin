@@ -1,5 +1,6 @@
 package muffin.interop.circe
 
+import cats.arrow.FunctionK
 import cats.~>
 import muffin.codec.*
 import io.circe.*
@@ -15,14 +16,20 @@ import muffin.roles.RoleInfo
 import java.time.*
 
 
-object codec extends MuffinCodec[Encoder, Decoder] {
-  val EncoderTo: Encoder ~> Encode = new (Encoder ~> Encode) {
+object codec extends MuffinCodec[Json, Encoder, Decoder] {
+  given RawFrom[T: Decoder]: RawDecode[Json, T] = (from: Json) => from.as[T]
+
+  given EncoderTo: FunctionK[Encoder, Encode] = new FunctionK[Encoder, Encode] {
     def apply[A](fa: Encoder[A]): Encode[A] = (obj: A) => fa.apply(obj).dropNullValues.noSpaces
   }
 
-  val DecoderFrom: Decoder ~> Decode = new (Decoder ~> Decode) {
-    override def apply[A](fa: Decoder[A]): Decode[A] = (str: String) => parse(str).flatMap(_.as(fa))
+  given DecoderFrom: FunctionK[Decoder, Decode] = new FunctionK[Decoder, Decode] {
+    def apply[A](fa: Decoder[A]): Decode[A] = (str: String) => parse(str).flatMap(_.as(fa))
   }
+
+  given EncodeTo[A: Encoder]: Encode[A] = Encoder[A].apply(_).dropNullValues.noSpaces
+
+  given DecodeFrom[A: Decoder]: Decode[A] =  (str: String) => parse(str).flatMap(_.as[A])
 
   given UnitFrom: Decoder[Unit] = Decoder.decodeUnit
 
@@ -158,7 +165,7 @@ object codec extends MuffinCodec[Encoder, Decoder] {
       id <- c.downField("id").as[ChannelId]
       channelType <- c.downField("type").as[String]
       name: String <- c.downField("name").as[String]
-      teamId <- c.downField("team_id").as[String]
+      teamId <- c.downField("team_id").as[TeamId]
       messageCount <- c.downField("message_count").as[Long]
     } yield ChannelInsight(id, channelType, name, teamId, messageCount)
 
