@@ -7,6 +7,7 @@ import io.circe.parser.*
 import muffin.preferences.*
 import muffin.status.*
 import muffin.predef.*
+import muffin.insights.*
 import cats.syntax.all.given
 import io.circe.Decoder.Result
 
@@ -21,7 +22,6 @@ object codec extends MuffinCodec[Encoder, Decoder] {
   val DecoderFrom: Decoder ~> Decode = new (Decoder ~> Decode) {
     override def apply[A](fa: Decoder[A]): Decode[A] = (str: String) => parse(str).flatMap(_.as(fa))
   }
-
 
   given UnitFrom: Decoder[Unit] = Decoder.decodeUnit
 
@@ -144,5 +144,28 @@ object codec extends MuffinCodec[Encoder, Decoder] {
           case StatusUser.Dnd(time) => ("dnd_end_time" -> Json.fromLong(time.atZone(zone).toEpochSecond)).some
           case _ => None
       ).flatten *)
+
+  given ReactionInsightDecode: Decoder[ReactionInsight] = (c: HCursor) =>
+    for {
+      emojiName <- c.downField("emoji_name").as[String]
+      count <- c.downField("count").as[Long]
+    } yield ReactionInsight(emojiName, count)
+
+
+  given ChannelInsightDecode: Decoder[ChannelInsight] = (c: HCursor) =>
+    for {
+      id <- c.downField("id").as[ChannelId]
+      channelType <- c.downField("type").as[String]
+      name: String <- c.downField("name").as[String]
+      teamId <- c.downField("team_id").as[String]
+      messageCount <- c.downField("message_count").as[Long]
+    } yield ChannelInsight(id, channelType, name, teamId, messageCount)
+
+  given ListWrapperDecode[T: Decoder]: Decoder[ListWrapper[T]] = (c: HCursor) =>
+    for {
+      hasNext <- c.downField("has_next").as[Boolean]
+      items <- c.downField("items").as[List[T]]
+    } yield ListWrapper(hasNext, items)
+
 
 }

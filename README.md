@@ -33,6 +33,7 @@ Status
 | System               |   ❎    |
 | Brand                |   ❎    | 
 | integration_actions  |   ❎    |
+| insights             |   ☑    |
 | ....                 |   ❎    |    
 
 

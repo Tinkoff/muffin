@@ -16,6 +16,7 @@ import muffin.users.*
 import fs2.*
 import muffin.ApiClient.params
 import muffin.codec.*
+import muffin.insights.*
 import muffin.preferences.*
 import muffin.status.*
 
@@ -43,7 +44,8 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     with Reactions[F]
     with Users[F]
     with Preferences[F]
-    with Status[F] {
+    with Status[F]
+    with Insights[F] {
 
   import codec.{given, *}
   import ApiClient.*
@@ -429,6 +431,82 @@ class ApiClient[F[_] : Concurrent, To[_], From[_]](http: HttpClient[F, To, From]
     )
   }
   // Status
+
+
+  // Insights
+  def getTopReactions(teamId: String, timeRange: TimeRange): Stream[F, ReactionInsight] = {
+    def single(page: Int) =
+      http.request[NonJson, ListWrapper[ReactionInsight]](
+        cfg.baseUrl + s"/teams/$teamId/top/reactions?time_range=$timeRange&page=$page",
+        Method.Delete,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+    Stream
+      .unfoldEval(0) { page =>
+        single(page).map(lw =>
+          if (lw.hasNext) Some(lw.items -> (page + 1)) else None
+        )
+      }
+      .flatMap(Stream.emits)
+  }
+
+  def getTopReactions(userId: UserId, timeRange: TimeRange, teamId: Option[String]): Stream[F, ReactionInsight] = {
+    def single(page: Int) =
+      http.request[NonJson, ListWrapper[ReactionInsight]](
+        cfg.baseUrl + s"/users/$userId/top/reactions?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
+        Method.Delete,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+    Stream
+      .unfoldEval(0) { page =>
+        single(page).map(lw =>
+          if (lw.hasNext) Some(lw.items -> (page + 1)) else None
+        )
+      }
+      .flatMap(Stream.emits)
+  }
+
+  def getTopChannels(teamId: String, timeRange: TimeRange): Stream[F, ChannelInsight] = {
+    def single(page: Int) =
+      http.request[NonJson, ListWrapper[ChannelInsight]](
+        cfg.baseUrl + s"/teams/$teamId/top/channels?time_range=$timeRange&page=$page",
+        Method.Delete,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+    Stream
+      .unfoldEval(0) { page =>
+        single(page).map(lw =>
+          if (lw.hasNext) Some(lw.items -> (page + 1)) else None
+        )
+      }
+      .flatMap(Stream.emits)
+  }
+
+  def getTopChannels(userId: UserId, timeRange: TimeRange, teamId: Option[String]): Stream[F, ChannelInsight] = {
+    def single(page: Int) =
+      http.request[NonJson, ListWrapper[ChannelInsight]](
+        cfg.baseUrl + s"/users/$userId/top/channels?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
+        Method.Delete,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+    Stream
+      .unfoldEval(0) { page =>
+        single(page).map(lw =>
+          if (lw.hasNext) Some(lw.items -> (page + 1)) else None
+        )
+      }
+      .flatMap(Stream.emits)
+  }
+  // Insights
+
 }
 
 object ApiClient {

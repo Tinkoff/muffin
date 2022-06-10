@@ -1,5 +1,6 @@
 package muffin.codec
 
+import muffin.insights.*
 import muffin.status.*
 import muffin.preferences.*
 
@@ -48,8 +49,15 @@ trait MuffinCodec[To[_], From[_]] {
   given CustomStatusEncode(using zone: ZoneId): To[CustomStatus]
 
   given CustomStatusDecode(using zone: ZoneId): From[CustomStatus]
-  
-  given UpdateUserStatusRequestEncode(using zone: ZoneId): To[UpdateUserStatusRequest]
 
+  given UpdateUserStatusRequestEncode(using zone: ZoneId): To[UpdateUserStatusRequest]
   //Status
+
+  //Insights
+  given ReactionInsightDecode: From[ReactionInsight]
+
+  given ChannelInsightDecode: From[ChannelInsight]
+
+  given ListWrapperDecode[T: From]: From[ListWrapper[T]]
+  //Insights
 }

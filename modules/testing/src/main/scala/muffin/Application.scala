@@ -118,9 +118,6 @@ object Application extends ZIOAppDefault {
         )
       )
 
-
-
-
       router <- {
         given HandlerA[Task] = new HandlerA[Task](app)
         given HandlerB[Task] = new HandlerB[Task](app)
