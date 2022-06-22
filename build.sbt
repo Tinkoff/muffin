@@ -8,39 +8,33 @@ ThisBuild / scalaOutputVersion := "3.1.2"
 
 lazy val root = (project in file("."))
   .settings(name := "muffin")
-  .dependsOn(core, client, http, app)
-  .aggregate(core, client, http, `http-sttp`, app, `circe-interop`, `zio-json-interop`)
-
+  .dependsOn(core)
+  .aggregate(core, `sttp-http-interop`, `circe-interop`, `zio-json-interop`, `zio-http-interop`, `http4s-http-interop`)
 
 
 ThisBuild / publishMavenStyle := true
-ThisBuild / publishTo         := (s"Tinkoff Releases" at s"https://nexus.tcsbank.ru/repository/api-snapshot").some
+ThisBuild / publishTo := (s"Tinkoff Releases" at s"https://nexus.tcsbank.ru/repository/api-snapshot").some
 
 //ThisBuild / publishConfiguration := (ThisBuild / publishConfiguration).value.withOverwrite(true)
 
-
 lazy val modules = file("modules")
-
-lazy val http = project
-  .in(modules / "http")
-  .dependsOn(core)
 
 lazy val core = project
   .in(modules / "core")
 
-lazy val client = project
-  .in(modules / "client")
-  .dependsOn(core, http)
-
-lazy val app = project
-  .in(modules / "app")
-  .dependsOn(core, client, http)
-
 lazy val integration = modules / "integration"
 
-lazy val `http-sttp` = project
-  .in(integration / "http-sttp")
-  .dependsOn(http)
+lazy val `sttp-http-interop` = project
+  .in(integration / "sttp-http-interop")
+  .dependsOn(core)
+
+lazy val `http4s-http-interop` = project
+  .in(integration / "http4s-http-interop")
+  .dependsOn(core)
+
+lazy val `zio-http-interop` = project
+  .in(integration / "zio-http-interop")
+  .dependsOn(core)
 
 lazy val `circe-interop` = project
   .in(integration / "circe-interop")
@@ -52,8 +46,8 @@ lazy val `zio-json-interop` = project
 
 lazy val testing = project
   .in(modules / "testing")
-  .aggregate(core, client, http, `http-sttp`, app, `circe-interop`, `zio-json-interop`)
-  .dependsOn(core, client, http, `http-sttp`, app, `circe-interop`, `zio-json-interop`)
+  .aggregate(core, `sttp-http-interop`, `circe-interop` )
+  .dependsOn(core, `sttp-http-interop`, `circe-interop`)
   .settings(publish / skip := true)
 
 ThisBuild / scalacOptions += "-source:future"

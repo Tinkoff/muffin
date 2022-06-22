@@ -7,7 +7,7 @@ object process {
     val sttp = "3.5.1"
     val circe = "0.14.1"
     val tapir = "1.0.0-M7"
-    val http4s ="0.23.11"
+    val http4s = "0.23.11"
   }
 
   trait Deps {
@@ -26,7 +26,8 @@ object process {
     }
 
     object http4s {
-      val ember  = "org.http4s" %% "http4s-ember-server" % version.http4s
+      val ember = "org.http4s" %% "http4s-ember-server" % version.http4s
+      val dsl = "org.http4s" %% "http4s-dsl" % version.http4s
     }
 
     object circe {
@@ -35,38 +36,44 @@ object process {
       val parser = "io.circe" %% "circe-parser" % version.circe
     }
 
+    object zio {
+      val json = "dev.zio" %% "zio-json" % "0.3.0-RC8"
+      val http = "io.d11" %% "zhttp" % "2.0.0-RC9"
+    }
+
     val zioCats = "dev.zio" %% "zio-interop-cats" % "3.3.0-RC2"
 
     object fs2 {
       val core = "co.fs2" %% "fs2-core" % "3.2.7"
     }
     //    lazy val enumeratum  = "com.beachape"               %% "enumeratum"        % version.enumeratum
-//    lazy val ficus       = "com.iheart"                 %% "ficus"             % version.ficus excludeAll ficusExclude
-//    lazy val quicklens   = "com.softwaremill.quicklens" %% "quicklens"         % version.quicklens
-//    lazy val ldap        = "com.unboundid"               % "unboundid-ldapsdk" % version.ldap
-//    lazy val logback     = "ch.qos.logback"              % "logback-classic"   % version.logback excludeModule slf4j
-//    lazy val swaggerUi   = "org.webjars.npm"             % "swagger-ui-dist"   % version.swaggerUi
-//    lazy val refined     = "eu.timepit"                 %% "refined"           % version.refined
+    //    lazy val ficus       = "com.iheart"                 %% "ficus"             % version.ficus excludeAll ficusExclude
+    //    lazy val quicklens   = "com.softwaremill.quicklens" %% "quicklens"         % version.quicklens
+    //    lazy val ldap        = "com.unboundid"               % "unboundid-ldapsdk" % version.ldap
+    //    lazy val logback     = "ch.qos.logback"              % "logback-classic"   % version.logback excludeModule slf4j
+    //    lazy val swaggerUi   = "org.webjars.npm"             % "swagger-ui-dist"   % version.swaggerUi
+    //    lazy val refined     = "eu.timepit"                 %% "refined"           % version.refined
 
   }
 }
 
 object test {
   object version {
-//    val scalaTest      = "3.1.0"
-//    val testcontainers = "0.39.5"
-//    val postgresql     = "1.15.3"
-//    val flyway         = "6.1.4"
-//    val scalamock      = "4.4.0"
+    //    val scalaTest      = "3.1.0"
+    //    val testcontainers = "0.39.5"
+    //    val postgresql     = "1.15.3"
+    //    val flyway         = "6.1.4"
+    //    val scalamock      = "4.4.0"
   }
-//
+
+  //
   trait Deps {
-//    lazy val scalaTest      = "org.scalatest"     %% "scalatest"            % version.scalaTest      % "it, test"
-//    lazy val scalastic      = "org.scalactic"     %% "scalactic"            % version.scalaTest      % "it, test"
-//    lazy val testcontainers = "com.dimafeng"      %% "testcontainers-scala" % version.testcontainers % "it"
-//    lazy val postgresql     = "org.testcontainers" % "postgresql"           % version.postgresql     % "it"
-//    lazy val flyway         = "org.flywaydb"       % "flyway-core"          % version.flyway         % "it"
-//    lazy val scalamock      = "org.scalamock"     %% "scalamock"            % version.scalamock      % "it, test"
+    //    lazy val scalaTest      = "org.scalatest"     %% "scalatest"            % version.scalaTest      % "it, test"
+    //    lazy val scalastic      = "org.scalactic"     %% "scalactic"            % version.scalaTest      % "it, test"
+    //    lazy val testcontainers = "com.dimafeng"      %% "testcontainers-scala" % version.testcontainers % "it"
+    //    lazy val postgresql     = "org.testcontainers" % "postgresql"           % version.postgresql     % "it"
+    //    lazy val flyway         = "org.flywaydb"       % "flyway-core"          % version.flyway         % "it"
+    //    lazy val scalamock      = "org.scalamock"     %% "scalamock"            % version.scalamock      % "it, test"
   }
 }
 
@@ -83,7 +90,7 @@ object ModulesSyntax {
       )
 
     def excludeAll(rules: Seq[ExclusionRule])(implicit
-      d: DummyImplicit
+                                              d: DummyImplicit
     ): ModuleID = id.excludeAll(rules: _*)
   }
 }

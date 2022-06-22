@@ -3,18 +3,20 @@ package muffin
 import cats.MonadThrow
 import io.circe.{Json, JsonObject}
 import io.circe.{Codec, Json, JsonObject}
-import muffin.app.{DialogSubmissionValue, *}
-import muffin.http.SttpClient
-import muffin.emoji.*
-import muffin.posts.*
+import muffin.api.emoji.*
+import muffin.api.posts.*
 import muffin.predef.*
-import muffin.reactions.*
+import muffin.api.reactions.*
 import muffin.DefaultApp
-import muffin.dialogs.*
+import muffin.api.dialogs.*
 import sttp.client3.httpclient.zio.HttpClientZioBackend
 import zio.{Task, ZIOAppDefault}
 import cats.syntax.all.given
+import muffin.api.ClientConfig
+import muffin.api.dialogs.{Dialog, Text}
 import muffin.codec.RawDecode
+import muffin.input.*
+import muffin.interop.http.SttpClient
 import zio.interop.catz.given
 
 import java.io.File
@@ -26,18 +28,16 @@ class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
   def kekA(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
-        OpenDialogRequest(
-          action.triggerId,
-          client.dialog("superdialog"),
-          Dialog(
-            "id",
-            "title",
-            "intoduction",
-            List(Text("display", "name")),
-            Some("submit submit"),
-            true,
-            "State"
-          )
+        action.triggerId,
+        client.dialog("superdialog"),
+        Dialog(
+          "id",
+          "title",
+          "intoduction",
+          List(Text("display", "name")),
+          Some("submit submit"),
+          true,
+          "State"
         )
       )
       .map(_ => AppResponse.Ok())
@@ -47,18 +47,16 @@ class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
   def actionA(dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
-        OpenDialogRequest(
-          dialog.triggerId,
-          client.dialog("superdialog"),
-          Dialog(
-            "id",
-            "title",
-            "intoduction",
-            List(Text("display", "name")),
-            Some("submit submit"),
-            true,
-            "State"
-          )
+        dialog.triggerId,
+        client.dialog("superdialog"),
+        Dialog(
+          "id",
+          "title",
+          "intoduction",
+          List(Text("display", "name")),
+          Some("submit submit"),
+          true,
+          "State"
         )
       )
       .map(_ => AppResponse.Ok())
@@ -68,18 +66,16 @@ class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
   def kekB(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
-        OpenDialogRequest(
-          action.triggerId,
-          client.dialog("superdialog"),
-          Dialog(
-            "id",
-            "title",
-            "intoduction",
-            List(Text("display", "name")),
-            Some("submit submit"),
-            true,
-            "State"
-          )
+        action.triggerId,
+        client.dialog("superdialog"),
+        Dialog(
+          "id",
+          "title",
+          "intoduction",
+          List(Text("display", "name")),
+          Some("submit submit"),
+          true,
+          "State"
         )
       )
       .map(_ => AppResponse.Ok())
@@ -87,18 +83,16 @@ class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
   def actionB(dialog: Action[A]): F[AppResponse] =
     client
       .openDialog(
-        OpenDialogRequest(
-          dialog.triggerId,
-          client.dialog("superdialog"),
-          Dialog(
-            "id",
-            "title",
-            "intoduction",
-            List(Text("display", "name")),
-            Some("submit submit"),
-            true,
-            "State"
-          )
+        dialog.triggerId,
+        client.dialog("superdialog"),
+        Dialog(
+          "id",
+          "title",
+          "intoduction",
+          List(Text("display", "name")),
+          Some("submit submit"),
+          true,
+          "State"
         )
       )
       .map(_ => AppResponse.Ok())
@@ -123,6 +117,7 @@ object Application extends ZIOAppDefault {
 
       router <- {
         given HandlerA[Task] = new HandlerA[Task](app)
+
         given HandlerB[Task] = new HandlerB[Task](app)
 
         RouterBuilder[Task, Json]
@@ -134,7 +129,7 @@ object Application extends ZIOAppDefault {
           .build[Task]
       }
 
-      _ <- DefaultServer(router).useForever
+      //      _ <- DefaultServer(router).useForever
     } yield ()
 
 }

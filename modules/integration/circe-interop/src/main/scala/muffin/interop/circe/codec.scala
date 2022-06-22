@@ -1,22 +1,27 @@
 package muffin.interop.circe
 
+
 import cats.arrow.FunctionK
 import cats.~>
 import muffin.codec.*
 import io.circe.*
 import io.circe.parser.*
-import muffin.preferences.*
-import muffin.status.*
+import muffin.api.preferences.*
+import muffin.api.status.*
 import muffin.predef.*
-import muffin.insights.*
+import muffin.api.insights.*
+import muffin.api.insights.*
+import muffin.api.preferences.*
+import muffin.api.roles.*
+import muffin.api.status.*
 import cats.syntax.all.given
-import io.circe.Decoder.Result
-import muffin.roles.RoleInfo
+import  Decoder.Result
 
 import java.time.*
+import  syntax.given
+import muffin.http.Body
 
-
-object codec extends MuffinCodec[Json, Encoder, Decoder] {
+object codec extends CodecSupport[Json, Encoder, Decoder] {
   given RawFrom[T: Decoder]: RawDecode[Json, T] = (from: Json) => from.as[T]
 
   given EncoderTo: FunctionK[Encoder, Encode] = new FunctionK[Encoder, Encode] {
@@ -29,9 +34,11 @@ object codec extends MuffinCodec[Json, Encoder, Decoder] {
 
   given EncodeTo[A: Encoder]: Encode[A] = Encoder[A].apply(_).dropNullValues.noSpaces
 
-  given DecodeFrom[A: Decoder]: Decode[A] =  (str: String) => parse(str).flatMap(_.as[A])
+  given DecodeFrom[A: Decoder]: Decode[A] = (str: String) => parse(str).flatMap(_.as[A])
 
   given UnitFrom: Decoder[Unit] = Decoder.decodeUnit
+
+  given RTo: Encoder[Json] = Encoder.encodeJson
 
   given CirceTo[A: Encoder]: Encoder[A] = summon[Encoder[A]]
 
@@ -184,4 +191,35 @@ object codec extends MuffinCodec[Json, Encoder, Decoder] {
       permissions <- c.downField("permissions").as[List[String]]
       schemeManaged <- c.downField("scheme_managed").as[Boolean]
     } yield RoleInfo(id, name, displayName, description, permissions, schemeManaged)
+
+  given ChannelInfoFrom:  Decoder[muffin.api.channels.ChannelInfo] = ???
+
+  given ChannelMemberFrom:  Decoder[muffin.api.channels.ChannelMember] = ???
+
+  given DialogEncode:  Encoder[muffin.api.dialogs.Dialog] = ???
+
+  given EmojiInfoFrom:  Decoder[muffin.api.emoji.EmojiInfo] = ???
+
+  given NotifyOptionFrom:  Decoder[muffin.api.channels.NotifyOption] = ???
+
+  given NotifyPropsFrom:  Decoder[muffin.api.channels.NotifyProps] = ???
+
+  given UnreadOptionFrom:  Decoder[muffin.api.channels.UnreadOption] = ???
+
+  given AppResponseTo:  Encoder[muffin.input.AppResponse] = ???
+  given CommandContextFrom:  Decoder[muffin.input.CommandContext] = ???
+  given DialogContextFrom:  Decoder[muffin.input.DialogContext] = ???
+  given RawActionFrom:  Decoder[muffin.input.RawAction[ Json]] = ???
+
+
+  def json: JsonRequestBuilder[Encoder, Json] = new CirceJsonBuilder(JsonObject.empty)
+
+  private class CirceJsonBuilder(state: JsonObject) extends JsonRequestBuilder[Encoder, Json] {
+    def field[T: Encoder](fieldName: String, fieldValue: T): JsonRequestBuilder[Encoder, Json] = {
+      state.add(fieldName, fieldValue.asJson)
+      this
+    }
+
+    def build: Body.Json[Json] = Body.Json[Json](Json.fromJsonObject(state))
+  }
 }
