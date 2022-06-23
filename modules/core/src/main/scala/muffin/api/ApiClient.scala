@@ -222,13 +222,22 @@ class ApiClient[
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def getEmojis(sorting: EmojiSorting = EmojiSorting.None): Stream[F, EmojiInfo] = ???
-  //    http.request[NonJson, GetEmojiListResponse](
-  //      cfg.baseUrl + s"/emoji?page=${req.page}&per_page=${req.per_page}&sort=${req.sort}",
-  //      Method.Get,
-  //      Body.Empty,
-  //      Map("Authorization" -> s"Bearer ${cfg.auth}")
-  //    )
+  def getEmojis(sorting: EmojiSorting = EmojiSorting.None): Stream[F, EmojiInfo] = {
+    def single(page: Int) =
+      http.request[NonJson, List[EmojiInfo]](
+        cfg.baseUrl + s"/emoji?page=$page&sort=$sorting",
+        Method.Get,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+    Stream
+      .unfoldEval(0) { page =>
+        single(page)
+          .map(list => if (list.isEmpty) None else Some((list, page + 1)))
+      }
+      .flatMap(Stream.emits)
+  }
 
   def getEmoji(emojiId: EmojiId): F[EmojiInfo] =
     http.request[NonJson, EmojiInfo](

@@ -25,7 +25,7 @@ trait CodecSupport[R, To[_], From[_]] {
   given DecodeFrom[A: From]: Decode[A]
 
   given StringTo: To[String]
-  
+
   given ListTo[A: To]: To[List[A]]
 
   given ListFrom[A: From]: From[List[A]]
@@ -42,6 +42,7 @@ trait CodecSupport[R, To[_], From[_]] {
   given TeamIdTo: To[TeamId]
   given ChannelIdTo: To[ChannelId]
   given MessageIdTo: To[MessageId]
+  given EmojiIdTo: To[EmojiId]
 
   given LoginFrom: From[Login]
   given UserIdFrom: From[UserId]
@@ -49,6 +50,7 @@ trait CodecSupport[R, To[_], From[_]] {
   given TeamIdFrom: From[TeamId]
   given ChannelIdFrom: From[ChannelId]
   given MessageIdFrom: From[MessageId]
+  given EmojiIdFrom: From[EmojiId]
 
 
   //Channels
@@ -58,13 +60,13 @@ trait CodecSupport[R, To[_], From[_]] {
   
   given NotifyPropsFrom: From[NotifyProps]
   
-  given ChannelMemberFrom: From[ChannelMember]
+  given ChannelMemberFrom(using zone: ZoneId): From[ChannelMember]
   
-  given ChannelInfoFrom: From[ChannelInfo]
+  given ChannelInfoFrom(using zone: ZoneId): From[ChannelInfo]
   //Channels
 
   //Emoji
-  given EmojiInfoFrom: From[EmojiInfo]
+  given EmojiInfoFrom(using zone: ZoneId): From[EmojiInfo]
   //Emoji
 
   //Preferences

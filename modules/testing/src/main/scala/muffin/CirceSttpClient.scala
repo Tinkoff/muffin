@@ -9,16 +9,21 @@ import muffin.api.{ApiClient, ClientConfig}
 import muffin.codec.Encode
 import muffin.http.HttpClient
 import muffin.interop.http.SttpClient
+import io.circe.{Json, Encoder, Decoder}
 
 import java.time.ZoneId
+import zio.*
+import zio.interop.catz.given
+import zio.interop.catz.implicits.given
 
-type CirceApi[F[_]] = ApiClient[F, Json, Encoder, Decoder]
 
-object DefaultApp {
-  def apply(cfg: ClientConfig): Task[CirceApi[Task]] =
+object CirceSttpClient {
+  type Api[F[_]] = ApiClient[F, Json, Encoder, Decoder]
+
+  def apply(cfg: ClientConfig): Task[Api[Task]] =
     for {
       backend <- HttpClientZioBackend()
       client <- SttpClient[Task, Task, Encoder, Decoder](backend)
-      given ZoneId <- Task.succeed(ZoneId.systemDefault())
+      given ZoneId <- ZIO.succeed(ZoneId.systemDefault())
     } yield new ApiClient[Task, Json, Encoder, Decoder](client, cfg)(codec)
 }

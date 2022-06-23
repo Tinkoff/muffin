@@ -12,13 +12,13 @@ object EmojiId {
 }
 
 case class EmojiInfo(
-                      id: EmojiId,
-                      creatorId: UserId,
-                      name: String,
-                      createAt: LocalDateTime,
-                      updateAt: LocalDateTime,
-                      deleteAt: Option[LocalDateTime]
-                    )
+  id: EmojiId,
+  creatorId: UserId,
+  name: String,
+  createAt: LocalDateTime,
+  updateAt: LocalDateTime,
+  deleteAt: Option[LocalDateTime]
+)
 
 
 enum EmojiSorting:

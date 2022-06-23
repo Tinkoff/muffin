@@ -14,11 +14,14 @@ import muffin.api.insights.*
 import muffin.api.preferences.*
 import muffin.api.roles.*
 import muffin.api.status.*
+import muffin.api.channels.*
+import muffin.api.emoji.*
 import cats.syntax.all.given
 import Decoder.Result
 import muffin.api.dialogs.*
 import muffin.api.posts.*
 import muffin.api.users.*
+import muffin.api.reactions.*
 
 import java.time.*
 import syntax.given
@@ -64,6 +67,8 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
 
   given MessageIdTo: Encoder[MessageId] = Encoder.encodeString.contramap(_.toString)
 
+  given EmojiIdTo: Encoder[EmojiId] = Encoder.encodeString.contramap(_.toString)
+
   given LoginFrom: Decoder[Login] = Decoder.decodeString.map(Login(_))
 
   given UserIdFrom: Decoder[UserId] = Decoder.decodeString.map(UserId(_))
@@ -75,6 +80,8 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
   given ChannelIdFrom: Decoder[ChannelId] = Decoder.decodeString.map(ChannelId(_))
 
   given MessageIdFrom: Decoder[MessageId] = Decoder.decodeString.map(MessageId(_))
+
+  given EmojiIdFrom: Decoder[EmojiId] = Decoder.decodeString.map(EmojiId(_))
 
   given PreferenceEncode: Encoder[Preference] = p =>
     Json.obj(
@@ -222,12 +229,38 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       schemeManaged <- c.downField("scheme_managed").as[Boolean]
     } yield RoleInfo(id, name, displayName, description, permissions, schemeManaged)
 
-  given ChannelInfoFrom: Decoder[muffin.api.channels.ChannelInfo] = (c: HCursor) => ???
-  //    for{
-  //
-  //    } yield ???
+  given ChannelInfoFrom(using zone: ZoneId): Decoder[ChannelInfo] = (c: HCursor) =>
+    for {
+      id <- c.downField("id").as[ChannelId]
+      createAt <- c.downField("create_at").as[Long].map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      updateAt <- c.downField("update_at").as[Long].map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      deleteAt = c.downField("delete_at").as[Option[Long]].toOption.flatten.map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      teamId <- c.downField("team_id").as[TeamId]
+      channelType <- c.downField("type").as[String]
+      displayName <- c.downField("display_name").as[String]
+      name <- c.downField("name").as[String]
+      header <- c.downField("header").as[String]
+      purpose <- c.downField("purpose").as[String]
+      lastPostAt = c.downField("last_post_at").as[Long].toOption.map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      totalMsgCount <- c.downField("total_msg_count").as[Int]
+      creatorId <- c.downField("creator_id").as[UserId]
+    } yield ChannelInfo(id, createAt, updateAt, deleteAt, teamId, channelType,
+      displayName, name, header, purpose, lastPostAt, totalMsgCount, creatorId)
 
-  given ChannelMemberFrom: Decoder[muffin.api.channels.ChannelMember] = (c: HCursor) => ???
+  given ChannelMemberFrom(using zone: ZoneId): Decoder[ChannelMember] = (c: HCursor) =>
+    for{
+      channelId <- c.downField("channel_id").as[ChannelId]
+      userId <- c.downField("userId").as[UserId]
+      roles <- c.downField("roles").as[String]
+      lastViewedAt <- c.downField("last_viewed_at").as[Long].map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      msgCount = c.downField("msg_count").as[Int].toOption
+      mentionCount = c.downField("mention_count").as[Int].toOption
+      notifyProps <- c.downField("notify_props").as[NotifyProps]
+      lastUpdateAt =  c.downField("last_viewed_at").as[Option[Long]].toOption.flatten.map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      teamDisplayName <- c.downField("team_display_name").as[String]
+      teamName <- c.downField("team_name").as[String]
+      teamUpdateAt <- c.downField("team_update_at").as[String]
+    } yield ChannelMember(channelId, userId, roles, lastViewedAt, msgCount, mentionCount, notifyProps, lastUpdateAt, teamDisplayName, teamName, teamUpdateAt)
 
   given DialogTo: Encoder[muffin.api.dialogs.Dialog] = dialog => {
     Json.obj(
@@ -331,22 +364,35 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
     case TextSubtype.Url => Encoder.encodeString("url")
   }
 
-  given ReactionInfoFrom(using zone: ZoneId): Decoder[muffin.api.reactions.ReactionInfo] = (c: HCursor) =>
+  given ReactionInfoFrom(using zone: ZoneId): Decoder[ReactionInfo] = (c: HCursor) =>
     for {
       userId <- c.downField("user_id").as[UserId]
       postId <- c.downField("post_id").as[MessageId]
       emojiName <- c.downField("emoji_name").as[String]
       createAt <- c.downField("create_at").as[Long].map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+    } yield ReactionInfo(userId, postId, emojiName, createAt)
 
-    } yield muffin.api.reactions.ReactionInfo(userId, postId, emojiName, createAt)
+  given EmojiInfoFrom(using zone: ZoneId): Decoder[EmojiInfo] = (c: HCursor) =>
+    for {
+      id <- c.downField("id").as[EmojiId]
+      creatorId <- c.downField("creator_id").as[UserId]
+      name <- c.downField("name").as[String]
+      createAt <- c.downField("create_at").as[Long].map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      updateAt <- c.downField("update_at").as[Long].map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+      deleteAt = c.downField("delete_at").as[Long].toOption.map(Instant.ofEpochSecond).map(LocalDateTime.ofInstant(_, zone))
+    } yield EmojiInfo(id, creatorId, name, createAt, updateAt, deleteAt)
 
-  given EmojiInfoFrom: Decoder[muffin.api.emoji.EmojiInfo] = ???
+  given NotifyOptionFrom: Decoder[NotifyOption] = _.as[String].map(a => NotifyOption.valueOf(a.capitalize))
 
-  given NotifyOptionFrom: Decoder[muffin.api.channels.NotifyOption] = ???
+  given NotifyPropsFrom: Decoder[NotifyProps] = (c: HCursor) =>
+    for {
+      email <- c.downField("email").as[Boolean]
+      push <- c.downField("push").as[NotifyOption]
+      desktop <- c.downField("desktop").as[NotifyOption]
+      markUnread <-  c.downField("mark_unread").as[UnreadOption]
+    } yield NotifyProps(email, push, desktop, markUnread)
 
-  given NotifyPropsFrom: Decoder[muffin.api.channels.NotifyProps] = ???
-
-  given UnreadOptionFrom: Decoder[muffin.api.channels.UnreadOption] = ???
+  given UnreadOptionFrom: Decoder[UnreadOption] = _.as[String].map(a => UnreadOption.valueOf(a.capitalize))
 
   given AppResponseTo: Encoder[muffin.input.AppResponse] = {
     case AppResponse.Ok() => Json.obj()
@@ -401,21 +447,21 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
 
   given RawActionFrom: Decoder[muffin.input.RawAction[Json]] = (c: HCursor) => {
     for {
-      user_id <- c.downField("callback_id").as[String]
-      user_name <- c.downField("callback_id").as[String]
-      channel_id <- c.downField("user_id").as[UserId]
-      channel_name <- c.downField("channel_id").as[ChannelId]
-      team_id <- c.downField("teamId").as[TeamId]
-      team_domain <- c.downField("submission").as[Map[String, Option[DialogSubmissionValue]]]
-      post_id <- c.downField("cancelled").as[Boolean]
-      trigger_id <- c.downField("cancelled").as[Boolean]
-      data_source <- c.downField("cancelled").as[Boolean]
-    } yield ???
+      userId <- c.downField("user_id").as[UserId]
+      userName <- c.downField("user_name").as[Login]
+      channelId <- c.downField("channel_id").as[ChannelId]
+      channelName <- c.downField("channel_name").as[String]
+      teamId <- c.downField("team_id").as[TeamId]
+      teamDomain <- c.downField("team_domain").as[String]
+      postId <- c.downField("post_id").as[MessageId]
+      triggerId <- c.downField("trigger_id").as[String]
+      dataSource <- c.downField("data_source").as[String]
+      typ <- c.downField("type").as[String]
+      context <- c.downField("context").as[Json]
+    } yield RawAction(userId, userName, channelId, channelName, teamId, teamDomain, postId, triggerId, dataSource, typ, context)
   }
 
-
   given UserFrom(using zone: ZoneId): Decoder[User] = ???
-
 
   given ActionTo: Encoder[Action] = {
     case value: Action.Button =>
@@ -441,15 +487,15 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       )
   }
 
-  given ActionFrom: Decoder[Action] = ???
+  given ActionFrom: Decoder[Action] = (c: HCursor) => ???
+
+
 
   given IntegrationTo: Encoder[Integration] = i =>
     Json.obj(
       "url" -> Json.fromString(i.url),
-      "context" -> Json.fromString(i.context),
+      "context" -> parse(i.context).toOption.getOrElse(Json.fromString(i.context)),
     )
-
-
 
   given StyleTo: Encoder[Style] = (s: Style) => Json.fromString(s.toString.toLowerCase)
 
@@ -486,7 +532,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
     )
 
   given PostFrom: Decoder[Post] = (c: HCursor) =>
-    for{
+    for {
       id <- c.downField("id").as[MessageId]
     } yield Post(id)
 

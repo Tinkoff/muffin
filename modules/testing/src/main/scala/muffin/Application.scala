@@ -7,13 +7,11 @@ import muffin.api.emoji.*
 import muffin.api.posts.*
 import muffin.predef.*
 import muffin.api.reactions.*
-import muffin.DefaultApp
+import muffin.CirceSttpClient
 import muffin.api.dialogs.*
 import sttp.client3.httpclient.zio.HttpClientZioBackend
-import zio.{Task, ZIOAppDefault}
 import cats.syntax.all.given
 import muffin.api.ClientConfig
-import muffin.api.dialogs.{Dialog, Text}
 import muffin.codec.RawDecode
 import muffin.input.*
 import muffin.interop.http.SttpClient
@@ -21,10 +19,11 @@ import zio.interop.catz.given
 
 import java.io.File
 import zio.interop.catz.implicits.given
+import zio.*
 
 case class A(str: String) derives Codec.AsObject
 
-class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
+class HandlerA[F[_] : MonadThrow](client: CirceSttpClient.Api[F]) {
   def kekA(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
@@ -34,15 +33,13 @@ class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
           "id",
           "title",
           "intoduction",
-          List(Text("display", "name")),
+          List(Element.Text("display", "name")),
           Some("submit submit"),
           true,
           "State"
         )
       )
       .map(_ => AppResponse.Ok())
-
-  def acc(action: RawAction[Json]): F[AppResponse] = ???
 
   def actionA(dialog: MessageAction[A]): F[AppResponse] =
     client
@@ -53,7 +50,7 @@ class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
           "id",
           "title",
           "intoduction",
-          List(Text("display", "name")),
+          List(Element.Text("display", "name")),
           Some("submit submit"),
           true,
           "State"
@@ -62,7 +59,7 @@ class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
       .map(_ => AppResponse.Ok())
 }
 
-class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
+class HandlerB[F[_] : MonadThrow](client: CirceSttpClient.Api[F]) {
   def kekB(action: CommandContext): F[AppResponse] =
     client
       .openDialog(
@@ -72,7 +69,7 @@ class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
           "id",
           "title",
           "intoduction",
-          List(Text("display", "name")),
+          List(Element.Text("display", "name")),
           Some("submit submit"),
           true,
           "State"
@@ -89,7 +86,7 @@ class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
           "id",
           "title",
           "intoduction",
-          List(Text("display", "name")),
+          List(Element.Text("display", "name")),
           Some("submit submit"),
           true,
           "State"
@@ -106,7 +103,7 @@ object Application extends ZIOAppDefault {
 
   val run =
     for {
-      app: CirceApi[Task] <- DefaultApp(
+      app: CirceSttpClient.Api[Task] <- CirceSttpClient(
         ClientConfig(
           "http://localhost:8065/api/v4",
           token,
@@ -122,10 +119,9 @@ object Application extends ZIOAppDefault {
 
         RouterBuilder[Task, Json]
           .command[HandlerA[Task], "kekA"]
-          .rawAction[HandlerA[Task], "acc"]
           .action[HandlerA[Task], A, "actionA"]
           .action[HandlerB[Task], A, "actionB"]
-          .unexpected((name, action) => Task.succeed(AppResponse.Ok()))
+          .unexpected((name, action) => ZIO.succeed(AppResponse.Ok()))
           .build[Task]
       }
 

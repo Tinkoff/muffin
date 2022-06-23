@@ -1,4 +1,4 @@
-ThisBuild / version := "0.1.23-SNAPSHOT"
+ThisBuild / version := "0.1.24-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.2.1-RC1-bin-20220621-75d8eea-NIGHTLY"
 
@@ -44,8 +44,7 @@ lazy val `zio-json-interop` = project
 
 lazy val testing = project
   .in(modules / "testing")
-  .aggregate(core, `sttp-http-interop`, `circe-interop` )
-  .dependsOn(core, `sttp-http-interop`, `circe-interop`)
+  .dependsOn(core, `sttp-http-interop`, `circe-interop`, `http4s-http-interop`)
   .settings(publish / skip := true)
 
 ThisBuild / scalacOptions += "-source:future"
