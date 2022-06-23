@@ -1,9 +1,9 @@
 package muffin.api.emoji
 
-import io.circe.{Codec, Decoder, Encoder}
 import muffin.predef.*
 
 import java.io.File
+import java.time.LocalDateTime
 
 opaque type EmojiId = String
 
@@ -15,9 +15,9 @@ case class EmojiInfo(
                       id: EmojiId,
                       creatorId: UserId,
                       name: String,
-                      createAt: Long,
-                      updateAt: Long,
-                      deleteAt: Long
+                      createAt: LocalDateTime,
+                      updateAt: LocalDateTime,
+                      deleteAt: Option[LocalDateTime]
                     )
 
 

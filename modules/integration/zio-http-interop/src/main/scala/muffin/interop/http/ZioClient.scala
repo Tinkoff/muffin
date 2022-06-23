@@ -36,7 +36,7 @@ class ZioClient[To[_], From[_]](using tk: To ~> Encode, fk: From ~> Decode) exte
 }
 
 object ZioClient {
-  type ZHttp[A] = ZIO[EventLoopGroup with ChannelFactory, Throwable, A]
+  type ZHttp[A] = ZIO[EventLoopGroup & ChannelFactory, Throwable, A]
 
   def apply[I[_] : Sync, To[_], From[_]](using tk: To ~> Encode, fk: From ~> Decode): I[HttpClient[ZHttp, To, From]] =
     Sync[I].delay(new ZioClient[To, From])

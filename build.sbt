@@ -1,10 +1,8 @@
 ThisBuild / version := "0.1.23-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.2.0-RC1-bin-20220530-d6e3d12-NIGHTLY"
+ThisBuild / scalaVersion := "3.2.1-RC1-bin-20220621-75d8eea-NIGHTLY"
 
 ThisBuild / organization := "space.littleinferno"
-
-ThisBuild / scalaOutputVersion := "3.1.2"
 
 lazy val root = (project in file("."))
   .settings(name := "muffin")
@@ -52,6 +50,7 @@ lazy val testing = project
 
 ThisBuild / scalacOptions += "-source:future"
 ThisBuild / scalacOptions += "-explain"
+ThisBuild / scalacOptions += "-deprecation"
 
 ThisBuild / credentials ++= Option(Path.userHome / ".ivy2" / ".credentials")
   .filter(_.exists)

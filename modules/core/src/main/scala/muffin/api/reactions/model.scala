@@ -1,13 +1,12 @@
 package muffin.api.reactions
 
-import io.circe.{Codec, Encoder}
-
 import muffin.predef.*
+import java.time.LocalDateTime
 
 case class ReactionInfo(
   userId: UserId,
   postId: MessageId,
   emojiName: String,
-  createAt: Long
-) derives Codec.AsObject
+  createAt: LocalDateTime
+)
 

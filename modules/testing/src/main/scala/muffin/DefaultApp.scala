@@ -5,7 +5,6 @@ import zio.Task
 import zio.interop.catz.given
 import muffin.interop.circe.codec
 import muffin.interop.circe.codec.given
-import io.circe.*
 import muffin.api.{ApiClient, ClientConfig}
 import muffin.codec.Encode
 import muffin.http.HttpClient

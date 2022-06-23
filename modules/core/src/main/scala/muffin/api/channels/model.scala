@@ -1,6 +1,5 @@
 package muffin.api.channels
 
-import io.circe.{Codec, Decoder}
 import muffin.predef.*
 
 import java.time.LocalDateTime

@@ -44,7 +44,7 @@ class HandlerA[F[_] : MonadThrow](client: CirceApi[F]) {
 
   def acc(action: RawAction[Json]): F[AppResponse] = ???
 
-  def actionA(dialog: Action[A]): F[AppResponse] =
+  def actionA(dialog: MessageAction[A]): F[AppResponse] =
     client
       .openDialog(
         dialog.triggerId,
@@ -80,7 +80,7 @@ class HandlerB[F[_] : MonadThrow](client: CirceApi[F]) {
       )
       .map(_ => AppResponse.Ok())
 
-  def actionB(dialog: Action[A]): F[AppResponse] =
+  def actionB(dialog: MessageAction[A]): F[AppResponse] =
     client
       .openDialog(
         dialog.triggerId,

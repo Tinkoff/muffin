@@ -1,7 +1,5 @@
 package muffin.api.posts
 
-import io.circe.*
-import io.circe.syntax.given
 import muffin.*
 import muffin.predef.*
 
@@ -11,35 +9,37 @@ import predef.*
 import fs2.Stream
 
 trait Posts[F[_]] {
+  def postToDirect(
+                    userId: UserId,
+                    message: Option[String] = None,
+                    props: Option[Props] = None
+                  ): F[Post]
 
-  def createPost(req: CreatePostRequest): F[CreatePostResponse]
+  def postToChat(
+                  userIds: List[UserId],
+                  message: Option[String] = None,
+                  props: Option[Props] = None
+                ): F[Post]
 
-  def createPostEphemeral(req: CreatePostEphemeral): F[CreatePostResponse]
+  def postToChannel(channelId: ChannelId,
+                    message: Option[String] = None,
+                    props: Option[Props] = None
+                   ): F[Post]
 
-  def getPost(req: GetPostRequest): F[GetPostResponse]
+  def createEphemeralPost(userId: UserId, channelId: ChannelId, message: String): F[Post]
 
-  def deletePost(req: DeletePostRequest): F[DeletePostResponse]
+  def getPost(postId: MessageId): F[Post]
 
-  def updatePost(req: PatchPostRequest): F[Unit]
+  def deletePost(postId: MessageId): F[Unit]
 
-  def markUnreadFrom(): F[Unit] = ???
+  def updatePost(postId: MessageId,
+                 message: Option[String] = None,
+                 props: Option[Props] = None): F[Post]
 
-  def patchPost(req: PatchPostRequest): F[CreatePostResponse]
+  def patchPost(postId: MessageId,
+                message: Option[String] = None,
+                props: Option[Props] = None
+               ): F[Post]
 
-  def getThread(): F[Unit] = ???
-
-  def getFlaggedPosts(): F[Unit] = ???
-
-//  def getPostsForChannel(channelId: ChannelId, modifiers: Option[SearchPostModifiers]): Stream[F, Post]
-
-  def searchTeamPosts(): F[Unit] = ???
-
-  def pinPost(req: PinPostRequest): F[PinPostResponse] = ???
-
-  def unpinChannel(req: UnpinPostRequest): F[UnpinPostResponse] = ???
-
-  def performAction(req: PerformActionRequest): F[PerformActionResponse]
-
-  def getPostsByIds(req: GetPostsByIdsRequest): F[GetPostsByIdsResponse] = ???
-
+  def getPostsByIds(messageId: List[MessageId]): F[List[Post]]
 }

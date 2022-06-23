@@ -1,8 +1,5 @@
 package muffin.http
 
-import io.circe.parser.parse
-import io.circe.syntax.given
-import io.circe.{Decoder, Encoder}
 import muffin.codec.*
 
 import java.io.File

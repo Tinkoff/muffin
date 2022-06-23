@@ -5,18 +5,13 @@ import muffin.predef.*
 import fs2.Stream
 
 trait Users[F[_]] {
+  def users(options: GetUserOptions): Stream[F, User]
 
-  def users(req: GetUsersRequest): F[GetUsersResponse]
+  def usersById(userIds: List[UserId]): F[List[User]]
 
-  def usersStream(req: GetUsersRequest): Stream[F, User]
+  def usersByUsername(users: List[String]): F[List[User]]
 
-  def usersById(req: GetUsersByIdRequest): F[GetUsersByIdResponse] = ???
+  def user(userId: UserId): F[User]
 
-  def usersByUsername(
-    req: GetUsersByUsernameRequest
-  ): F[GetUsersByUsernameResponse] = ???
-
-  def user(req: GetUserRequest): F[GetUserResponse] = ???
-
-  def userByUsername(req: GetUserByUsernameRequest): F[GetUserByUsernameResponse]
+  def userByUsername(user: String): F[User]
 }

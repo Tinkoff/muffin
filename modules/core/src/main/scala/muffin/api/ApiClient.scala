@@ -23,13 +23,6 @@ import muffin.http.*
 
 import java.time.*
 
-case class CreateDirectPostRequest(
-                                    message: Option[String] = None,
-                                    props: Option[Props] = None,
-                                    root_id: Option[MessageId] = None,
-                                    file_ids: List[String] = Nil // TODO make Id
-                                  ) derives Encoder.AsObject
-
 class ApiClient[
   F[_] : Concurrent,
   R,
@@ -61,90 +54,109 @@ class ApiClient[
   def actions(name: String): String =
     cfg.serviceUrl + s"/actions/$name"
 
-  def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
+  private def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 
-  def createPost(req: CreatePostRequest): F[CreatePostResponse] =
-    http.request(
-      cfg.baseUrl + "/posts",
-      Method.Post,
-      Body.Json(req),
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    )
+  def postToDirect(
+                    userId: UserId,
+                    message: Option[String] = None,
+                    props: Option[Props] = None
+                  ): F[Post] =
+    postToChat(userId :: Nil, message, props)
 
-  def createPost(
-                  userId: UserId,
-                  req: CreateDirectPostRequest
-                ): F[CreatePostResponse] =
-    for {
-      id <- botId
-      info <- direct(userId :: id :: Nil)
-      res <- createPost(
-        posts.CreatePostRequest(
-          info.id,
-          req.message,
-          req.props,
-          req.root_id,
-          req.file_ids
-        )
-      )
-    } yield res
-
-  def createPost(
+  def postToChat(
                   userIds: List[UserId],
-                  req: CreateDirectPostRequest
-                ): F[CreatePostResponse] =
+                  message: Option[String] = None,
+                  props: Option[Props] = None
+                ): F[Post] =
     for {
       id <- botId
       info <- direct(id :: userIds)
-      res <- createPost(
-        posts.CreatePostRequest(
-          info.id,
-          req.message,
-          req.props,
-          req.root_id,
-          req.file_ids
-        )
-      )
+      res <- postToChannel(info.id, message, props)
     } yield res
 
-  def createPostEphemeral(req: CreatePostEphemeral): F[CreatePostResponse] = ???
 
-  def getPost(req: GetPostRequest): F[GetPostResponse] = ???
+  def postToChannel(channelId: ChannelId, message: Option[String] = None, props: Option[Props] = None): F[Post] =
+    http.request(
+      cfg.baseUrl + "/posts",
+      Method.Post,
+      json
+        .field("channel_id", channelId)
+        .field("message", message)
+        .field("props", props)
+        .build,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
 
-  def deletePost(req: DeletePostRequest): F[Unit] =
+  def createEphemeralPost(userId: UserId, channelId: ChannelId, message: String): F[Post] =
+    http.request(
+      cfg.baseUrl + "/posts/ephemeral",
+      Method.Post,
+      json
+        .field("user_id", userId)
+        .field("channel_id", channelId)
+        .field("message", message)
+        .build,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def getPost(postId: MessageId): F[Post] =
     http
-      .request[DeletePostRequest, Unit](
-        cfg.baseUrl + s"posts/$req",
+      .request[NonJson, Post](
+        cfg.baseUrl + s"posts/$postId",
+        Method.Get,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+
+  def deletePost(postId: MessageId): F[Unit] =
+    http
+      .request[NonJson, Unit](
+        cfg.baseUrl + s"posts/$postId",
         Method.Delete,
         Body.Empty,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
 
-  def updatePost(req: PatchPostRequest): F[Unit] =
+  def updatePost(postId: MessageId,
+                 message: Option[String] = None,
+                 props: Option[Props] = None): F[Post] = {
     http
       .request(
-        cfg.baseUrl + s"/posts/${req.post_id}",
+        cfg.baseUrl + s"/posts/$postId",
         Method.Put,
-        Body.Json(req),
+        json
+          .field("id", postId)
+          .field("message", message)
+          .field("props", props)
+          .build,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+  }
+
+  def patchPost(postId: MessageId,
+                message: Option[String] = None,
+                props: Option[Props] = None
+               ): F[Post] =
+    http
+      .request(
+        cfg.baseUrl + s"/posts/$postId/patch",
+        Method.Put,
+        json
+          .field("message", message)
+          .field("props", props)
+          .build,
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
 
-  def patchPost(req: PatchPostRequest): F[CreatePostResponse] =
+  def getPostsByIds(messageId: List[MessageId]): F[List[Post]] =
     http
       .request(
-        cfg.baseUrl + s"/posts/${req.post_id}/patch",
+        cfg.baseUrl + s"/posts/ids",
         Method.Put,
-        Body.Json(req),
+        Body.Json(messageId),
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
 
-  def performAction(req: PerformActionRequest): F[PerformActionResponse] =
-    http.request[NonJson, PerformActionResponse](
-      cfg.baseUrl + s"/posts/${req.post_id}/actions/${req.action_id}",
-      Method.Post,
-      Body.Empty,
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    )
 
   ////////////////////////////////////////////////
   def openDialog(triggerId: String, url: String, dialog: Dialog): F[Unit] =
@@ -309,47 +321,65 @@ class ApiClient[
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def users(req: GetUsersRequest): F[GetUsersResponse] =
-    http.request[NonJson, GetUsersResponse](
-      cfg.baseUrl + s"/posts/ids/reactions${
-        params(
-          "page" -> req.page.toString,
-          "per_page" -> req.per_page.toString,
-          "in_team" -> req.in_team.toString,
-          "not_in_team" -> req.not_in_team.toString,
-          "in_channel" -> req.in_channel.toString,
-          "not_in_channel" -> req.not_in_channel.toString,
-          "in_group" -> req.in_group.toString,
-          "group_constrained" -> req.group_constrained.toString,
-          "without_team" -> req.without_team.toString,
-          "active" -> req.active.toString,
-          "inactive" -> req.inactive.toString,
-          "role" -> req.role.toString
-        )
-      }",
-      Method.Get,
-      Body.Empty,
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    )
+  def users(options: GetUserOptions): Stream[F, User] = {
+    def single(page: Int): F[List[User]] =
+      http.request[NonJson, List[User]](
+        cfg.baseUrl + s"/posts/ids/reactions${
+          params(
+            "page" -> page.toString,
+            "in_team" -> options.inTeam.toString,
+            "not_in_team" -> options.notInTeam.toString,
+            "in_channel" -> options.inChannel.toString,
+            "not_in_channel" -> options.notInChannel.toString,
+            "active" -> options.active.toString,
+          )
+        }",
+        Method.Get,
+        Body.Empty,
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
 
-  def usersStream(req: GetUsersRequest): Stream[F, User] = {
     Stream
       .unfoldEval(0) { page =>
-        users(req.copy(page = page.some))
+        single(page)
           .map(list => if (list.isEmpty) None else Some((list, page + 1)))
       }
       .flatMap(Stream.emits)
   }
 
-  def userByUsername(
-                      req: GetUserByUsernameRequest
-                    ): F[GetUserByUsernameResponse] =
-    http.request[NonJson, GetUserByUsernameResponse](
-      cfg.baseUrl + s"/users/username/$req",
+
+  def usersById(userIds: List[UserId]): F[List[User]] =
+    http.request(
+      cfg.baseUrl + s"/users/ids",
+      Method.Post,
+      Body.Json(userIds),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def usersByUsername(users: List[String]): F[List[User]] =
+    http.request(
+      cfg.baseUrl + s"/users/usernames",
+      Method.Post,
+      Body.Json(users),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def userByUsername(user: String): F[User] =
+    http.request[NonJson, User](
+      cfg.baseUrl + s"/users/username/$user",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
+
+  def user(userId: UserId): F[User] =
+    http.request[NonJson, User](
+      cfg.baseUrl + s"/users/$userId",
+      Method.Get,
+      Body.Empty,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
 
   //  Preferences
   def getUserPreferences(userId: UserId): F[List[Preference]] =

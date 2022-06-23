@@ -7,7 +7,11 @@ import muffin.api.preferences.*
 import muffin.api.roles.*
 import muffin.api.status.*
 import muffin.api.dialogs.*
+import muffin.api.reactions.*
+import muffin.api.users.*
+import muffin.api.posts.*
 import muffin.input.*
+import muffin.predef.*
 
 import java.time.*
 
@@ -28,9 +32,26 @@ trait CodecSupport[R, To[_], From[_]] {
 
   given ListFrom[A: From]: From[List[A]]
 
+  given MapFrom[A: From]: From[Map[String, A]]
+
   given UnitFrom: From[Unit]
 
   given RTo: To[R]
+
+  given LoginTo: To[Login]
+  given UserIdTo: To[UserId]
+  given GroupIdTo: To[GroupId]
+  given TeamIdTo: To[TeamId]
+  given ChannelIdTo: To[ChannelId]
+  given MessageIdTo: To[MessageId]
+
+  given LoginFrom: From[Login]
+  given UserIdFrom: From[UserId]
+  given GroupIdFrom: From[GroupId]
+  given TeamIdFrom: From[TeamId]
+  given ChannelIdFrom: From[ChannelId]
+  given MessageIdFrom: From[MessageId]
+
 
   //Channels
   given NotifyOptionFrom: From[NotifyOption]
@@ -87,8 +108,18 @@ trait CodecSupport[R, To[_], From[_]] {
   //Roles
 
 
-  given DialogEncode: To[Dialog]
+  given DialogTo: To[Dialog]
 
+  given DialogElementTo: To[Element]
+
+  given DataSourceTo: To[DataSource]
+
+  given SelectOptionTo: To[SelectOption]
+
+  given TextSubtypeTo: To[TextSubtype]
+
+
+  given ReactionInfoFrom(using zone: ZoneId): From[ReactionInfo]
 
   //  input
 
@@ -96,10 +127,33 @@ trait CodecSupport[R, To[_], From[_]] {
 
   given DialogContextFrom: From[DialogContext]
 
+  given DialogSubmissionValueFrom: From[DialogSubmissionValue]
+  
   given RawActionFrom: From[RawAction[R]]
 
   given AppResponseTo: To[AppResponse]
 
+  given ResponseTypeTo: To[ResponseType]
+
   //  input
+
+  given UserFrom(using zone: ZoneId): From[User]
+
+
+
+
+  given ActionTo: To[Action]
+  given ActionFrom: From[Action]
+
+  given IntegrationTo: To[Integration]
+  given StyleTo: To[Style]
+  given StyleFrom: From[Style]
+  given PropsTo: To[Props]
+  given AttachmentTo: To[Attachment]
+  given AttachmentFieldTo: To[AttachmentField]
+  
+  
+  given PostFrom: From[Post]
+
 
 }

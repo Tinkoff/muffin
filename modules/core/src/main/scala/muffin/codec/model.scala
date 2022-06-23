@@ -15,6 +15,8 @@ type Decode[T] = RawDecode[String, T]
 trait JsonRequestBuilder[To[_], R](){
   def field[T: To](fieldName: String, fieldValue: T): JsonRequestBuilder[To, R]
 
+  def field[T: To](fieldName: String, fieldValue: Option[T]): JsonRequestBuilder[To, R]
+
   def build: Body.Json[R]
 }
 

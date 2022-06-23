@@ -2,12 +2,9 @@ package muffin.interop.http
 
 import cats.effect.Sync
 import cats.{Applicative, MonadThrow, ~>}
-import io.circe.Decoder
-import io.circe.parser.parse
 import sttp.client3.*
 import sttp.client3.given
 import sttp.model.{Header, Uri, Method as SMethod}
-import io.circe.syntax.given
 import cats.syntax.all.given
 import muffin.codec.{Decode, Encode}
 import muffin.http.{Body, HttpClient, Method, MultipartElement}
@@ -33,7 +30,7 @@ class SttpClient[F[_] : MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any]
       .headers(headers)
 
     (body match {
-      case b: Body.Json[In] =>
+      case b: Body.Json[?] =>
         backend.send(
           req
             .body(tk.apply(summon[To[In]]).apply(b.value), "UTF-8")

@@ -1,6 +1,5 @@
 package muffin.api.commands
 
-import io.circe.{Codec, Encoder}
 import muffin.predef.*
 
 enum CommandMethod:
