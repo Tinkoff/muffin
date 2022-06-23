@@ -1,6 +1,5 @@
 package muffin.api.posts
 
-import io.circe.Decoder.Result
 import muffin.api.reactions.ReactionInfo
 import muffin.predef.*
 

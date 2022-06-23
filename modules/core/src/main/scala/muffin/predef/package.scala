@@ -1,7 +1,5 @@
 package muffin.predef
 
-import io.circe.{Decoder, Encoder, Json}
-
 opaque type Login = String
 
 object Login {

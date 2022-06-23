@@ -4,7 +4,6 @@ import cats.Monad
 import cats.effect.Concurrent
 import cats.syntax.all.given
 import fs2.*
-import io.circe.{Codec, Encoder, Json, JsonObject}
 import muffin.api.ApiClient.params
 import muffin.api.channels.*
 import muffin.api.dialogs.{Dialog, Dialogs}
@@ -214,14 +213,10 @@ class ApiClient[
         MultipartElement.FileElement("image", req.image) ::
           MultipartElement.StringElement(
             "emoji",
-            Json
-              .fromJsonObject(
-                JsonObject(
-                  "creator_id" -> Json.fromString(req.creatorId.toString),
-                  "name" -> Json.fromString(req.emojiName)
-                )
-              )
-              .noSpaces
+            json
+              .field("creator_id", req.creatorId)
+              .field("name", req.emojiName)
+              .buildString
           ) :: Nil
       ),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
@@ -596,6 +591,3 @@ object ApiClient {
     params.toMap.map(p => s"${p._1}=${p._2}").mkString("?", "&", "")
   }
 }
-
-
-private case class StatusResponse(status: String) derives Codec.AsObject

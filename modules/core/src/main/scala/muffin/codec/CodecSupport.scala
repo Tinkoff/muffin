@@ -18,16 +18,14 @@ import java.time.*
 trait CodecSupport[R, To[_], From[_]] {
   def json: JsonRequestBuilder[To, R]
 
-  given CirceTo[A: io.circe.Encoder]: To[A]
-
-  given CirceFrom[A: io.circe.Decoder]: From[A]
-
   given RawFrom[T: From]: RawDecode[R, T]
 
   given EncodeTo[A: To]: Encode[A]
 
   given DecodeFrom[A: From]: Decode[A]
 
+  given StringTo: To[String]
+  
   given ListTo[A: To]: To[List[A]]
 
   given ListFrom[A: From]: From[List[A]]
@@ -151,8 +149,8 @@ trait CodecSupport[R, To[_], From[_]] {
   given PropsTo: To[Props]
   given AttachmentTo: To[Attachment]
   given AttachmentFieldTo: To[AttachmentField]
-  
-  
+
+
   given PostFrom: From[Post]
 
 

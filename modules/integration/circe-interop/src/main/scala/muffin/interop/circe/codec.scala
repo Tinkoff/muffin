@@ -44,9 +44,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
 
   given RTo: Encoder[Json] = Encoder.encodeJson
 
-  given CirceTo[A: Encoder]: Encoder[A] = summon[Encoder[A]]
-
-  given CirceFrom[A: Decoder]: Decoder[A] = summon[Decoder[A]]
+  given StringTo: Encoder[String] = Encoder.encodeString.apply(_)
 
   given ListTo[A: Encoder]: Encoder[List[A]] = Encoder.encodeList[A]
 
@@ -506,5 +504,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
 
 
     def build: Body.Json[Json] = Body.Json[Json](Json.fromJsonObject(state))
+
+    def buildString: String = Json.fromJsonObject(state).dropNullValues.noSpaces
   }
 }
