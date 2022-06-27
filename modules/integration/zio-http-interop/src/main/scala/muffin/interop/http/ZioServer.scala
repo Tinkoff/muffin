@@ -15,8 +15,7 @@ class ZioServer {
   def routes[R, To[_], From[_]](router: Router[Task, R], codec: CodecSupport[R, To, From]): Http[Any, Throwable, Request, Response] = Http.collectZIO[Request] {
     case req@Method.POST -> !! / "commands" / command =>
       import codec.given
-      handleEvent[CommandContext](req)(router.handleCommand(command, _))
-
+      ???
     case req@Method.POST -> !! / "actions" / actions =>
       import codec.given
       handleEvent[RawAction[R]](req)(router.handleAction(actions, _))

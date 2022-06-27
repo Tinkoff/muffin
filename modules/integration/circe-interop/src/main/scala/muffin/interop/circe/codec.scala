@@ -409,20 +409,6 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
     case ResponseType.InChannel => Encoder.encodeString("in_channel")
   }
 
-  given CommandContextFrom: Decoder[muffin.input.CommandContext] = (c: HCursor) => {
-    for {
-      channelId <- c.downField("channel_id").as[ChannelId]
-      channelName <- c.downField("channel_name").as[String]
-      responseUrl <- c.downField("response_url").as[String]
-      teamDomain <- c.downField("team_domain").as[String]
-      teamId <- c.downField("team_id").as[TeamId]
-      text <- c.downField("text").as[Option[String]]
-      triggerId <- c.downField("trigger_id").as[String]
-      userId <- c.downField("user_id").as[UserId]
-      userName <- c.downField("user_name").as[String]
-    } yield CommandContext(channelId, channelName, responseUrl, teamDomain, teamId, text, triggerId, userId, userName)
-  }
-
   given DialogContextFrom: Decoder[muffin.input.DialogContext] = (c: HCursor) => {
     for {
       callbackId <- c.downField("callback_id").as[String]

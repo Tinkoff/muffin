@@ -122,9 +122,6 @@ trait CodecSupport[R, To[_], From[_]] {
   given ReactionInfoFrom(using zone: ZoneId): From[ReactionInfo]
 
   //  input
-
-  given CommandContextFrom: From[CommandContext]
-
   given DialogContextFrom: From[DialogContext]
 
   given DialogSubmissionValueFrom: From[DialogSubmissionValue]
