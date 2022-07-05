@@ -42,8 +42,6 @@ class ApiClient[
   import codec.{given, *}
   import ApiClient.*
 
-  private given To[NonJson] = assert(false).asInstanceOf[Nothing] // should never call
-
   def command(name: String): String =
     cfg.serviceUrl + s"/commands/$name"
 
@@ -100,7 +98,7 @@ class ApiClient[
 
   def getPost(postId: MessageId): F[Post] =
     http
-      .request[NonJson, Post](
+      .request[Unit, Post](
         cfg.baseUrl + s"posts/$postId",
         Method.Get,
         Body.Empty,
@@ -109,7 +107,7 @@ class ApiClient[
 
   def deletePost(postId: MessageId): F[Unit] =
     http
-      .request[NonJson, Unit](
+      .request[Unit, Unit](
         cfg.baseUrl + s"posts/$postId",
         Method.Delete,
         Body.Empty,
@@ -173,7 +171,7 @@ class ApiClient[
 
   def members(channelId: ChannelId): Stream[F, ChannelMember] = {
     def single(page: Int): F[List[ChannelMember]] =
-      http.request[NonJson, List[ChannelMember]](
+      http.request[Unit, List[ChannelMember]](
         cfg.baseUrl + s"/channels/$channelId/members?page=$page",
         Method.Get,
         Body.Empty,
@@ -197,7 +195,7 @@ class ApiClient[
     )
 
   def getChannelByName(teamId: TeamId, name: String): F[ChannelInfo] = {
-    http.request[NonJson, ChannelInfo](
+    http.request[Unit, ChannelInfo](
       cfg.baseUrl + s"/teams/$teamId/channels/name/$name",
       Method.Get,
       Body.Empty,
@@ -206,7 +204,7 @@ class ApiClient[
   }
 
   def createEmoji(req: CreateEmojiRequest): F[EmojiInfo] =
-    http.request[NonJson, EmojiInfo](
+    http.request[Unit, EmojiInfo](
       cfg.baseUrl + s"/emoji",
       Method.Post,
       Body.Multipart(
@@ -224,7 +222,7 @@ class ApiClient[
 
   def getEmojis(sorting: EmojiSorting = EmojiSorting.None): Stream[F, EmojiInfo] = {
     def single(page: Int) =
-      http.request[NonJson, List[EmojiInfo]](
+      http.request[Unit, List[EmojiInfo]](
         cfg.baseUrl + s"/emoji?page=$page&sort=$sorting",
         Method.Get,
         Body.Empty,
@@ -240,7 +238,7 @@ class ApiClient[
   }
 
   def getEmoji(emojiId: EmojiId): F[EmojiInfo] =
-    http.request[NonJson, EmojiInfo](
+    http.request[Unit, EmojiInfo](
       cfg.baseUrl + s"/emoji/$emojiId",
       Method.Get,
       Body.Empty,
@@ -248,7 +246,7 @@ class ApiClient[
     )
 
   def deleteEmoji(emojiId: EmojiId): F[EmojiInfo] =
-    http.request[NonJson, EmojiInfo](
+    http.request[Unit, EmojiInfo](
       cfg.baseUrl + s"/emoji/name/$emojiId",
       Method.Delete,
       Body.Empty,
@@ -256,7 +254,7 @@ class ApiClient[
     )
 
   def getEmojiByName(name: String): F[EmojiInfo] =
-    http.request[NonJson, EmojiInfo](
+    http.request[Unit, EmojiInfo](
       cfg.baseUrl + s"/emoji/name/$name",
       Method.Get,
       Body.Empty,
@@ -277,7 +275,7 @@ class ApiClient[
   def autocompleteEmoji(
                          name: String
                        ): F[List[EmojiInfo]] =
-    http.request[NonJson, List[EmojiInfo]](
+    http.request[Unit, List[EmojiInfo]](
       cfg.baseUrl + s"/emoji/autocomplete?name=$name",
       Method.Get,
       Body.Empty,
@@ -299,7 +297,7 @@ class ApiClient[
     )
 
   def getReactions(postId: MessageId): F[List[ReactionInfo]] =
-    http.request[NonJson, List[ReactionInfo]](
+    http.request[Unit, List[ReactionInfo]](
       cfg.baseUrl + s"/posts/$postId/reactions",
       Method.Get,
       Body.Empty,
@@ -310,7 +308,7 @@ class ApiClient[
                      postId: MessageId,
                      emojiName: String): F[Unit] =
     http
-      .request[NonJson, Unit](
+      .request[Unit, Unit](
         cfg.baseUrl + s"/users/$userId/posts/$postId/reactions/$emojiName",
         Method.Delete,
         Body.Empty,
@@ -327,7 +325,7 @@ class ApiClient[
 
   def users(options: GetUserOptions): Stream[F, User] = {
     def single(page: Int): F[List[User]] =
-      http.request[NonJson, List[User]](
+      http.request[Unit, List[User]](
         cfg.baseUrl + s"/posts/ids/reactions${
           params(
             "page" -> page.toString,
@@ -369,7 +367,7 @@ class ApiClient[
     )
 
   def userByUsername(user: String): F[User] =
-    http.request[NonJson, User](
+    http.request[Unit, User](
       cfg.baseUrl + s"/users/username/$user",
       Method.Get,
       Body.Empty,
@@ -377,7 +375,7 @@ class ApiClient[
     )
 
   def user(userId: UserId): F[User] =
-    http.request[NonJson, User](
+    http.request[Unit, User](
       cfg.baseUrl + s"/users/$userId",
       Method.Get,
       Body.Empty,
@@ -387,7 +385,7 @@ class ApiClient[
 
   //  Preferences
   def getUserPreferences(userId: UserId): F[List[Preference]] =
-    http.request[NonJson, List[Preference]](
+    http.request[Unit, List[Preference]](
       cfg.baseUrl + s"/users/$userId/preferences",
       Method.Get,
       Body.Empty,
@@ -395,7 +393,7 @@ class ApiClient[
     )
 
   def getUserPreferences(userId: UserId, category: String): F[List[Preference]] =
-    http.request[NonJson, List[Preference]](
+    http.request[Unit, List[Preference]](
       cfg.baseUrl + s"/users/$userId/preferences/${category}",
       Method.Get,
       Body.Empty,
@@ -403,7 +401,7 @@ class ApiClient[
     )
 
   def getUserPreference(userId: UserId, category: String, name: String): F[Preference] =
-    http.request[NonJson, Preference](
+    http.request[Unit, Preference](
       cfg.baseUrl + s"/users/$userId/preferences/${category}/name/${name}",
       Method.Get,
       Body.Empty,
@@ -431,7 +429,7 @@ class ApiClient[
 
   // Status
   def getUserStatus(userId: UserId): F[UserStatus] = {
-    http.request[NonJson, UserStatus](
+    http.request[Unit, UserStatus](
       cfg.baseUrl + s"/users/$userId/status",
       Method.Get,
       Body.Empty,
@@ -466,7 +464,7 @@ class ApiClient[
   }
 
   def unsetCustomStatus(userId: UserId): F[Unit] = {
-    http.request[NonJson, Unit](
+    http.request[Unit, Unit](
       cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Delete,
       Body.Empty,
@@ -479,7 +477,7 @@ class ApiClient[
   // Insights
   def getTopReactions(teamId: TeamId, timeRange: TimeRange): Stream[F, ReactionInsight] = {
     def single(page: Int) =
-      http.request[NonJson, ListWrapper[ReactionInsight]](
+      http.request[Unit, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/reactions?time_range=$timeRange&page=$page",
         Method.Get,
         Body.Empty,
@@ -497,7 +495,7 @@ class ApiClient[
 
   def getTopReactions(userId: UserId, timeRange: TimeRange, teamId: Option[TeamId]): Stream[F, ReactionInsight] = {
     def single(page: Int) =
-      http.request[NonJson, ListWrapper[ReactionInsight]](
+      http.request[Unit, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/users/$userId/top/reactions?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
         Method.Get,
         Body.Empty,
@@ -515,7 +513,7 @@ class ApiClient[
 
   def getTopChannels(teamId: TeamId, timeRange: TimeRange): Stream[F, ChannelInsight] = {
     def single(page: Int) =
-      http.request[NonJson, ListWrapper[ChannelInsight]](
+      http.request[Unit, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/channels?time_range=$timeRange&page=$page",
         Method.Get,
         Body.Empty,
@@ -533,7 +531,7 @@ class ApiClient[
 
   def getTopChannels(userId: UserId, timeRange: TimeRange, teamId: Option[TeamId]): Stream[F, ChannelInsight] = {
     def single(page: Int) =
-      http.request[NonJson, ListWrapper[ChannelInsight]](
+      http.request[Unit, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/users/$userId/top/channels?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
         Method.Get,
         Body.Empty,
@@ -552,7 +550,7 @@ class ApiClient[
 
   //  Roles
   def getAllRoles: F[List[RoleInfo]] =
-    http.request[NonJson, List[RoleInfo]](
+    http.request[Unit, List[RoleInfo]](
       cfg.baseUrl + s"/roles",
       Method.Get,
       Body.Empty,
@@ -560,7 +558,7 @@ class ApiClient[
     )
 
   def getRoleById(id: String): F[RoleInfo] =
-    http.request[NonJson, RoleInfo](
+    http.request[Unit, RoleInfo](
       cfg.baseUrl + s"/roles/$id",
       Method.Get,
       Body.Empty,
@@ -568,7 +566,7 @@ class ApiClient[
     )
 
   def getRoleByName(name: String): F[RoleInfo] =
-    http.request[NonJson, RoleInfo](
+    http.request[Unit, RoleInfo](
       cfg.baseUrl + s"/roles/name/$name",
       Method.Get,
       Body.Empty,
@@ -594,8 +592,6 @@ class ApiClient[
 }
 
 object ApiClient {
-  private case class NonJson()
-
   private def params(params: (String, String)*): String = {
     params.toMap.map(p => s"${p._1}=${p._2}").mkString("?", "&", "")
   }

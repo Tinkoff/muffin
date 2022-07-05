@@ -32,6 +32,7 @@ trait CodecSupport[R, To[_], From[_]] {
 
   given MapFrom[A: From]: From[Map[String, A]]
 
+  given UnitTo: To[Unit]
   given UnitFrom: From[Unit]
 
   given RTo: To[R]
