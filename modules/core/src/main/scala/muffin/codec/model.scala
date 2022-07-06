@@ -12,13 +12,11 @@ trait RawDecode[R, T] {
 
 type Decode[T] = RawDecode[String, T]
 
-trait JsonRequestBuilder[To[_], R](){
-  def field[T: To](fieldName: String, fieldValue: T): JsonRequestBuilder[To, R]
+trait JsonRequestBuilder[To[_]](){
+  def field[T: To](fieldName: String, fieldValue: T): JsonRequestBuilder[To]
 
-  def field[T: To](fieldName: String, fieldValue: Option[T]): JsonRequestBuilder[To, R]
+  def field[T: To](fieldName: String, fieldValue: Option[T]): JsonRequestBuilder[To]
 
-  def build: Body.Json[R]
-  
-  def buildString: String
+  def build: Body.RawJson
 }
 

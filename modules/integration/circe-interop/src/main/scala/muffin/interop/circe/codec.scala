@@ -715,28 +715,24 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       id <- c.downField("id").as[MessageId]
     } yield Post(id)
 
-  def json: JsonRequestBuilder[Encoder, Json] = new CirceJsonBuilder(
-    JsonObject.empty
-  )
+  def json: JsonRequestBuilder[Encoder] = new CirceJsonBuilder(JsonObject.empty)
 
   private class CirceJsonBuilder(state: JsonObject)
-      extends JsonRequestBuilder[Encoder, Json] {
+      extends JsonRequestBuilder[Encoder] {
     def field[T: Encoder](
       fieldName: String,
       fieldValue: T
-    ): JsonRequestBuilder[Encoder, Json] =
+    ): JsonRequestBuilder[Encoder] =
       CirceJsonBuilder(state.add(fieldName, fieldValue.asJson))
 
     def field[T: Encoder](
       fieldName: String,
       fieldValue: Option[T]
-    ): JsonRequestBuilder[Encoder, Json] =
+    ): JsonRequestBuilder[Encoder] =
       fieldValue match
         case Some(value) => CirceJsonBuilder(state.add(fieldName, value.asJson))
         case None        => this
 
-    def build: Body.Json[Json] = Body.Json[Json](Json.fromJsonObject(state))
-
-    def buildString: String = Json.fromJsonObject(state).dropNullValues.noSpaces
+    def build: Body.RawJson = Body.RawJson(Json.fromJsonObject(state).dropNullValues.noSpaces)
   }
 }

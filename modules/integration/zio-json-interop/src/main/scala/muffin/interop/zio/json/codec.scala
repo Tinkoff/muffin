@@ -1,92 +1,176 @@
-package muffin.interop.zio.json
-
-import muffin.codec.{CodecSupport, JsonRequestBuilder}
-import zio.json.{JsonDecoder, JsonEncoder}
-import zio.json.ast.Json
-
+//package muffin.interop.zio.json
+//
+//import muffin.codec.{CodecSupport, JsonRequestBuilder}
+//import muffin.http.Body
+//import zio.json.{JsonDecoder, JsonEncoder}
+//import zio.json.ast.Json
+//
 //object codec extends CodecSupport[Json, JsonEncoder, JsonDecoder] {
-//  given ChannelInfoFrom: JsonDecoder[muffin.api.channels.ChannelInfo] = ???
+//  def json: JsonRequestBuilder[To, R]
 //
-//  given ChannelInsightDecode: JsonDecoder[muffin.api.insights.ChannelInsight] = ???
+//  given RawFrom[T: JsonDecoder]: RawDecode[R, T]
 //
-//  given ChannelMemberFrom: JsonDecoder[muffin.api.channels.ChannelMember] = ???
+//  given EncodeTo[A: JsonEncoder]: Encode[A]
 //
-//  given CirceFrom[A](using io.circe.Decoder[A]): JsonDecoder[A] = ???
+//  given DecodeFrom[A: JsonDecoder]: Decode[A]
 //
-//  given CirceTo[A](using evidence$1: io.circe.Encoder[A]): JsonEncoder[A] = ???
+//  given StringTo: JsonEncoder[String]
 //
-//  given CustomStatusDecode(using zone: java.time.ZoneId): JsonDecoder[muffin.api.status.CustomStatus] = ???
+//  given ListTo[A: JsonEncoder]: JsonEncoder[List[A]]
 //
-//  given CustomStatusDurationDecode(using time: Option[java.time.LocalDateTime]): JsonDecoder[muffin.api.status.CustomStatusDuration] = ???
+//  given ListFrom[A: JsonDecoder]: JsonDecoder[List[A]]
 //
-//  given CustomStatusDurationEncode: JsonEncoder[muffin.api.status.CustomStatusDuration] = ???
+//  given MapFrom[A: JsonDecoder]: JsonDecoder[Map[String, A]]
 //
-//  given CustomStatusEncode(using zone: java.time.ZoneId): JsonEncoder[muffin.api.status.CustomStatus] = ???
+//  given UnitTo: JsonEncoder[Unit]
 //
-//  given DecodeFrom[A](using evidence$5: JsonDecoder[A]): muffin.codec.Decode[A] = ???
+//  given UnitFrom: JsonDecoder[Unit]
 //
-//  given DialogEncode: JsonEncoder[muffin.api.dialogs.Dialog] = ???
+//  given RTo: JsonEncoder[R]
 //
-//  given EmojiInfoFrom: JsonDecoder[muffin.api.emoji.EmojiInfo] = ???
+//  given LoginTo: JsonEncoder[Login] = JsonEncoder.string.contramap(_.toString)
 //
-//  given EncodeTo[A](using evidence$4: JsonEncoder[A]): muffin.codec.Encode[A] = ???
+//  given UserIdTo: JsonEncoder[UserId] = JsonEncoder.string.contramap(_.toString)
 //
-//  given ListFrom[A](using evidence$7: JsonDecoder[A]): JsonDecoder[List[A]] = ???
+//  given GroupIdTo: JsonEncoder[GroupId] = JsonEncoder.string.contramap(_.toString)
 //
-//  given ListTo[A](using evidence$6: JsonEncoder[A]): JsonEncoder[List[A]] = ???
+//  given TeamIdTo: JsonEncoder[TeamId] = JsonEncoder.string.contramap(_.toString)
 //
-//  given MapFrom[A: JsonDecoder]: JsonDecoder[Map[String, A]] = ???
+//  given ChannelIdTo: JsonEncoder[ChannelId] = JsonEncoder.string.contramap(_.toString)
 //
-//  given ListWrapperDecode[T](using evidence$8: JsonDecoder[T]): JsonDecoder[muffin.api.insights.ListWrapper[T]] = ???
+//  given MessageIdTo: JsonEncoder[MessageId] = JsonEncoder.string.contramap(_.toString)
 //
-//  given NotifyOptionFrom: JsonDecoder[muffin.api.channels.NotifyOption] = ???
+//  given EmojiIdTo: JsonEncoder[EmojiId] = JsonEncoder.string.contramap(_.toString)
 //
-//  given NotifyPropsFrom: JsonDecoder[muffin.api.channels.NotifyProps] = ???
+//  given LoginFrom: JsonDecoder[Login] = JsonDecoder.string.map(Login(_))
 //
-//  given PreferenceDecode: JsonDecoder[muffin.api.preferences.Preference] = ???
+//  given UserIdFrom: JsonDecoder[UserId] = JsonDecoder.string.map(UserId(_))
 //
-//  given PreferenceEncode: JsonEncoder[muffin.api.preferences.Preference] = ???
+//  given GroupIdFrom: JsonDecoder[GroupId] = JsonDecoder.string.map(GroupId(_))
 //
-//  given RTo: JsonEncoder[Json] = ???
+//  given TeamIdFrom: JsonDecoder[TeamId] = JsonDecoder.string.map(TeamId(_))
 //
-//  given RawFrom[T](using evidence$3: JsonDecoder[T]): muffin.codec.RawDecode[Json, T] = ???
+//  given ChannelIdFrom: JsonDecoder[ChannelId] = JsonDecoder.string.map(ChannelId(_))
 //
-//  given ReactionInsightDecode: JsonDecoder[muffin.api.insights.ReactionInsight] = ???
+//  given MessageIdFrom: JsonDecoder[MessageId] = JsonDecoder.string.map(MessageId(_))
 //
-//  given RoleInfoDecode: JsonDecoder[muffin.api.roles.RoleInfo] = ???
+//  given EmojiIdFrom: JsonDecoder[EmojiId] = JsonDecoder.string.map(EmojiId(_))
 //
-//  given StatusUserDecode(using time: Option[java.time.LocalDateTime]): JsonDecoder[muffin.api.status.StatusUser] = ???
+//  //Channels
+//  given NotifyOptionFrom: JsonDecoder[NotifyOption]
 //
-//  given StatusUserEncode: JsonEncoder[muffin.api.status.StatusUser] = ???
+//  given UnreadOptionFrom: JsonDecoder[UnreadOption]
 //
-//  given UnitFrom: JsonDecoder[Unit] = ???
+//  given NotifyPropsFrom: JsonDecoder[NotifyProps]
 //
-//  given UnreadOptionFrom: JsonDecoder[muffin.api.channels.UnreadOption] = ???
+//  given ChannelMemberFrom(using zone: ZoneId): JsonDecoder[ChannelMember]
 //
-//  given UpdateUserStatusRequestEncode(using zone: java.time.ZoneId): JsonEncoder[muffin.api.status.UpdateUserStatusRequest] = ???
+//  given ChannelInfoFrom(using zone: ZoneId): JsonDecoder[ChannelInfo]
+//  //Channels
 //
-//  given UserStatusDecode(using zone: java.time.ZoneId): JsonDecoder[muffin.api.status.UserStatus] = ???
+//  //Emoji
+//  given EmojiInfoFrom(using zone: ZoneId): JsonDecoder[EmojiInfo]
+//  //Emoji
 //
-//  given UserStatusEncode(using zone: java.time.ZoneId): JsonEncoder[muffin.api.status.UserStatus] = ???
+//  //Preferences
+//  given PreferenceEncode: JsonEncoder[Preference]
 //
-//  def json: JsonRequestBuilder[JsonEncoder, Json] = ???
+//  given PreferenceDecode: JsonDecoder[Preference]
+//  //Preferences
 //
-//  given DialogElementTo: JsonEncoder[muffin.api.dialogs.Element] = ???
-//  given DialogTo: JsonEncoder[muffin.api.dialogs.Dialog] = ???
+//  //Status
+//  given StatusUserEncode: JsonEncoder[StatusUser]
 //
-//  given AppResponseTo: JsonEncoder[muffin.input.AppResponse] = ???
-//  given CommandContextFrom: JsonDecoder[muffin.input.CommandContext] = ???
-//  given DialogContextFrom: JsonDecoder[muffin.input.DialogContext] = ???
-//  given RawActionFrom: JsonDecoder[muffin.input.RawAction[zio.json.ast.Json]] = ???
-//  given DialogSubmissionValueFrom: JsonDecoder[muffin.input.DialogSubmissionValue] = ???
-//  given ResponseTypeTo: JsonEncoder[muffin.input.ResponseType] = ???
+//  given StatusUserDecode(using time: Option[LocalDateTime]): JsonDecoder[StatusUser]
+//
+//  given UserStatusEncode(using zone: ZoneId): JsonEncoder[UserStatus]
+//
+//  given UserStatusDecode(using zone: ZoneId): JsonDecoder[UserStatus]
+//
+//  given CustomStatusDurationEncode: JsonEncoder[CustomStatusDuration]
+//
+//  given CustomStatusDurationDecode(using time: Option[LocalDateTime]): JsonDecoder[CustomStatusDuration]
+//
+//  given CustomStatusEncode(using zone: ZoneId): JsonEncoder[CustomStatus]
+//
+//  given CustomStatusDecode(using zone: ZoneId): JsonDecoder[CustomStatus]
+//
+//  given UpdateUserStatusRequestEncode(using zone: ZoneId): JsonEncoder[UpdateUserStatusRequest]
+//  //Status
+//
+//  //Insights
+//  given ReactionInsightDecode: JsonDecoder[ReactionInsight]
+//
+//  given ChannelInsightDecode: JsonDecoder[ChannelInsight]
+//
+//  given ListWrapperDecode[T: JsonDecoder]: JsonDecoder[ListWrapper[T]]
+//  //Insights
+//
+//  //Roles
+//  given RoleInfoDecode: JsonDecoder[RoleInfo]
+//  //Roles
 //
 //
-//  given DataSourceTo: zio.json.JsonEncoder[muffin.api.dialogs.DataSource] = ???
-//  given SelectOptionTo: zio.json.JsonEncoder[muffin.api.dialogs.SelectOption] = ???
+//  given DialogTo: JsonEncoder[Dialog]
 //
-//  given ReactionInfoFrom(using zone: java.time.ZoneId): zio.json.JsonDecoder[muffin.api.reactions.ReactionInfo] = ???
-//  given TextSubtypeTo: zio.json.JsonEncoder[muffin.api.dialogs.TextSubtype] = ???
+//  given DialogElementTo: JsonEncoder[Element]
 //
-//  given UserFrom(using zone: java.time.ZoneId): JsonDecoder[muffin.api.users.User] = ???
+//  given DataSourceTo: JsonEncoder[DataSource]
+//
+//  given SelectOptionTo: JsonEncoder[SelectOption]
+//
+//  given TextSubtypeTo: JsonEncoder[TextSubtype]
+//
+//
+//  given ReactionInfoFrom(using zone: ZoneId): JsonDecoder[ReactionInfo]
+//
+//  //  input
+//  given DialogContextFrom: JsonDecoder[DialogContext]
+//
+//  given DialogSubmissionValueFrom: JsonDecoder[DialogSubmissionValue]
+//
+//  given RawActionFrom: JsonDecoder[RawAction[R]]
+//
+//  given AppResponseTo: JsonEncoder[AppResponse]
+//
+//  given ResponseTypeTo: JsonEncoder[ResponseType]
+//
+//  //  input
+//
+//  given UserFrom(using zone: ZoneId): JsonDecoder[User]
+//
+//
+//  given ActionTo: JsonEncoder[Action]
+//
+//  given ActionFrom: JsonDecoder[Action]
+//
+//  given IntegrationTo: JsonEncoder[Integration]
+//
+//  given StyleTo: JsonEncoder[Style]
+//
+//  given StyleFrom: JsonDecoder[Style]
+//
+//  given PropsTo: JsonEncoder[Props]
+//
+//  given AttachmentTo: JsonEncoder[Attachment]
+//
+//  given AttachmentFieldTo: JsonEncoder[AttachmentField]
+//
+//  given PostFrom: JsonDecoder[Post]
+//
+//
+//
+//  private class ZioJsonBuilder(json: Json) extends JsonRequestBuilder[JsonEncoder]{
+//    override def field[T: JsonEncoder](fieldName: String, fieldValue: T): JsonRequestBuilder[JsonEncoder] = {
+//
+//      json.merge(Json.Obj(fieldName -> JsonEncoder[T].toJson))
+//
+//
+//
+//    }
+//
+//    override def field[T: JsonEncoder](fieldName: String, fieldValue: Option[T]): JsonRequestBuilder[JsonEncoder] = ???
+//
+//    override def build: Body.RawJson = ???
+//  }
 //}

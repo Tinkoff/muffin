@@ -214,7 +214,7 @@ class ApiClient[
             json
               .field("creator_id", req.creatorId)
               .field("name", req.emojiName)
-              .buildString
+              .build.value
           ) :: Nil
       ),
       Map("Authorization" -> s"Bearer ${cfg.auth}")

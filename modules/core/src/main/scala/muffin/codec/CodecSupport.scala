@@ -16,7 +16,7 @@ import muffin.predef.*
 import java.time.*
 
 trait CodecSupport[R, To[_], From[_]] {
-  def json: JsonRequestBuilder[To, R]
+  def json: JsonRequestBuilder[To]
 
   given RawFrom[T: From]: RawDecode[R, T]
 
@@ -56,13 +56,13 @@ trait CodecSupport[R, To[_], From[_]] {
 
   //Channels
   given NotifyOptionFrom: From[NotifyOption]
-  
+
   given UnreadOptionFrom: From[UnreadOption]
-  
+
   given NotifyPropsFrom: From[NotifyProps]
-  
+
   given ChannelMemberFrom(using zone: ZoneId): From[ChannelMember]
-  
+
   given ChannelInfoFrom(using zone: ZoneId): From[ChannelInfo]
   //Channels
 
@@ -126,7 +126,7 @@ trait CodecSupport[R, To[_], From[_]] {
   given DialogContextFrom: From[DialogContext]
 
   given DialogSubmissionValueFrom: From[DialogSubmissionValue]
-  
+
   given RawActionFrom: From[RawAction[R]]
 
   given AppResponseTo: To[AppResponse]
@@ -136,8 +136,6 @@ trait CodecSupport[R, To[_], From[_]] {
   //  input
 
   given UserFrom(using zone: ZoneId): From[User]
-
-
 
 
   given ActionTo: To[Action]
@@ -150,8 +148,5 @@ trait CodecSupport[R, To[_], From[_]] {
   given AttachmentTo: To[Attachment]
   given AttachmentFieldTo: To[AttachmentField]
 
-
   given PostFrom: From[Post]
-
-
 }
