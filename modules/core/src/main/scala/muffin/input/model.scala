@@ -20,6 +20,8 @@ object AppResponse {
     responseType: ResponseType,
     attachments: List[Attachment] = Nil
   ) extends AppResponse
+
+  case class Errors(errors: Map[String, String]) extends AppResponse
 }
 
 case class RawAction[R](
