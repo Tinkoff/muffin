@@ -449,7 +449,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
           ("name" -> Json.fromString(value.name)).some,
           ("optional" -> Json.fromBoolean(value.optional)).some,
           value.helpText.map(l => ("help_text" -> Json.fromString(l))),
-          value.default.map(l => ("default" -> Json.fromBoolean(l))),
+          value.default.map(l => ("default" -> Json.fromString(l))),
           value.placeholder.map(l => ("placeholder" -> Json.fromString(l))),
           ("type" -> Json.fromString("bool")).some
         ).flatten*
@@ -463,7 +463,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
             .encodeList[SelectOption]
             .apply(value.options)).some,
           value.helpText.map(l => ("help_text" -> Json.fromString(l))),
-          value.default.map(l => ("default" -> Json.fromBoolean(l))),
+          value.default.map(l => ("default" -> Json.fromString(l))),
           ("type" -> Json.fromString("radio")).some
         ).flatten*
       )
