@@ -1,5 +1,6 @@
 ThisBuild / version := "0.1.62-SNAPSHOT"
 
+
 ThisBuild / scalaVersion := "3.2.1-RC1-bin-20220621-75d8eea-NIGHTLY"
 
 ThisBuild / organization := "space.littleinferno"
