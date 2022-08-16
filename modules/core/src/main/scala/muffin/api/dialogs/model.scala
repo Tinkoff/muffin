@@ -63,7 +63,7 @@ object Element {
                        name: String,
                        optional: Boolean = false,
                        helpText: Option[String] = None,
-                       default: Option[Boolean] = None,
+                       default: Option[String] = None,
                        placeholder: Option[String] = None
                      ) extends Element
 
@@ -72,7 +72,7 @@ object Element {
                     name: String,
                     options: List[SelectOption],
                     helpText: Option[String] = None,
-                    default: Option[Boolean] = None
+                    default: Option[String] = None
                   ) extends Element
 }
 

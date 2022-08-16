@@ -547,6 +547,10 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
         "response_type" -> Encoder[ResponseType].apply(responseType),
         "attachments" -> Encoder.encodeList[Attachment].apply(attachments)
       )
+    case AppResponse.Errors(map) =>
+      Json.obj(
+        "errors" -> Encoder.encodeMap[String, String].apply(map)
+      )
   }
 
   given ResponseTypeTo: Encoder[ResponseType] = {
