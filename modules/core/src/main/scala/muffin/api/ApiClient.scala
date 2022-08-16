@@ -1,3 +1,4 @@
+
 package muffin.api
 
 import cats.Monad
@@ -60,6 +61,7 @@ class ApiClient[
                   ): F[Post] =
     postToChat(userId :: Nil, message, props)
 
+
   def postToChat(
                   userIds: List[UserId],
                   message: Option[String] = None,
@@ -67,7 +69,7 @@ class ApiClient[
                 ): F[Post] =
     for {
       id <- botId
-      info <- direct(id :: userIds)
+      info <- group(id :: userIds)
       res <- postToChannel(info.id, message, props)
     } yield res
 
@@ -186,9 +188,10 @@ class ApiClient[
       .flatMap(Stream.emits)
   }
 
-  def direct(userIds: List[UserId]): F[ChannelInfo] =
+
+  def group(userIds: List[UserId]): F[ChannelInfo] =
     http.request(
-      cfg.baseUrl + "/channels/direct",
+      cfg.baseUrl + "/channels/group",
       Method.Post,
       Body.Json(userIds),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
@@ -596,3 +599,4 @@ object ApiClient {
     params.toMap.map(p => s"${p._1}=${p._2}").mkString("?", "&", "")
   }
 }
+
