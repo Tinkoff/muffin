@@ -9,5 +9,7 @@ trait Channels[F[_]] {
 
   def direct(userIds: List[UserId]): F[ChannelInfo]
 
+  def group(userIds: List[UserId]): F[ChannelInfo]
+
   def getChannelByName(teamId: TeamId, name: String): F[ChannelInfo]
 }

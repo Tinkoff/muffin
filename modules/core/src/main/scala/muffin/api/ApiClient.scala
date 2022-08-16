@@ -54,20 +54,25 @@ class ApiClient[
   private def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 
   def postToDirect(
-                    userId: UserId,
-                    message: Option[String] = None,
-                    props: Option[Props] = None
-                  ): F[Post] =
+    userId: UserId,
+    message: Option[String] = None,
+    props: Option[Props] = None
+  ): F[Post] =
     postToChat(userId :: Nil, message, props)
 
   def postToChat(
-                  userIds: List[UserId],
-                  message: Option[String] = None,
-                  props: Option[Props] = None
-                ): F[Post] =
+    userIds: List[UserId],
+    message: Option[String] = None,
+    props: Option[Props] = None
+  ): F[Post] =
     for {
       id <- botId
-      info <- direct(id :: userIds)
+      info <-
+        if (userIds.length > 1)
+          group(id :: userIds)
+        else
+          direct(id :: userIds)
+
       res <- postToChannel(info.id, message, props)
     } yield res
 
@@ -81,6 +86,15 @@ class ApiClient[
         .field("message", message)
         .field("props", props)
         .build,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+
+  def group(userIds: List[UserId]): F[ChannelInfo] =
+    http.request(
+      cfg.baseUrl + "/channels/group",
+      Method.Post,
+      Body.Json(userIds),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
