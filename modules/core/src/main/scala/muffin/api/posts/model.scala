@@ -29,46 +29,45 @@ case class PostMetadata(reactions: Option[ReactionInfo])
 case class Props(attachments: List[Attachment] = Nil)
 
 case class Attachment(
-                       fallback: Option[String] = None,
-                       color: Option[String] = None, // TODO Make Id
-                       pretext: Option[String] = None,
-                       text: Option[String] = None,
-                       authorName: Option[String] = None,
-                       authorLink: Option[String] = None, // TODO Make URL
-                       authorIcon: Option[String] = None, // TODO Make URL
+                       fallback: Option[String],
+                       color: Option[String], // TODO Make Id
+                       pretext: Option[String],
+                       text: Option[String],
+                       authorName: Option[String],
+                       authorLink: Option[String], // TODO Make URL
+                       authorIcon: Option[String], // TODO Make URL
 
-                       title: Option[String] = None,
-                       titleLink: Option[String] = None, // TODO Make URL
+                       title: Option[String],
+                       titleLink: Option[String], // TODO Make URL
 
-                       fields: List[AttachmentField] = Nil,
-                       imageUrl: Option[String] = None, // TODO Make URL
-                       thumbUrl: Option[String] = None, // TODO Make URL
+                       fields: List[AttachmentField],
+                       imageUrl: Option[String], // TODO Make URL
+                       thumbUrl: Option[String], // TODO Make URL
 
-                       footer: Option[String] = None,
-                       footerIcon: Option[String] = None, // TODO Make URL
+                       footer: Option[String],
+                       footerIcon: Option[String], // TODO Make URL
 
-                       actions: List[Action] = Nil
+                       actions: List[Action]
                      )
 object Attachment {
   def apply(
-    color: Option[String],
-    pretext: Option[String],
-    text: Option[String],
-    authorName: Option[String],
-    authorLink: Option[String],
-    authorIcon: Option[String],
+    color: Option[String] = None,
+    pretext: Option[String] = None,
+    text: Option[String] = None,
+    authorName: Option[String] = None,
+    authorLink: Option[String] = None,
+    authorIcon: Option[String] = None,
+    title: Option[String] = None,
+    titleLink: Option[String] = None,
 
-    title: Option[String],
-    titleLink: Option[String],
+    fields: List[AttachmentField] = Nil,
+    imageUrl: Option[String] = None,
+    thumbUrl: Option[String] = None,
 
-    fields: List[AttachmentField],
-    imageUrl: Option[String],
-    thumbUrl: Option[String],
+    footer: Option[String] = None,
+    footerIcon: Option[String] = None,
 
-    footer: Option[String],
-    footerIcon: Option[String],
-
-    actions: List[Action]
+    actions: List[Action] = Nil
   ): Attachment =
     Attachment(
       fallback = text,
