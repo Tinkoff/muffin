@@ -49,6 +49,45 @@ case class Attachment(
 
                        actions: List[Action] = Nil
                      )
+object Attachment {
+  def apply(
+    color: Option[String],
+    pretext: Option[String],
+    text: Option[String],
+    authorName: Option[String],
+    authorLink: Option[String],
+    authorIcon: Option[String],
+
+    title: Option[String],
+    titleLink: Option[String],
+
+    fields: List[AttachmentField],
+    imageUrl: Option[String],
+    thumbUrl: Option[String],
+
+    footer: Option[String],
+    footerIcon: Option[String],
+
+    actions: List[Action]
+  ): Attachment =
+    Attachment(
+      fallback = text,
+      color,
+      pretext,
+      text,
+      authorName,
+      authorLink,
+      authorIcon,
+      title,
+      titleLink,
+      fields,
+      imageUrl,
+      thumbUrl,
+      footer,
+      footerIcon,
+      actions
+    )
+}
 
 case class AttachmentField(title: String, value: String, short: Boolean = false)
 
@@ -72,7 +111,6 @@ object Action {
 
 }
 
-
 case class Integration(url: String, context: String)
 
 enum Style:
@@ -82,4 +120,3 @@ enum DataSource:
   case Channels, Users
 
 case class SelectOption(text: String, value: String)
-
