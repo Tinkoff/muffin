@@ -602,7 +602,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       triggerId <- c.downField("trigger_id").as[String]
       dataSource <- c.downField("data_source").as[String]
       typ <- c.downField("type").as[String]
-      context <- c.downField("context").as[Json]
+      context = c.downField("context").as[Json]
     } yield RawAction(
       userId,
       userName,
@@ -614,7 +614,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       triggerId,
       dataSource,
       typ,
-      context
+      context.toOption
     )
 
   given UserFrom(using zone: ZoneId): Decoder[User] = (c: HCursor) =>
@@ -670,9 +670,10 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
 
   given IntegrationTo: Encoder[Integration] = i =>
     Json.obj(
-      "url" -> Json.fromString(i.url),
-      "context" -> parse(i.context).toOption
-        .getOrElse(Json.fromString(i.context))
+      List(
+        ("url" -> Json.fromString(i.url)).some,
+      i.context.map(ctx => "context" -> parse(ctx).toOption.getOrElse(Json.fromString(ctx)))
+      ).flatten*
     )
 
   given StyleTo: Encoder[Style] = (s: Style) =>
