@@ -2,6 +2,7 @@ package muffin.api.posts
 
 import muffin.api.reactions.ReactionInfo
 import muffin.predef.*
+import cats.syntax.all.given
 
 import java.time.LocalDateTime
 
@@ -110,7 +111,11 @@ object Action {
 
 }
 
-case class Integration(url: String, context: String)
+case class Integration(url: String, context: Option[String] = None)
+
+object Integration{
+  def apply(url: String, context: String): Integration = Integration(url, context.some)
+}
 
 enum Style:
   case Good, Warning, Danger, Default, Primary, Success

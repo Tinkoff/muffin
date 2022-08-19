@@ -35,14 +35,14 @@ case class RawAction[R](
   triggerId: String,
   dataSource: String,
   `type`: String,
-  context: R
+  context: Option[R]
 ) {
   def asTyped[F[_], T](implicit
     monad: MonadThrow[F],
     decoder: RawDecode[R, T]
   ): F[MessageAction[T]] = {
     MonadThrow[F]
-      .fromEither(decoder(context))
+      .fromEither(context.fold(Left(new Exception("can't convert from None")))(decoder(_)))
       .map(action =>
         MessageAction(
           userId,
