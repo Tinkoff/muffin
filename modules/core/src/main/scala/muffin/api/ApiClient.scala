@@ -58,7 +58,11 @@ class ApiClient[
     message: Option[String] = None,
     props: Option[Props] = None
   ): F[Post] =
-    postToChat(userId :: Nil, message, props)
+    for {
+      id <- botId
+      info <- direct(id :: userId :: Nil)
+      res <- postToChannel(info.id, message, props)
+    } yield res
 
   def postToChat(
     userIds: List[UserId],
@@ -67,15 +71,9 @@ class ApiClient[
   ): F[Post] =
     for {
       id <- botId
-      info <-
-        if (userIds.length > 1)
-          group(id :: userIds)
-        else
-          direct(id :: userIds)
-
+      info <- group(id :: userIds)
       res <- postToChannel(info.id, message, props)
     } yield res
-
 
   def postToChannel(channelId: ChannelId, message: Option[String] = None, props: Option[Props] = None): F[Post] =
     http.request(

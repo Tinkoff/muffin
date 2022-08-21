@@ -449,7 +449,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
           ("name" -> Json.fromString(value.name)).some,
           ("optional" -> Json.fromBoolean(value.optional)).some,
           value.helpText.map(l => ("help_text" -> Json.fromString(l))),
-          value.default.map(l => ("default" -> Json.fromBoolean(l))),
+          value.default.map(l => ("default" -> Json.fromString(l))),
           value.placeholder.map(l => ("placeholder" -> Json.fromString(l))),
           ("type" -> Json.fromString("bool")).some
         ).flatten*
@@ -463,7 +463,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
             .encodeList[SelectOption]
             .apply(value.options)).some,
           value.helpText.map(l => ("help_text" -> Json.fromString(l))),
-          value.default.map(l => ("default" -> Json.fromBoolean(l))),
+          value.default.map(l => ("default" -> Json.fromString(l))),
           ("type" -> Json.fromString("radio")).some
         ).flatten*
       )
@@ -547,6 +547,10 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
         "response_type" -> Encoder[ResponseType].apply(responseType),
         "attachments" -> Encoder.encodeList[Attachment].apply(attachments)
       )
+    case AppResponse.Errors(map) =>
+      Json.obj(
+        "errors" -> Encoder.encodeMap[String, String].apply(map)
+      )
   }
 
   given ResponseTypeTo: Encoder[ResponseType] = {
@@ -598,7 +602,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       triggerId <- c.downField("trigger_id").as[String]
       dataSource <- c.downField("data_source").as[String]
       typ <- c.downField("type").as[String]
-      context <- c.downField("context").as[Json]
+      context = c.downField("context").as[Json]
     } yield RawAction(
       userId,
       userName,
@@ -610,7 +614,7 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
       triggerId,
       dataSource,
       typ,
-      context
+      context.toOption
     )
 
   given UserFrom(using zone: ZoneId): Decoder[User] = (c: HCursor) =>
@@ -666,9 +670,10 @@ object codec extends CodecSupport[Json, Encoder, Decoder] {
 
   given IntegrationTo: Encoder[Integration] = i =>
     Json.obj(
-      "url" -> Json.fromString(i.url),
-      "context" -> parse(i.context).toOption
-        .getOrElse(Json.fromString(i.context))
+      List(
+        ("url" -> Json.fromString(i.url)).some,
+      i.context.map(ctx => "context" -> parse(ctx).toOption.getOrElse(Json.fromString(ctx)))
+      ).flatten*
     )
 
   given StyleTo: Encoder[Style] = (s: Style) =>
