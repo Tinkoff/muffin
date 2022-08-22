@@ -29,6 +29,10 @@ case class PostMetadata(reactions: Option[ReactionInfo])
 
 case class Props(attachments: List[Attachment] = Nil)
 
+object Props {
+  def empty: Option[Props] = Props(Nil).some
+}
+
 case class Attachment(
                        fallback: Option[String],
                        color: Option[String], // TODO Make Id
