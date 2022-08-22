@@ -54,23 +54,26 @@ class ApiClient[
   private def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 
   def postToDirect(
-                    userId: UserId,
-                    message: Option[String] = None,
-                    props: Option[Props] = None
-                  ): F[Post] =
-    postToChat(userId :: Nil, message, props)
-
-  def postToChat(
-                  userIds: List[UserId],
-                  message: Option[String] = None,
-                  props: Option[Props] = None
-                ): F[Post] =
+    userId: UserId,
+    message: Option[String] = None,
+    props: Option[Props] = None
+  ): F[Post] =
     for {
       id <- botId
-      info <- direct(id :: userIds)
+      info <- direct(id :: userId :: Nil)
       res <- postToChannel(info.id, message, props)
     } yield res
 
+  def postToChat(
+    userIds: List[UserId],
+    message: Option[String] = None,
+    props: Option[Props] = None
+  ): F[Post] =
+    for {
+      id <- botId
+      info <- group(id :: userIds)
+      res <- postToChannel(info.id, message, props)
+    } yield res
 
   def postToChannel(channelId: ChannelId, message: Option[String] = None, props: Option[Props] = None): F[Post] =
     http.request(
@@ -81,6 +84,15 @@ class ApiClient[
         .field("message", message)
         .field("props", props)
         .build,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+
+  def group(userIds: List[UserId]): F[ChannelInfo] =
+    http.request(
+      cfg.baseUrl + "/channels/group",
+      Method.Post,
+      Body.Json(userIds),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 

@@ -20,7 +20,6 @@ trait Posts[F[_]] {
                   message: Option[String] = None,
                   props: Option[Props] = None
                 ): F[Post]
-
   def postToChannel(channelId: ChannelId,
                     message: Option[String] = None,
                     props: Option[Props] = None
