@@ -605,6 +605,6 @@ class ApiClient[
 
 object ApiClient {
   private def params(params: (String, Option[String])*): String = {
-    params.toMap.map(p => s"${p._1}=${p._2}").mkString("?", "&", "")
+    params.toMap.collect{case (key, Some(value)) => s"${key}=${value}"}.mkString("?", "&", "")
   }
 }
