@@ -117,6 +117,8 @@ object DialogSubmissionExtractor {
   given DialogSubmissionExtractor[Boolean] = partial(_) {
     case DialogSubmissionValue.Bool(value) =>
       value.some
+    case DialogSubmissionValue.Str(value) =>
+      value.toBooleanOption
   }
 
   given DialogSubmissionExtractor[Int] = partial(_) {
