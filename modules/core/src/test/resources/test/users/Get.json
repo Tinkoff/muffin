@@ -1,0 +1,79 @@
+[
+  {
+    "request": {
+      "params": {
+        "page": "0",
+        "per_page": "1",
+        "active": "true"
+      }
+    },
+    "response": [
+      {
+        "id": "mitrfpqcqpn89nxd1ryrk6s41o",
+        "create_at": 1651697926064,
+        "update_at": 1653415145914,
+        "delete_at": 1653415145914,
+        "username": "030503030503",
+        "auth_data": "",
+        "auth_service": "",
+        "email": "qwe@qwe",
+        "nickname": "",
+        "first_name": "",
+        "last_name": "",
+        "position": "",
+        "roles": "system_user",
+        "locale": "en",
+        "timezone": {
+          "automaticTimezone": "",
+          "manualTimezone": "",
+          "useAutomaticTimezone": "true"
+        },
+        "disable_welcome_email": false
+      }
+    ]
+  },
+  {
+    "request": {
+      "params": {
+        "page": "1",
+        "per_page": "1",
+        "active": "true"
+      }
+    },
+    "response": [
+      {
+        "id": "mitrfpqcqpn89nxd1ryrk6s41o",
+        "create_at": 1651697926064,
+        "update_at": 1653415145914,
+        "delete_at": 1653415145914,
+        "username": "030503030503",
+        "auth_data": "",
+        "auth_service": "",
+        "email": "qwe@qwe",
+        "nickname": "",
+        "first_name": "",
+        "last_name": "",
+        "position": "",
+        "roles": "system_user",
+        "locale": "en",
+        "timezone": {
+          "automaticTimezone": "",
+          "manualTimezone": "",
+          "useAutomaticTimezone": "true"
+        },
+        "disable_welcome_email": false
+      }
+    ]
+  },
+  {
+    "request": {
+      "params": {
+        "page": "2",
+        "per_page": "1",
+        "active": "true"
+      }
+    },
+    "response": [
+    ]
+  }
+]

@@ -77,6 +77,12 @@ object codec extends CodecSupport[Encoder, Decoder] {
 
   given AnyFrom: io.circe.Decoder[Any] = UnitFrom.asInstanceOf[Decoder[Any]]
 
+  given MapTo[K: Encoder, V: Encoder]: Encoder[Map[K, V]] =
+    map => {
+      given KeyEncoder[K] = Encoder[K].apply(_).noSpaces
+      Encoder.encodeMap[K, V].apply(map)
+    }
+
   given OptionTo[A: Encoder]: io.circe.Encoder[Option[A]] = Encoder.encodeOption[A]
 
   given OptionFrom[A: Decoder]: io.circe.Decoder[Option[A]] = Decoder.decodeOption[A]
@@ -111,9 +117,9 @@ object codec extends CodecSupport[Encoder, Decoder] {
       CirceJsonBuilder(fun :: funs)
     }
 
-    def build[X >: T]: Encoder[X] = { (a: X) =>
-      Json.fromJsonObject(funs.foldLeft(JsonObject.empty)((acc, i) => i(a.asInstanceOf[T], acc)))
-    }
+    def build: Encoder[T] =
+      (a: T) =>
+        Json.fromJsonObject(funs.foldLeft(JsonObject.empty)((acc, i) => i(a, acc)))
 
   }
 

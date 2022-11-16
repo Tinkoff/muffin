@@ -64,6 +64,8 @@ lazy val `muffin-core` = project
   .settings(commonSettings)
   .settings(libraryDependencies ~= (_.map(_.excludeAll(ExclusionRule(organization = "org.scala-lang.modules", name = "scala-collection-compat_2.13")))))
 
+val TestAndCompile = config("test->test;compile->compile")
+
 lazy val integration = modules / "integration"
 
 lazy val `muffin-sttp-http-interop` = project
@@ -84,13 +86,12 @@ lazy val `muffin-zio-http-interop` = project
 lazy val `muffin-circe-json-interop` = project
   .in(integration / "circe-json-interop")
   .settings(commonSettings)
-  .dependsOn(`muffin-core`)
+  .dependsOn(`muffin-core` % TestAndCompile)
 
 lazy val `muffin-zio-json-interop` = project
   .in(integration / "zio-json-interop")
   .settings(commonSettings)
-  .dependsOn(`muffin-core`)
-
+  .dependsOn(`muffin-core` % TestAndCompile)
 
 lazy val examples = modules / "examples"
 

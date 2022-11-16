@@ -1,0 +1,36 @@
+[
+  {
+    "request": {
+      "body": {
+        "id": "34b52dfdd69f485bb0e70d1879",
+        "props": {
+          "attachments": []
+        },
+        "message": "text"
+      }
+    },
+    "response": {
+      "id": "34b52dfdd69f485bb0e70d1879",
+      "create_at": 1668581344168,
+      "update_at": 1668581360120,
+      "edit_at": 1668581360119,
+      "delete_at": 0,
+      "is_pinned": false,
+      "user_id": "65wezbrt3ibw8pect7bc4zepqh",
+      "channel_id": "4kzqbb15iprsxx61imwo3uxakc",
+      "root_id": "",
+      "original_id": "",
+      "message": "text",
+      "type": "",
+      "props": {
+        "disable_group_highlight": true
+      },
+      "hashtags": "",
+      "pending_post_id": "",
+      "reply_count": 0,
+      "last_reply_at": 0,
+      "participants": null,
+      "metadata": {}
+    }
+  }
+]

@@ -2,6 +2,7 @@
 
 # Muffin
 
+[![Build](https://github.com/tinkoff/muffin/workflows/CI/badge.svg)](https://github.com/Tinkoff/muffin/actions?query=workflow%3ACI+branch%3Amaster)
 ----
 
 Mattermost v4 API client for Scala 3.
@@ -24,7 +25,7 @@ libraryDependencies += "ru.tinkoff" %% "muffin-sttp-http-interop" % "latest vers
 libraryDependencies += "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % "3.7.6"
 ```
 
-3. Program example
+3. Full example
 
 ```scala
 import java.time.{LocalDateTime, ZoneId}
@@ -72,6 +73,8 @@ object Application extends IOApp.Simple {
 }
 ```
 
+More examples [here](https://github.com/little-inferno/muffin/tree/oss/modules/examples)
+
 # Supported integrations
 
 ## Json integrations
@@ -79,7 +82,7 @@ object Application extends IOApp.Simple {
 ### [circe](https://github.com/circe/circe)
 
 ```sbt
-libraryDependencies += "space.littleinferno" %% "muffin-circe-json-interop" % "latest version in badge"
+libraryDependencies += "ru.tinkoff" %% "muffin-circe-json-interop" % "latest version in badge"
 ```
 
 ```scala
@@ -89,7 +92,7 @@ import muffin.interop.circe.codec.given
 ### [zio-json](https://github.com/zio/zio-json)
 
 ```sbt
-libraryDependencies += "space.littleinferno" %% "muffin-zio-json-interop" % "latest version in badge"
+libraryDependencies += "ru.tinkoff" %% "muffin-zio-json-interop" % "latest version in badge"
 ```
 
 ```scala
@@ -101,7 +104,7 @@ import muffin.interop.zio.codec.given
 ### [http4s](https://github.com/http4s/http4s)
 
 ```sbt
-libraryDependencies += "space.littleinferno" %% "muffin-http4s-http-interop" % "latest version in badge"
+libraryDependencies += "ru.tinkoff" %% "muffin-http4s-http-interop" % "latest version in badge"
 ```
 
 ```scala
@@ -123,7 +126,7 @@ val server = EmberServerBuilder
 ### [zio-http](https://github.com/dream11/zio-http)
 
 ```sbt
-libraryDependencies += "space.littleinferno" %% "muffin-zio-http-interop" % "latest version in badge"
+libraryDependencies += "ru.tinkoff" %% "muffin-zio-http-interop" % "latest version in badge"
 ```
 
 ```scala
@@ -144,7 +147,7 @@ val server = Server.start(8080, ZioServer.routes(router, codec))
 ### [sttp](https://github.com/softwaremill/sttp)
 
 ```sbt
-libraryDependencies += "space.littleinferno" %% "muffin-sttp-http-interop" % "latest version in badge"
+libraryDependencies += "ru.tinkoff" %% "muffin-sttp-http-interop" % "latest version in badge"
 ```
 
 ```scala

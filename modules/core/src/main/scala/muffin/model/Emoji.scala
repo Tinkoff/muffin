@@ -3,6 +3,7 @@ package muffin.model
 import java.io.File
 import java.time.LocalDateTime
 
+import cats.Show
 import fs2.Stream
 
 import muffin.api.*
@@ -10,9 +11,7 @@ import muffin.api.*
 opaque type EmojiId = String
 
 object EmojiId {
-
   def apply(id: String): EmojiId = id
-
 }
 
 case class EmojiInfo(
@@ -25,10 +24,16 @@ case class EmojiInfo(
 )
 
 enum EmojiSorting {
-
   case None
+  case Name
+}
 
-  case Name(text: String)
+object EmojiSorting {
+
+  given Show[EmojiSorting] = {
+    case EmojiSorting.None => ""
+    case EmojiSorting.Name => "name"
+  }
 
 }
 

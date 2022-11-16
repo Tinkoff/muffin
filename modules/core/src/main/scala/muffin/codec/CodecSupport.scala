@@ -3,6 +3,7 @@ package muffin.codec
 import java.time.*
 import scala.collection.StringParsers
 import scala.deriving.Mirror
+import scala.reflect.ClassTag
 
 import cats.arrow.FunctionK
 import cats.syntax.all.{*, given}
@@ -36,7 +37,7 @@ trait JsonRequestBuilder[T, To[_]]() { self =>
 
   def field[X: To](fieldName: String, fieldValue: T => X): JsonRequestBuilder[T, To]
 
-  def build[X >: T]: To[X]
+  def build: To[T]
 }
 
 trait JsonResponseBuilder[From[_], Params <: Tuple] {
@@ -350,9 +351,9 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .build
 
   given DialogElementTo: To[Element] =
-    seal {
+    seal[Element] {
       case value: Element.Text     =>
-        json
+        json[Element]
           .field("display_name", value.displayName)
           .field("name", value.name)
           .field("subtype", value.subtype)
@@ -364,7 +365,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
           .field("type", "text")
           .build
       case value: Element.Textarea =>
-        json
+        json[Element]
           .field("display_name", value.displayName)
           .field("name", value.name)
           .field("subtype", value.subtype)
@@ -376,7 +377,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
           .field("type", "textarea")
           .build
       case value: Element.Select   =>
-        json
+        json[Element]
           .field("display_name", value.displayName)
           .field("name", value.name)
           .field("data_source", value.dataSource)
@@ -388,7 +389,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
           .field("type", "select")
           .build
       case value: Element.Checkbox =>
-        json
+        json[Element]
           .field("display_name", value.displayName)
           .field("name", value.name)
           .field("optional", value.optional)
@@ -398,7 +399,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
           .field("type", "bool")
           .build
       case value: Element.Radio    =>
-        json
+        json[Element]
           .field("display_name", value.displayName)
           .field("name", value.name)
           .field("options", value.options)
@@ -490,7 +491,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
           .field("response_type", responseType)
           .field[List[Attachment[T]]]("attachments", attachments)
           .build
-      case AppResponse.Errors(map)                              => json.field("errors", map).build
+      case AppResponse.Errors(map)                              => json[AppResponse[T]].field("errors", map).build
     }
 
   given ResponseTypeTo: To[ResponseType] =
@@ -515,9 +516,9 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       }
 
   given ActionTo[T: To]: To[Action[T]] =
-    seal {
+    seal[Action[T]] {
       case Action.Button(id, name, integration, style)               =>
-        json
+        json[Action[T]]
           .field("id", id)
           .field("name", name)
           .field[Integration[T]]("integration", integration)
@@ -525,7 +526,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
           .field("type", "button")
           .build
       case Action.Select(id, name, integration, options, dataSource) =>
-        json
+        json[Action[T]]
           .field("id", id)
           .field("name", name)
           .field[Integration[T]]("integration", integration)
@@ -553,9 +554,8 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given IntegrationTo[T: To]: To[Integration[T]] =
     seal[Integration[T]] {
-      case Integration.Url(url)          => json[Integration.Url].field("url", url).build
-      case Integration.Context(url, ctx) =>
-        json[Integration.Context[T]].field("url", url).field[T]("context", ctx).build
+      case Integration.Url(url)          => json[Integration[T]].field("url", url).build
+      case Integration.Context(url, ctx) => json[Integration[T]].field("url", url).field[T]("context", ctx).build
     }
 
   given IntegrationFrom[T: From]: From[Integration[T]] =
@@ -613,10 +613,10 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
         case t => Attachment[T].apply.tupled(t)
       }
 
-  given AttachmentFieldTo: To[AttachmentField] =
+  protected given AttachmentFieldTo: To[AttachmentField] =
     json[AttachmentField].field("title", _.title).field("value", _.value).field("short", _.short).build
 
-  given AttachmentFieldFrom: From[AttachmentField] =
+  protected given AttachmentFieldFrom: From[AttachmentField] =
     parsing
       .field[Boolean]("short")
       .field[String]("value")
@@ -670,4 +670,6 @@ trait PrimitivesSupport[To[_], From[_]] {
   given AnyTo: To[Any]
 
   given AnyFrom: From[Any]
+
+  given MapTo[K: To, V: To]: To[Map[K, V]]
 }

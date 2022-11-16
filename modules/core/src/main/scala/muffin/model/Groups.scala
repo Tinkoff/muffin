@@ -20,9 +20,7 @@ case class Group(
 sealed trait CreateGroup
 
 object CreateGroup {
-
   case class Custom(name: String, displayName: String)
-
 }
 
 case class GroupStats(groupId: GroupId, totalMemberCount: Int)

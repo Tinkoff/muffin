@@ -1,5 +1,8 @@
-# Created by https://www.toptal.com/developers/gitignore/api/scala,sbt,intellij+all,visualstudiocode,macos,windows
-# Edit at https://www.toptal.com/developers/gitignore?templates=scala,sbt,intellij+all,visualstudiocode,macos,windows
+# Created by https://www.toptal.com/developers/gitignore/api/scala,sbt,intellij+all,visualstudiocode,macos,windows,metals,bloop
+# Edit at https://www.toptal.com/developers/gitignore?templates=scala,sbt,intellij+all,visualstudiocode,macos,windows,metals,bloop
+
+### Bloop ###
+.bloop/
 
 ### Intellij+all ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -80,10 +83,6 @@ fabric.properties
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
 
-### Intellij+all Patch ###
-# Ignore everything but code style settings and run configurations
-# that are supposed to be shared within teams.
-
 .idea/*
 
 ### macOS ###
@@ -118,6 +117,10 @@ Temporary Items
 ### macOS Patch ###
 # iCloud generated files
 *.icloud
+
+### Metals ###
+.metals/
+project/**/metals.sbt
 
 ### SBT ###
 # Simple Build Tool
@@ -182,4 +185,4 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/scala,sbt,intellij+all,visualstudiocode,macos,windows
+# End of https://www.toptal.com/developers/gitignore/api/scala,sbt,intellij+all,visualstudiocode,macos,windows,metals,bloop

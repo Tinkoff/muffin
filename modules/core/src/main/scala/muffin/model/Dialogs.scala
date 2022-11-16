@@ -11,19 +11,12 @@ case class Dialog[T](
 )
 
 enum TextSubtype {
-
   case Text
-
   case Email
-
   case Number
-
   case Password
-
   case Tel
-
   case Url
-
 }
 
 sealed trait Element

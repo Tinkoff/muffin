@@ -1,49 +1,29 @@
 package muffin.model
 
-opaque type Login = String
+import cats.Show
 
-object Login {
-
-  def apply(login: String): Login = login
-
+trait ApplyOpaque[T, U <: T] {
+  def apply(value: U): T = value
 }
+
+trait StringShowOpaque[U <: String] {
+  given Show[U] = identity(_)
+}
+
+opaque type Login = String
+object Login extends ApplyOpaque[Login, String] with StringShowOpaque[Login]
 
 opaque type UserId = String
-
-object UserId {
-
-  def apply(id: String): UserId = id
-
-}
+object UserId extends ApplyOpaque[UserId, String] with StringShowOpaque[UserId]
 
 opaque type GroupId = String
-
-object GroupId {
-
-  def apply(id: String): GroupId = id
-
-}
+object GroupId extends ApplyOpaque[GroupId, String] with StringShowOpaque[GroupId]
 
 opaque type TeamId = String
-
-object TeamId {
-
-  def apply(id: String): TeamId = id
-
-}
+object TeamId extends ApplyOpaque[TeamId, String] with StringShowOpaque[TeamId]
 
 opaque type ChannelId = String
-
-object ChannelId {
-
-  def apply(d: String): ChannelId = d
-
-}
+object ChannelId extends ApplyOpaque[ChannelId, String] with StringShowOpaque[ChannelId]
 
 opaque type MessageId = String
-
-object MessageId {
-
-  def apply(id: String): MessageId = id
-
-}
+object MessageId extends ApplyOpaque[MessageId, String] with StringShowOpaque[MessageId]

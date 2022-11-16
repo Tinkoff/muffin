@@ -104,9 +104,7 @@ trait MessageSyntax {
   }
 
   object AttachmentQuery {
-
     def apply(): AttachmentQuery[Nothing] = new AttachmentQuery(Attachment[Nothing]())
-
   }
 
 }
@@ -135,9 +133,7 @@ trait DialogSyntax {
   }
 
   object DialogQuery {
-
     def apply[T](title: String, state: T): DialogQuery[T] = new DialogQuery(Dialog(title = title, state = state))
-
   }
 
 }

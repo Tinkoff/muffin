@@ -1,0 +1,33 @@
+[
+  {
+    "request": {
+      "body": [
+        "97qfjny8pbgrbrjhnre8sxfe1y"
+      ]
+    },
+    "response": [
+      {
+        "id": "97qfjny8pbgrbrjhnre8sxfe1y",
+        "create_at": 1667825685493,
+        "update_at": 1667825691936,
+        "delete_at": 0,
+        "username": "danil",
+        "auth_data": "",
+        "auth_service": "",
+        "email": "qwe@qwe",
+        "nickname": "",
+        "first_name": "",
+        "last_name": "",
+        "position": "",
+        "roles": "system_admin system_user",
+        "locale": "en",
+        "timezone": {
+          "automaticTimezone": "",
+          "manualTimezone": "",
+          "useAutomaticTimezone": "true"
+        },
+        "disable_welcome_email": false
+      }
+    ]
+  }
+]

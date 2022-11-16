@@ -18,7 +18,13 @@ class SttpClient[F[_]: MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any],
 
   import codec.given
 
-  def request[In: To, Out: From](url: String, method: Method, body: Body[In], headers: Map[String, String]): F[Out] = {
+  def request[In: To, Out: From](
+      url: String,
+      method: Method,
+      body: Body[In],
+      headers: Map[String, String],
+      params: Params => Params
+  ): F[Out] = {
     val req = basicRequest
       .method(
         method match {
@@ -28,7 +34,7 @@ class SttpClient[F[_]: MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any],
           case Method.Delete => SMethod.DELETE
           case Method.Patch  => SMethod.PATCH
         },
-        Uri.unsafeParse(url)
+        Uri.unsafeParse(url + params(Params.Empty).mkString)
       )
       .headers(headers)
       .mapResponse(_.flatMap(response => summon[Decode[Out]].apply(response).left.map(_.getMessage)))

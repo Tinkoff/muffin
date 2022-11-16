@@ -1,3 +1,3 @@
 package muffin.api
 
-case class ClientConfig(baseUrl: String, auth: String, botName: String, serviceUrl: String)
+case class ClientConfig(baseUrl: String, auth: String, botName: String, serviceUrl: String, perPage: Int = 60)

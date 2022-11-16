@@ -32,9 +32,7 @@ case class PostMetadata(reactions: Option[ReactionInfo])
 case class Props[T](attachments: List[Attachment[T]] = Nil)
 
 object Props {
-
   def empty: Props[Nothing] = Props(Nil)
-
 }
 
 case class Attachment[+T](
@@ -58,13 +56,11 @@ case class Attachment[+T](
 case class AttachmentField(title: String, value: String, short: Boolean = false)
 
 sealed trait Action[+T] {
-
   val id: String
 
   val name: String
 
   val integration: Integration[T]
-
 }
 
 object Action {
@@ -83,35 +79,22 @@ object Action {
 }
 
 enum Integration[+T] {
-
   case Url(url: String) extends Integration[Nothing]
-
   case Context[T](url: String, ctx: T) extends Integration[T]
-
 }
 
 enum Style {
-
   case Good
-
   case Warning
-
   case Danger
-
   case Default
-
   case Primary
-
   case Success
-
 }
 
 enum DataSource {
-
   case Channels
-
   case Users
-
 }
 
 case class SelectOption(text: String, value: String)

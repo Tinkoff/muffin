@@ -15,27 +15,17 @@ case class UserStatus(
 )
 
 enum StatusUser {
-
   case Online
-
   case Offline
-
   case Away
-
   case Dnd(time: LocalDateTime)
-
 }
 
 enum RawStatusUser {
-
   case Online
-
   case Offline
-
   case Away
-
   case Dnd
-
 }
 
 object StatusUser {
@@ -54,35 +44,21 @@ object StatusUser {
 case class CustomStatus(emoji: String, text: Option[String], duration: Option[CustomStatusDuration])
 
 enum RawCustomStatusDuration {
-
   case ThirtyMinutes
-
   case OneHour
-
   case FourHours
-
   case Today
-
   case ThisWeek
-
   case DateAndTime
-
 }
 
 enum CustomStatusDuration {
-
   case ThirtyMinutes
-
   case OneHour
-
   case FourHours
-
   case Today
-
   case ThisWeek
-
   case DateAndTime(duration: LocalDateTime)
-
 }
 
 object CustomStatusDuration {

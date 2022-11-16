@@ -7,7 +7,6 @@ import cats.effect.Concurrent
 import cats.syntax.all.given
 import fs2.*
 
-import muffin.api.ApiClient.params
 import muffin.codec.*
 import muffin.http.*
 import muffin.model.*
@@ -16,7 +15,6 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     codec: CodecSupport[To, From]
 )(using ZoneId) {
 
-  import ApiClient.*
   import codec.{*, given}
 
   def command(name: String): String = cfg.serviceUrl + s"/commands/$name"
@@ -34,7 +32,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   ): F[Post[T]] =
     for {
       id   <- botId
-      info <- direct(id :: userId :: Nil)
+      info <- channel(id :: userId :: Nil)
       res  <- postToChannel(info.id, message, props)
     } yield res
 
@@ -45,7 +43,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   ): F[Post[T]] =
     for {
       id   <- botId
-      info <- group(id :: userIds)
+      info <- channel(id :: userIds)
       res  <- postToChannel(info.id, message, props)
     } yield res
 
@@ -61,16 +59,24 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def group(userIds: List[UserId]): F[ChannelInfo] =
-    http.request(
-      cfg.baseUrl + "/channels/group",
-      Method.Post,
-      Body.Json(userIds),
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    )
+  def channel(userIds: List[UserId]): F[ChannelInfo] =
+    if (userIds.size == 2)
+      http.request[List[UserId], ChannelInfo](
+        cfg.baseUrl + "/channels/direct",
+        Method.Post,
+        Body.Json(userIds),
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
+    else
+      http.request[List[UserId], ChannelInfo](
+        cfg.baseUrl + "/channels/group",
+        Method.Post,
+        Body.Json(userIds),
+        Map("Authorization" -> s"Bearer ${cfg.auth}")
+      )
 
   def createEphemeralPost(userId: UserId, channelId: ChannelId, message: String): F[Post[Nothing]] =
-    http.request(
+    http.request[String, Post[Nothing]](
       cfg.baseUrl + "/posts/ephemeral",
       Method.Post,
       jsonRaw.field("user_id", userId).field("channel_id", channelId).field("message", message).build,
@@ -79,7 +85,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def getPost[T: From](postId: MessageId): F[Post[T]] =
     http.request[Unit, Post[T]](
-      cfg.baseUrl + s"posts/$postId",
+      cfg.baseUrl + s"/posts/$postId",
       Method.Get,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
@@ -87,13 +93,17 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def deletePost(postId: MessageId): F[Unit] =
     http.request[Unit, Unit](
-      cfg.baseUrl + s"posts/$postId",
+      cfg.baseUrl + s"/posts/$postId",
       Method.Delete,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def updatePost[T: To: From](postId: MessageId, message: Option[String] = None, props: Props[T]): F[Post[T]] =
+  def updatePost[T: To: From](
+      postId: MessageId,
+      message: Option[String] = None,
+      props: Props[T] = Props.empty
+  ): F[Post[T]] =
     http.request(
       cfg.baseUrl + s"/posts/$postId",
       Method.Put,
@@ -101,7 +111,11 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def patchPost[T: To: From](postId: MessageId, message: Option[String] = None, props: Props[T]): F[Post[T]] =
+  def patchPost[T: To: From](
+      postId: MessageId,
+      message: Option[String] = None,
+      props: Props[T] = Props.empty
+  ): F[Post[T]] =
     http.request(
       cfg.baseUrl + s"/posts/$postId/patch",
       Method.Put,
@@ -110,10 +124,18 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getPostsByIds(messageId: List[MessageId]): F[List[Post[Nothing]]] =
-    http.request(
+    http.request[List[MessageId], List[Post[Nothing]]](
       cfg.baseUrl + s"/posts/ids",
       Method.Put,
       Body.Json(messageId),
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
+  def performAction(postId: MessageId, actionId: String): F[Unit] =
+    http.request[Unit, Unit](
+      cfg.baseUrl + s"/posts/$postId/actions/$actionId",
+      Method.Post,
+      Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
@@ -126,13 +148,39 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
+  def submitDialog[T: To](
+      url: String,
+      channelId: ChannelId,
+      teamId: TeamId,
+      submission: Map[String, String],
+      state: T,
+      callbackId: Option[String],
+      cancelled: Boolean = false
+  ): F[Unit] =
+    http.request(
+      cfg.baseUrl + "/actions/dialogs/submit",
+      Method.Post,
+      jsonRaw
+        .field("url", url)
+        .field("channel_id", channelId)
+        .field("team_id", teamId)
+        .field("submission", submission)
+        .field("callback_id", callbackId)
+        .field("state", state)
+        .field("cancelled", cancelled)
+        .build,
+      Map("Authorization" -> s"Bearer ${cfg.auth}")
+    )
+
   def members(channelId: ChannelId): Stream[F, ChannelMember] = {
     def single(page: Int): F[List[ChannelMember]] =
       http.request[Unit, List[ChannelMember]](
-        cfg.baseUrl + s"/channels/$channelId/members?page=$page",
+        cfg.baseUrl + s"/channels/$channelId/members",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("page", page)
+          .withParam("per_page", cfg.perPage)
       )
 
     Stream
@@ -146,14 +194,6 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       }
       .flatMap(Stream.emits)
   }
-
-  def direct(userIds: List[UserId]): F[ChannelInfo] =
-    http.request(
-      cfg.baseUrl + "/channels/direct",
-      Method.Post,
-      Body.Json(userIds),
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
-    )
 
   def getChannelByName(teamId: TeamId, name: String): F[ChannelInfo] =
     http.request[Unit, ChannelInfo](
@@ -180,10 +220,13 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   def getEmojis(sorting: EmojiSorting = EmojiSorting.None): Stream[F, EmojiInfo] = {
     def single(page: Int) =
       http.request[Unit, List[EmojiInfo]](
-        cfg.baseUrl + s"/emoji?page=$page&sort=$sorting",
+        cfg.baseUrl + "/emoji",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("page", page)
+          .withParam("per_page", cfg.perPage)
+          .withParam("sort", sorting)
       )
 
     Stream
@@ -198,7 +241,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       .flatMap(Stream.emits)
   }
 
-  def getEmoji(emojiId: EmojiId): F[EmojiInfo] =
+  def getEmojiById(emojiId: EmojiId): F[EmojiInfo] =
     http.request[Unit, EmojiInfo](
       cfg.baseUrl + s"/emoji/$emojiId",
       Method.Get,
@@ -206,9 +249,9 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def deleteEmoji(emojiId: EmojiId): F[EmojiInfo] =
-    http.request[Unit, EmojiInfo](
-      cfg.baseUrl + s"/emoji/name/$emojiId",
+  def deleteEmoji(emojiId: EmojiId): F[Unit] =
+    http.request[Unit, Unit](
+      cfg.baseUrl + s"/emoji/$emojiId",
       Method.Delete,
       Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
@@ -232,10 +275,11 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def autocompleteEmoji(name: String): F[List[EmojiInfo]] =
     http.request[Unit, List[EmojiInfo]](
-      cfg.baseUrl + s"/emoji/autocomplete?name=$name",
+      cfg.baseUrl + s"/emoji/autocomplete",
       Method.Get,
       Body.Empty,
-      Map("Authorization" -> s"Bearer ${cfg.auth}")
+      Map("Authorization" -> s"Bearer ${cfg.auth}"),
+      _.withParam("name", name)
     )
 
   def createReaction(userId: UserId, postId: MessageId, emojiName: String): F[ReactionInfo] =
@@ -263,28 +307,42 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def bulkReactions(messages: List[MessageId]): F[Map[String, List[ReactionInfo]]] =
-    http.request(
+    http.request[List[MessageId], Map[String, List[ReactionInfo]]](
       cfg.baseUrl + s"/posts/ids/reactions",
       Method.Post,
       Body.Json(messages),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def users(options: GetUserOptions): Stream[F, User] = {
+//  def userTeams(userId: UserId): F[List[Team]] =
+//    http.request[Unit, List[Team]](
+//      cfg.baseUrl + s"/users/$userId/teams",
+//      Method.Get,
+//      Body.Empty,
+//      Map("Authorization" -> s"Bearer ${cfg.auth}")
+//    )
+
+  def users(
+      inTeam: Option[TeamId] = None,
+      notInTeam: Option[TeamId] = None,
+      inChannel: Option[ChannelId] = None,
+      notInChannel: Option[ChannelId] = None,
+      active: Option[Boolean] = None
+  ): Stream[F, User] = {
     def single(page: Int): F[List[User]] =
       http.request[Unit, List[User]](
         cfg.baseUrl +
-          s"/users${params(
-              "page"           -> page.toString.some,
-              "in_team"        -> options.inTeam.map(_.toString),
-              "not_in_team"    -> options.notInTeam.map(_.toString),
-              "in_channel"     -> options.inChannel.map(_.toString),
-              "not_in_channel" -> options.notInChannel.map(_.toString),
-              "active"         -> options.active.map(_.toString)
-            )}",
+          s"/users",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("page", page)
+          .withParam("per_page", cfg.perPage)
+          .withParam("in_team", inTeam)
+          .withParam("not_in_team", notInTeam)
+          .withParam("in_channel", inChannel)
+          .withParam("not_in_channel", notInChannel)
+          .withParam("active", active)
       )
 
     Stream
@@ -299,19 +357,19 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       .flatMap(Stream.emits)
   }
 
-  def usersById(userIds: List[UserId]): F[List[User]] =
-    http.request(
-      cfg.baseUrl + s"/users/ids",
-      Method.Post,
-      Body.Json(userIds),
+  def user(userId: UserId): F[User] =
+    http.request[Unit, User](
+      cfg.baseUrl + s"/users/$userId",
+      Method.Get,
+      Body.Empty,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def usersByUsername(users: List[String]): F[List[User]] =
-    http.request(
-      cfg.baseUrl + s"/users/usernames",
+  def usersById(userIds: List[UserId]): F[List[User]] =
+    http.request[List[UserId], List[User]](
+      cfg.baseUrl + s"/users/ids",
       Method.Post,
-      Body.Json(users),
+      Body.Json(userIds),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
@@ -323,11 +381,11 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def user(userId: UserId): F[User] =
-    http.request[Unit, User](
-      cfg.baseUrl + s"/users/$userId",
-      Method.Get,
-      Body.Empty,
+  def usersByUsername(users: List[String]): F[List[User]] =
+    http.request[List[String], List[User]](
+      cfg.baseUrl + s"/users/usernames",
+      Method.Post,
+      Body.Json(users),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
@@ -357,7 +415,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def saveUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] =
-    http.request(
+    http.request[List[Preference], Unit](
       cfg.baseUrl + s"/users/$userId/preferences",
       Method.Put,
       Body.Json(preferences),
@@ -365,7 +423,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def deleteUserPreference(userId: UserId, preferences: List[Preference]): F[Unit] =
-    http.request(
+    http.request[List[Preference], Unit](
       cfg.baseUrl + s"/users/$userId/preferences/delete",
       Method.Post,
       Body.Json(preferences),
@@ -383,7 +441,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getUserStatuses(users: List[UserId]): F[List[UserStatus]] =
-    http.request(
+    http.request[List[UserId], List[UserStatus]](
       cfg.baseUrl + s"/users/status/ids",
       Method.Post,
       Body.Json(users),
@@ -391,7 +449,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def updateUserStatus(userId: UserId, statusUser: StatusUser): F[Unit] =
-    http.request(
+    http.request[UpdateUserStatusRequest, Unit](
       cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Put,
       Body.Json(UpdateUserStatusRequest(userId, statusUser)),
@@ -399,7 +457,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def updateCustomStatus(userId: UserId, customStatus: CustomStatus): F[Unit] =
-    http.request(
+    http.request[CustomStatus, Unit](
       cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Put,
       Body.Json(customStatus),
@@ -419,10 +477,13 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   def getTopReactions(teamId: TeamId, timeRange: TimeRange): Stream[F, ReactionInsight] = {
     def single(page: Int) =
       http.request[Unit, ListWrapper[ReactionInsight]](
-        cfg.baseUrl + s"/teams/$teamId/top/reactions?time_range=$timeRange&page=$page",
+        cfg.baseUrl + s"/teams/$teamId/top/reactions",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("time_range", timeRange)
+          .withParam("page", page)
+          .withParam("per_page", cfg.perPage)
       )
 
     Stream
@@ -441,10 +502,14 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     def single(page: Int) =
       http.request[Unit, ListWrapper[ReactionInsight]](
         cfg.baseUrl +
-          s"/users/$userId/top/reactions?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
+          s"/users/$userId/top/reactions",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("time_range", timeRange)
+          .withParam("page", page)
+          .withParam("per_page", cfg.perPage)
+          .withParam("team_id", teamId)
       )
 
     Stream
@@ -462,10 +527,13 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   def getTopChannels(teamId: TeamId, timeRange: TimeRange): Stream[F, ChannelInsight] = {
     def single(page: Int) =
       http.request[Unit, ListWrapper[ChannelInsight]](
-        cfg.baseUrl + s"/teams/$teamId/top/channels?time_range=$timeRange&page=$page",
+        cfg.baseUrl + s"/teams/$teamId/top/channels",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("time_range", timeRange)
+          .withParam("page", page)
+          .withParam("per_page", cfg.perPage)
       )
 
     Stream
@@ -484,10 +552,14 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     def single(page: Int) =
       http.request[Unit, ListWrapper[ChannelInsight]](
         cfg.baseUrl +
-          s"/users/$userId/top/channels?time_range=$timeRange&page=$page${teamId.map(id => s"&team_id=$id")}",
+          s"/users/$userId/top/channels",
         Method.Get,
         Body.Empty,
-        Map("Authorization" -> s"Bearer ${cfg.auth}")
+        Map("Authorization" -> s"Bearer ${cfg.auth}"),
+        _.withParam("time_range", timeRange)
+          .withParam("page", page)
+          .withParam("per_page", cfg.perPage)
+          .withParam("team_id", teamId)
       )
 
     Stream
@@ -529,7 +601,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def updateRole(id: String, permissions: List[String]): F[RoleInfo] =
-    http.request(
+    http.request[List[String], RoleInfo](
       cfg.baseUrl + s"/roles/$id/patch",
       Method.Patch,
       Body.Json(permissions),
@@ -537,24 +609,12 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getRoles(names: List[String]): F[List[RoleInfo]] =
-    http.request(
+    http.request[List[String], List[RoleInfo]](
       cfg.baseUrl + s"/roles/names",
       Method.Post,
       Body.Json(names),
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
   //  Roles
-
-}
-
-object ApiClient {
-
-  private def params(params: (String, Option[String])*): String =
-    params
-      .toMap
-      .collect {
-        case (key, Some(value)) => s"$key=$value"
-      }
-      .mkString("?", "&", "")
 
 }

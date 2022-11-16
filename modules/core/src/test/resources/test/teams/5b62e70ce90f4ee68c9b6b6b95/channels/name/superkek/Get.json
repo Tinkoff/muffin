@@ -1,0 +1,27 @@
+[
+  {
+    "response": {
+      "id": "5b62e70ce90f4ee68c9b6b6b95",
+      "create_at": 1650874772671,
+      "update_at": 1653184406799,
+      "delete_at": 0,
+      "team_id": "tpojbdfd83b7ik6onnmzod7b9e",
+      "type": "P",
+      "display_name": "superkek",
+      "name": "superkek",
+      "header": "superkek",
+      "purpose": "",
+      "last_post_at": 1668150202363,
+      "total_msg_count": 8373,
+      "extra_update_at": 0,
+      "creator_id": "jrbxmnpqyifdjrxx8wbuubumpc",
+      "scheme_id": "",
+      "props": null,
+      "group_constrained": false,
+      "shared": null,
+      "total_msg_count_root": 7811,
+      "policy_id": null,
+      "last_root_post_at": 1668150202363
+    }
+  }
+]

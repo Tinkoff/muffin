@@ -1,0 +1,35 @@
+[
+  {
+    "request": {
+      "body": [
+        "dc4055ef2f8847fcbd990371b6",
+        "w5qwc1xdc3rgxde8dufr1nfpzr",
+        "y6hu6uafnbrgjce68sos88xorr",
+        "6bic3idfo387xg55o4dgzzp9xe"
+      ]
+    },
+    "response": {
+      "id": "w9s6bs5hs7yj5dcwbrdbw137dh",
+      "create_at": 1667799920513,
+      "update_at": 1667799920513,
+      "delete_at": 0,
+      "team_id": "",
+      "type": "G",
+      "display_name": "a.andreev, a.antonov, d.zasypkin",
+      "name": "1cecfea593b171fa406e4503a15d8d2ff9bca0c6",
+      "header": "",
+      "purpose": "",
+      "last_post_at": 0,
+      "total_msg_count": 0,
+      "extra_update_at": 0,
+      "creator_id": "",
+      "scheme_id": null,
+      "props": null,
+      "group_constrained": null,
+      "shared": null,
+      "total_msg_count_root": 0,
+      "policy_id": null,
+      "last_root_post_at": 0
+    }
+  }
+]

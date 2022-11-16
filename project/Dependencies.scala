@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  object version {
+  object Version {
     val sttp = "3.8.3"
 
     val circe = "0.15.0-M1"
@@ -22,31 +22,37 @@ object Dependencies {
       val effect = "3.3.14"
     }
 
+    val scalatest = "3.2.14"
   }
 
-  val sttp = "com.softwaremill.sttp.client3" %% "core" % version.sttp
+  val sttp = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
 
   object http4s {
-    val core = "org.http4s" %% "http4s-core" % version.http4s
-    val dsl  = "org.http4s" %% "http4s-dsl"  % version.http4s
+    val core = "org.http4s" %% "http4s-core" % Version.http4s
+    val dsl  = "org.http4s" %% "http4s-dsl"  % Version.http4s
   }
 
   object circe {
-    val core    = "io.circe" %% "circe-core"    % version.circe
-    val parser  = "io.circe" %% "circe-parser"  % version.circe
+    val core   = "io.circe" %% "circe-core"   % Version.circe
+    val parser = "io.circe" %% "circe-parser" % Version.circe
   }
 
   object zio {
-    val json = "dev.zio" %% "zio-json" % version.zio.json
-    val http = "io.d11"  %% "zhttp"    % version.zio.zhttp
-    val core = "dev.zio" %% "zio"      % version.zio.core
+    val json = "dev.zio" %% "zio-json" % Version.zio.json
+    val http = "io.d11"  %% "zhttp"    % Version.zio.zhttp
+    val core = "dev.zio" %% "zio"      % Version.zio.core
   }
 
-  val fs2 = "co.fs2" %% "fs2-core" % version.fs2
+  val fs2 = "co.fs2" %% "fs2-core" % Version.fs2
 
   object cats {
-    val core   = "org.typelevel" %% "cats-core"   % version.cats.core
-    val effect = "org.typelevel" %% "cats-effect" % version.cats.effect
+    val core   = "org.typelevel" %% "cats-core"   % Version.cats.core
+    val effect = "org.typelevel" %% "cats-effect" % Version.cats.effect
+  }
+
+  object scalatest {
+    val core        = "org.scalatest" %% "scalatest-core"        % Version.scalatest % Test
+    val featureSpec = "org.scalatest" %% "scalatest-featurespec" % Version.scalatest % Test
   }
 
 }

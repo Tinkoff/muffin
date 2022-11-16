@@ -1,0 +1,15 @@
+[
+  {
+    "request": {
+      "body": {
+        "emoji": "calendar",
+        "text": "In a meeting",
+        "duration": "one_hour",
+        "expires_at": "2022-11-03T11:34:00.000Z"
+      }
+    },
+    "response": {
+      "status": "OK"
+    }
+  }
+]

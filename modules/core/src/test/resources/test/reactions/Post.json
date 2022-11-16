@@ -1,0 +1,21 @@
+[
+  {
+    "request": {
+      "body": {
+        "user_id": "w5qwc1xdc3rgxde8dufr1nfpzr",
+        "post_id": "34b52dfdd69f485bb0e70d1879",
+        "emoji_name": "grinning"
+      }
+    },
+    "response": {
+      "user_id": "w5qwc1xdc3rgxde8dufr1nfpzr",
+      "post_id": "34b52dfdd69f485bb0e70d1879",
+      "emoji_name": "grinning",
+      "create_at": 1667450390711,
+      "update_at": 1667450390711,
+      "delete_at": 0,
+      "remote_id": "",
+      "channel_id": "pocz7hwx3bne7jb4e8smwz9jto"
+    }
+  }
+]

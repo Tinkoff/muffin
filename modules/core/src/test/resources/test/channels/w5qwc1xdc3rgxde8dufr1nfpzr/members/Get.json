@@ -1,0 +1,108 @@
+[
+  {
+    "request": {
+      "params": {
+        "page": "0",
+        "per_page": "1"
+      }
+    },
+    "response": [
+      {
+        "channel_id": "ucu81osib7yifnww8aain866ga",
+        "user_id": "1qeigrm6o78p5q59sjra14o7ua",
+        "roles": "channel_user",
+        "last_viewed_at": 1668150202363,
+        "msg_count": 8373,
+        "mention_count": 0,
+        "mention_count_root": 0,
+        "msg_count_root": 7811,
+        "notify_props": {
+          "desktop": "default",
+          "email": "default",
+          "ignore_channel_mentions": "default",
+          "mark_unread": "mention",
+          "push": "default"
+        },
+        "last_update_at": 1668150202363,
+        "scheme_guest": false,
+        "scheme_user": true,
+        "scheme_admin": false,
+        "explicit_roles": ""
+      }
+    ]
+  },
+  {
+    "request": {
+      "params": {
+        "page": "1",
+        "per_page": "1"
+      }
+    },
+    "response": [
+      {
+        "channel_id": "ucu81osib7yifnww8aain866ga",
+        "user_id": "1qxtezgpotfbugnbgrp3i3mmuw",
+        "roles": "channel_user",
+        "last_viewed_at": 1668150202363,
+        "msg_count": 8373,
+        "mention_count": 0,
+        "mention_count_root": 0,
+        "msg_count_root": 7811,
+        "notify_props": {
+          "desktop": "default",
+          "email": "default",
+          "ignore_channel_mentions": "default",
+          "mark_unread": "all",
+          "push": "default"
+        },
+        "last_update_at": 1668150202363,
+        "scheme_guest": false,
+        "scheme_user": true,
+        "scheme_admin": false,
+        "explicit_roles": ""
+      }
+    ]
+  },
+  {
+    "request": {
+      "params": {
+        "page": "2",
+        "per_page": "1"
+      }
+    },
+    "response": [
+      {
+        "channel_id": "ucu81osib7yifnww8aain866ga",
+        "user_id": "8ox9oorchpy7ic5cperqd55xka",
+        "roles": "channel_user",
+        "last_viewed_at": 1668150202363,
+        "msg_count": 8373,
+        "mention_count": 0,
+        "mention_count_root": 0,
+        "msg_count_root": 7811,
+        "notify_props": {
+          "desktop": "default",
+          "email": "default",
+          "ignore_channel_mentions": "default",
+          "mark_unread": "all",
+          "push": "default"
+        },
+        "last_update_at": 1668150202363,
+        "scheme_guest": false,
+        "scheme_user": true,
+        "scheme_admin": false,
+        "explicit_roles": ""
+      }
+    ]
+  },
+  {
+    "request": {
+      "params": {
+        "page": "3",
+        "per_page": "1"
+      }
+    },
+    "response": [
+    ]
+  }
+]

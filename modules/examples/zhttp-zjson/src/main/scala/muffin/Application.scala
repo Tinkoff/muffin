@@ -5,12 +5,10 @@ import zio.*
 import java.time.{LocalDateTime, ZoneId}
 import cats.effect.*
 import zio.json.{JsonDecoder, JsonEncoder}
-import zio.interop.catz.given
+import zio.interop.catz.`given`
 import muffin.api.*
 import muffin.model.*
 import muffin.dsl.*
-import muffin.interop.zio.codec
-import muffin.interop.zio.codec.given
 import muffin.interop.http.zio.*
 import muffin.router.Router
 import zhttp.http.{Http, Request, Response}

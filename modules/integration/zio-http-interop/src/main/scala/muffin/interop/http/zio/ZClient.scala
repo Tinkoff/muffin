@@ -19,11 +19,12 @@ class ZClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpClie
       url: String,
       method: Method,
       body: Body[In],
-      headers: Map[String, String]
+      headers: Map[String, String],
+      params: Params => Params
   ): ZRHttp[R, Out] =
     Client
       .request(
-        url,
+        url + params(Params.Empty).mkString,
         method match {
           case Method.Get    => ZMethod.GET
           case Method.Post   => ZMethod.POST

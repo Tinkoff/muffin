@@ -63,6 +63,13 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
 
   given AnyFrom: JsonDecoder[Any] = UnitFrom.asInstanceOf[JsonDecoder[Any]]
 
+  given MapTo[K: JsonEncoder, V: JsonEncoder]: JsonEncoder[Map[K, V]] =
+    (a: Map[K, V], indent: Option[Int], out: Write) => {
+      given JsonFieldEncoder[K] = JsonEncoder[K].encodeJson(_, None).toString
+
+      JsonEncoder.map[K, V].unsafeEncode(a, indent, out)
+    }
+
   given OptionTo[A: JsonEncoder]: JsonEncoder[Option[A]] = JsonEncoder.option[A]
 
   given OptionFrom[A: JsonDecoder]: JsonDecoder[Option[A]] = JsonDecoder.option[A]
@@ -98,8 +105,8 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
       ZioJsonBuilder(fun :: funs)
     }
 
-    def build[X >: T]: JsonEncoder[X] =
-      (a: X, _: Option[Int], out: Write) => out.write(funs.map(_.apply(a.asInstanceOf[T])).mkString("{", ",", "}"))
+    def build: JsonEncoder[T] =
+      (a: T, _: Option[Int], out: Write) => out.write(funs.map(_.apply(a.asInstanceOf[T])).mkString("{", ",", "}"))
 
   }
 

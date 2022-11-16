@@ -29,9 +29,7 @@ case class CommandAction(
 )
 
 trait DialogSubmission[T] {
-
   def get(submission: String): Option[T]
-
 }
 
 object DialogSubmission {
@@ -43,11 +41,8 @@ object DialogSubmission {
     )
 
   given DialogSubmission[Long] = partial(_)(_.toLongOption)
-
   given DialogSubmission[String] = partial(_)(_.some)
-
   given DialogSubmission[Boolean] = partial(_)(_.toBooleanOption)
-
   given DialogSubmission[Int] = partial(_)(_.toIntOption)
 
 }
