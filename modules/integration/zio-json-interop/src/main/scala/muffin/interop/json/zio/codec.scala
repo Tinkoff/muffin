@@ -1,4 +1,4 @@
-package muffin.interop.zio
+package muffin.interop.json.zio
 
 import java.time.{Instant, LocalDateTime, ZoneId}
 import scala.collection.mutable

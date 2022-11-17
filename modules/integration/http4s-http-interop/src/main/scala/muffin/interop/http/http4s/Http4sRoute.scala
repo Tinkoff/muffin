@@ -1,4 +1,4 @@
-package muffin.interop.http.zio
+package muffin.interop.http.http4s
 
 import cats.data.EitherT
 import cats.effect.Concurrent

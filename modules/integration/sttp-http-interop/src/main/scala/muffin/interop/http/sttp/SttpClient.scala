@@ -1,4 +1,4 @@
-package muffin.interop.http.zio
+package muffin.interop.http.sttp
 
 import java.io.File
 

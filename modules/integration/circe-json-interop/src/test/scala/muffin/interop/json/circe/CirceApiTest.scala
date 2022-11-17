@@ -1,4 +1,4 @@
-package muffin.interop.circe
+package muffin.interop.json.circe
 
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
@@ -7,6 +7,7 @@ import java.time.ZoneId
 import cats.effect.{IO, Resource}
 import cats.syntax.all.{*, given}
 
+import codec.{*, given}
 import io.circe.*
 import io.circe.syntax.{*, given}
 import org.scalatest.*
@@ -16,7 +17,6 @@ import muffin.api.{ApiClient, ApiTest, ClientConfig}
 import muffin.codec.CodecSupport
 import muffin.dsl.*
 import muffin.http.{Body, HttpClient, Method, Params}
-import muffin.interop.circe.codec.{*, given}
 import muffin.model.*
 
 class CirceApiTest extends ApiTest[Encoder, Decoder]("circe", codec) {

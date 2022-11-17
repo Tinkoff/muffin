@@ -1,4 +1,4 @@
-package muffin.interop.zio
+package muffin.interop.json.zio
 
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
@@ -15,7 +15,6 @@ import zio.json.ast.Json
 import muffin.api.{ApiClient, ApiTest, ClientConfig}
 import muffin.codec.CodecSupport
 import muffin.http.{Body, HttpClient, Method, Params}
-import muffin.interop.zio.codec
 import muffin.model.*
 
 class ZioApiTest extends ApiTest[JsonEncoder, JsonDecoder]("zio", codec) {

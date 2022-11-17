@@ -54,7 +54,9 @@ lazy val root = (project in file("."))
     `muffin-circe-json-interop`,
     `muffin-zio-json-interop`,
     `muffin-zio-http-interop`,
-    `muffin-http4s-http-interop`
+    `muffin-http4s-http-interop`,
+    `muffin-http4s-sttp-circe-example`,
+    `muffin-zhttp-zjson-example`
   )
 
 lazy val modules = file("modules")

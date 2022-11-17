@@ -1,26 +1,26 @@
 package muffin
 
 import java.time.{LocalDateTime, ZoneId}
+
 import cats.effect.*
-import muffin.api.*
-import muffin.model.*
-import muffin.dsl.*
-import muffin.interop.circe.codec
-import muffin.interop.circe.codec.given
-
-import io.circe.{Decoder, Encoder}
-
-import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
+import cats.effect.IO.given
 import cats.effect.syntax.all.given
 
-import cats.effect.IO.given
-
+import com.comcast.ip4s.*
+import io.circe.{Decoder, Encoder}
 import org.http4s.ember.server.*
 import org.http4s.server.Router
-import com.comcast.ip4s.*
-import muffin.internal.router.Handle
+import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
+
+import muffin.api.*
+import muffin.dsl.*
 import muffin.internal.router.*
-import muffin.interop.http.zio.{Http4sRoute, SttpClient}
+import muffin.internal.router.Handle
+import muffin.interop.http.http4s.Http4sRoute
+import muffin.interop.http.sttp.SttpClient
+import muffin.interop.json.circe.codec
+import muffin.interop.json.circe.codec.given
+import muffin.model.*
 
 type Api = ApiClient[IO, Encoder, Decoder]
 

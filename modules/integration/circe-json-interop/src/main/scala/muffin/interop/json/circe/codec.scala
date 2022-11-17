@@ -1,4 +1,4 @@
-package muffin.interop.circe
+package muffin.interop.json.circe
 
 import java.time.*
 import scala.deriving.Mirror
