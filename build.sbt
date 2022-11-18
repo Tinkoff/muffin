@@ -12,7 +12,13 @@ inThisBuild(
         url("https://github.com/little-inferno")
       )
     ),
-    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0"))
+    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    scmInfo :=
+      Some(ScmInfo(url("https://github.com/Tinkoff/muffin"), "scm:git@github.com:Tinkoff/muffin.git")),
+    Test / publishArtifact := false,
+    credentials ++= Option(Path.userHome / ".sbt" / ".sonatype_credential")
+      .filter(_.exists)
+      .map(Credentials.apply)
   )
 )
 
@@ -21,9 +27,6 @@ addCommandAlias("fixCheck", "scalafmtCheckAll")
 val commonSettings = Seq(
   version := "0.2.0",
   scalaVersion := "3.2.0",
-  Compile / packageDoc / publishArtifact := false,
-  Compile / packageSrc / publishArtifact := false,
-  Compile / doc / sources := Seq.empty,
 
   scalacOptions ++= Seq(
     "-explain",
@@ -33,9 +36,12 @@ val commonSettings = Seq(
   ),
 
   publishMavenStyle := true,
-  credentials ++= Option(Path.userHome / ".sbt" / "sonatype_credential")
-    .filter(_.exists)
-    .map(Credentials.apply),
+  publishTo := {
+    if (isSnapshot.value)
+      Some(Opts.resolver.sonatypeSnapshots)
+    else
+      sonatypePublishToBundle.value
+  }
 )
 
 val skipPublish = Seq(
