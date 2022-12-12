@@ -1,6 +1,7 @@
 package muffin.model
 
 import cats.Show
+
 import muffin.internal.NewType
 
 type Login = Login.Type

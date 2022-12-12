@@ -8,6 +8,7 @@ import cats.syntax.all.given
 import muffin.codec.*
 
 trait HttpClient[F[_], To[_], From[_]] {
+
   def request[In: To, Out: From](
       url: String,
       method: Method,
@@ -15,6 +16,7 @@ trait HttpClient[F[_], To[_], From[_]] {
       headers: Map[String, String] = Map.empty,
       params: Params => Params = identity
   ): F[Out]
+
 }
 
 sealed trait Body[+T]

@@ -56,7 +56,8 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
                 cases
                   .flatMap(_.apply(rawAction))
                   .map {
-                    case MatchCase(handler, name, body) => CaseDef(Literal(StringConstant(s"$handler::$name")), None, body)
+                    case MatchCase(handler, name, body) =>
+                      CaseDef(Literal(StringConstant(s"$handler::$name")), None, body)
                   }
               )
               Block(Nil, body).changeOwner(sym)

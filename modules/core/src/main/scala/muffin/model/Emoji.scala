@@ -2,8 +2,10 @@ package muffin.model
 
 import java.io.File
 import java.time.LocalDateTime
+
 import cats.Show
 import fs2.Stream
+
 import muffin.api.*
 import muffin.internal.NewType
 
