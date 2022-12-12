@@ -21,7 +21,7 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
 
   import q.reflect.*
 
-  private case class MatchCase(pattern: String, body: Term)
+  private case class MatchCase(handle: String, pattern: String, body: Term)
 
   private case class HandleDef(
       actions: Term => List[MatchCase],
@@ -56,7 +56,7 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
                 cases
                   .flatMap(_.apply(rawAction))
                   .map {
-                    case MatchCase(name, body) => CaseDef(Literal(StringConstant(name)), None, body)
+                    case MatchCase(handler, name, body) => CaseDef(Literal(StringConstant(s"$handler::$name")), None, body)
                   }
               )
               Block(Nil, body).changeOwner(sym)
@@ -88,6 +88,7 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
         val handle = getSymbolFromType[T]("h")
         flatTypeTreeHandle[
           h,
+          n,
           commandName,
           commandOut,
           actionName,
@@ -101,6 +102,7 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
 
   private def flatTypeTreeHandle[
       H: Type,
+      N: Type,
       CommandName <: Tuple: Type,
       CommandOut <: Tuple: Type,
       ActionName <: Tuple: Type,
@@ -111,25 +113,27 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
       DialogOut <: Tuple: Type
   ](path: Term, handle: Symbol): List[HandleDef] = {
 
-    val actions  = summonNames[ActionName]
-    val commands = summonNames[CommandName]
-    val dialogs  = summonNames[DialogName]
+    val handlerName = summonValue[N].toString()
+    val actions     = summonNames[ActionName]
+    val commands    = summonNames[CommandName]
+    val dialogs     = summonNames[DialogName]
 
     val actionCases =
       (rawAction: Term) =>
         actions
           .zip(summonActionCases[H, ActionIn, ActionOut](path.select(handle), actions, rawAction))
-          .map(MatchCase.apply)
+          .map(MatchCase.apply(handlerName, _, _))
 
     val commandCases =
       (rawAction: Term) =>
-        commands.zip(summonCommandCases[H, CommandOut](path.select(handle), commands, rawAction)).map(MatchCase.apply)
+        commands.zip(summonCommandCases[H, CommandOut](path.select(handle), commands, rawAction))
+          .map(MatchCase.apply(handlerName, _, _))
 
     val dialogCases =
       (rawAction: Term) =>
         dialogs
           .zip(summonDialogCases[H, DialogIn, DialogOut](path.select(handle), dialogs, rawAction))
-          .map(MatchCase.apply)
+          .map(MatchCase.apply(handlerName, _, _))
 
     HandleDef(actionCases, commandCases, dialogCases) :: Nil
   }

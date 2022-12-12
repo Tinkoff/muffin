@@ -84,7 +84,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getPost[T: From](postId: MessageId): F[Post[T]] =
-    http.request[Unit, Post[T]](
+    http.request[Nothing, Post[T]](
       cfg.baseUrl + s"/posts/$postId",
       Method.Get,
       Body.Empty,
@@ -92,7 +92,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def deletePost(postId: MessageId): F[Unit] =
-    http.request[Unit, Unit](
+    http.request[Nothing, Unit](
       cfg.baseUrl + s"/posts/$postId",
       Method.Delete,
       Body.Empty,
@@ -132,7 +132,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def performAction(postId: MessageId, actionId: String): F[Unit] =
-    http.request[Unit, Unit](
+    http.request[Nothing, Unit](
       cfg.baseUrl + s"/posts/$postId/actions/$actionId",
       Method.Post,
       Body.Empty,
@@ -174,7 +174,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def members(channelId: ChannelId): Stream[F, ChannelMember] = {
     def single(page: Int): F[List[ChannelMember]] =
-      http.request[Unit, List[ChannelMember]](
+      http.request[Nothing, List[ChannelMember]](
         cfg.baseUrl + s"/channels/$channelId/members",
         Method.Get,
         Body.Empty,
@@ -196,7 +196,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   }
 
   def getChannelByName(teamId: TeamId, name: String): F[ChannelInfo] =
-    http.request[Unit, ChannelInfo](
+    http.request[Nothing, ChannelInfo](
       cfg.baseUrl + s"/teams/$teamId/channels/name/$name",
       Method.Get,
       Body.Empty,
@@ -204,7 +204,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def createEmoji(req: CreateEmojiRequest): F[EmojiInfo] =
-    http.request[Unit, EmojiInfo](
+    http.request[Nothing, EmojiInfo](
       cfg.baseUrl + s"/emoji",
       Method.Post,
       Body.Multipart(
@@ -219,7 +219,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def getEmojis(sorting: EmojiSorting = EmojiSorting.None): Stream[F, EmojiInfo] = {
     def single(page: Int) =
-      http.request[Unit, List[EmojiInfo]](
+      http.request[Nothing, List[EmojiInfo]](
         cfg.baseUrl + "/emoji",
         Method.Get,
         Body.Empty,
@@ -242,7 +242,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   }
 
   def getEmojiById(emojiId: EmojiId): F[EmojiInfo] =
-    http.request[Unit, EmojiInfo](
+    http.request[Nothing, EmojiInfo](
       cfg.baseUrl + s"/emoji/$emojiId",
       Method.Get,
       Body.Empty,
@@ -250,7 +250,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def deleteEmoji(emojiId: EmojiId): F[Unit] =
-    http.request[Unit, Unit](
+    http.request[Nothing, Unit](
       cfg.baseUrl + s"/emoji/$emojiId",
       Method.Delete,
       Body.Empty,
@@ -258,7 +258,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getEmojiByName(name: String): F[EmojiInfo] =
-    http.request[Unit, EmojiInfo](
+    http.request[Nothing, EmojiInfo](
       cfg.baseUrl + s"/emoji/name/$name",
       Method.Get,
       Body.Empty,
@@ -274,7 +274,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def autocompleteEmoji(name: String): F[List[EmojiInfo]] =
-    http.request[Unit, List[EmojiInfo]](
+    http.request[Nothing, List[EmojiInfo]](
       cfg.baseUrl + s"/emoji/autocomplete",
       Method.Get,
       Body.Empty,
@@ -291,7 +291,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getReactions(postId: MessageId): F[List[ReactionInfo]] =
-    http.request[Unit, List[ReactionInfo]](
+    http.request[Nothing, List[ReactionInfo]](
       cfg.baseUrl + s"/posts/$postId/reactions",
       Method.Get,
       Body.Empty,
@@ -299,7 +299,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def removeReaction(userId: UserId, postId: MessageId, emojiName: String): F[Unit] =
-    http.request[Unit, Unit](
+    http.request[Nothing, Unit](
       cfg.baseUrl + s"/users/$userId/posts/$postId/reactions/$emojiName",
       Method.Delete,
       Body.Empty,
@@ -315,7 +315,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
 //  def userTeams(userId: UserId): F[List[Team]] =
-//    http.request[Unit, List[Team]](
+//    http.request[Nothing, List[Team]](
 //      cfg.baseUrl + s"/users/$userId/teams",
 //      Method.Get,
 //      Body.Empty,
@@ -330,7 +330,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       active: Option[Boolean] = None
   ): Stream[F, User] = {
     def single(page: Int): F[List[User]] =
-      http.request[Unit, List[User]](
+      http.request[Nothing, List[User]](
         cfg.baseUrl +
           s"/users",
         Method.Get,
@@ -358,7 +358,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   }
 
   def user(userId: UserId): F[User] =
-    http.request[Unit, User](
+    http.request[Nothing, User](
       cfg.baseUrl + s"/users/$userId",
       Method.Get,
       Body.Empty,
@@ -374,7 +374,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def userByUsername(user: String): F[User] =
-    http.request[Unit, User](
+    http.request[Nothing, User](
       cfg.baseUrl + s"/users/username/$user",
       Method.Get,
       Body.Empty,
@@ -391,7 +391,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   //  Preferences
   def getUserPreferences(userId: UserId): F[List[Preference]] =
-    http.request[Unit, List[Preference]](
+    http.request[Nothing, List[Preference]](
       cfg.baseUrl + s"/users/$userId/preferences",
       Method.Get,
       Body.Empty,
@@ -399,7 +399,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getUserPreferences(userId: UserId, category: String): F[List[Preference]] =
-    http.request[Unit, List[Preference]](
+    http.request[Nothing, List[Preference]](
       cfg.baseUrl + s"/users/$userId/preferences/$category",
       Method.Get,
       Body.Empty,
@@ -407,7 +407,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getUserPreference(userId: UserId, category: String, name: String): F[Preference] =
-    http.request[Unit, Preference](
+    http.request[Nothing, Preference](
       cfg.baseUrl + s"/users/$userId/preferences/$category/name/$name",
       Method.Get,
       Body.Empty,
@@ -433,7 +433,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   // Status
   def getUserStatus(userId: UserId): F[UserStatus] =
-    http.request[Unit, UserStatus](
+    http.request[Nothing, UserStatus](
       cfg.baseUrl + s"/users/$userId/status",
       Method.Get,
       Body.Empty,
@@ -465,7 +465,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def unsetCustomStatus(userId: UserId): F[Unit] =
-    http.request[Unit, Unit](
+    http.request[Nothing, Unit](
       cfg.baseUrl + s"/users/$userId/status/custom",
       Method.Delete,
       Body.Empty,
@@ -476,7 +476,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
   // Insights
   def getTopReactions(teamId: TeamId, timeRange: TimeRange): Stream[F, ReactionInsight] = {
     def single(page: Int) =
-      http.request[Unit, ListWrapper[ReactionInsight]](
+      http.request[Nothing, ListWrapper[ReactionInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/reactions",
         Method.Get,
         Body.Empty,
@@ -500,7 +500,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def getTopReactions(userId: UserId, timeRange: TimeRange, teamId: Option[TeamId]): Stream[F, ReactionInsight] = {
     def single(page: Int) =
-      http.request[Unit, ListWrapper[ReactionInsight]](
+      http.request[Nothing, ListWrapper[ReactionInsight]](
         cfg.baseUrl +
           s"/users/$userId/top/reactions",
         Method.Get,
@@ -526,7 +526,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def getTopChannels(teamId: TeamId, timeRange: TimeRange): Stream[F, ChannelInsight] = {
     def single(page: Int) =
-      http.request[Unit, ListWrapper[ChannelInsight]](
+      http.request[Nothing, ListWrapper[ChannelInsight]](
         cfg.baseUrl + s"/teams/$teamId/top/channels",
         Method.Get,
         Body.Empty,
@@ -550,7 +550,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   def getTopChannels(userId: UserId, timeRange: TimeRange, teamId: Option[TeamId]): Stream[F, ChannelInsight] = {
     def single(page: Int) =
-      http.request[Unit, ListWrapper[ChannelInsight]](
+      http.request[Nothing, ListWrapper[ChannelInsight]](
         cfg.baseUrl +
           s"/users/$userId/top/channels",
         Method.Get,
@@ -577,7 +577,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   //  Roles
   def getAllRoles: F[List[RoleInfo]] =
-    http.request[Unit, List[RoleInfo]](
+    http.request[Nothing, List[RoleInfo]](
       cfg.baseUrl + s"/roles",
       Method.Get,
       Body.Empty,
@@ -585,7 +585,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getRoleById(id: String): F[RoleInfo] =
-    http.request[Unit, RoleInfo](
+    http.request[Nothing, RoleInfo](
       cfg.baseUrl + s"/roles/$id",
       Method.Get,
       Body.Empty,
@@ -593,7 +593,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   def getRoleByName(name: String): F[RoleInfo] =
-    http.request[Unit, RoleInfo](
+    http.request[Nothing, RoleInfo](
       cfg.baseUrl + s"/roles/name/$name",
       Method.Get,
       Body.Empty,

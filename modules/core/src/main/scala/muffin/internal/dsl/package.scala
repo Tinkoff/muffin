@@ -96,7 +96,7 @@ trait MessageSyntax {
     def fields(fields: List[AttachmentField]): AttachmentQuery[T] =
       new AttachmentQuery(attachment.copy(fields = fields))
 
-    def action[X >: T](action: Action[T]): AttachmentQuery[X] =
+    def action[X >: T](action: Action[X]): AttachmentQuery[X] =
       new AttachmentQuery[X](attachment.copy(actions = action :: attachment.actions).asInstanceOf[Attachment[X]])
 
     def make: Attachment[T] = attachment

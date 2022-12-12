@@ -15,6 +15,13 @@ trait MacroUtils {
       .getOrElse(report.errorAndAbort(s"Can't find $name in ${Type.show[T]}"))
   }
 
+  protected def summonValue[T: Type](using q: Quotes) = {
+    import q.reflect.*
+
+    Type.valueOfConstant[T]
+      .getOrElse(report.errorAndAbort(s"Could not get value from ${Type.show[T]}"))
+  }
+
   protected def summonNames[T <: Tuple: Type](using q: Quotes): List[String] =
     Type
       .valueOfTuple[T]

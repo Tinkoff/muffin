@@ -7,23 +7,15 @@ import fs2.Stream
 import muffin.api.*
 
 enum NotifyOption {
-
   case All
-
   case Mention
-
   case None
-
   case Default
-
 }
 
 enum UnreadOption {
-
   case All
-
   case Mention
-
 }
 
 case class NotifyProps(email: NotifyOption, push: NotifyOption, desktop: NotifyOption, markUnread: UnreadOption)

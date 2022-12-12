@@ -26,19 +26,17 @@ object ZRoutes {
       .collectZIO[Request]
       .apply[HttpR[R], Throwable, Response] {
         case req @ Method.POST -> !! / "commands" / handler / command =>
-          handleEvent[HttpR[R], String](req)(data => router.handleCommand(s"$handler::$command", decodeFormData(data)))
+          handleEvent[HttpR[R]](req)(data => router.handleCommand(s"$handler::$command", decodeFormData(data)))
         case req @ Method.POST -> !! / "actions" / handler / actions  =>
-          handleEvent[HttpR[R], String](req)(data => router.handleAction(s"$handler::$actions", HttpAction(data)))
+          handleEvent[HttpR[R]](req)(data => router.handleAction(s"$handler::$actions", HttpAction(data)))
         case req @ Method.POST -> !! / "dialogs" / handler / dialogs  =>
-          handleEvent[HttpR[R], String](req)(data => router.handleDialog(s"$handler::$dialogs", HttpAction(data)))
+          handleEvent[HttpR[R]](req)(data => router.handleDialog(s"$handler::$dialogs", HttpAction(data)))
       }
   }
 
-  private given Decode[String] = s => Right(s)
-
-  def handleEvent[R, In](
+  def handleEvent[R](
       request: Request
-  )(fun: In => ZRHttp[HttpR[R], HttpResponse])(using decoder: Decode[In]): ZRHttp[HttpR[R], Response] =
+  )(fun: String => ZRHttp[HttpR[R], HttpResponse])(using decoder: Decode[String]): ZRHttp[HttpR[R], Response] =
     for {
       buf      <- request.body.asString(Charset.forName("UTF-8"))
       response <-

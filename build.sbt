@@ -25,20 +25,18 @@ inThisBuild(
 addCommandAlias("fixCheck", "scalafmtCheckAll")
 
 val commonSettings = Seq(
-  version := "0.2.0",
-  scalaVersion := "3.2.0",
-
+  version := "0.2.1",
+  scalaVersion := "3.2.1",
   scalacOptions ++= Seq(
     "-explain",
     "-deprecation",
     "-no-indent",
     "-old-syntax"
   ),
-
   publishMavenStyle := true,
   publishTo := {
     if (isSnapshot.value)
-      Some(Opts.resolver.sonatypeSnapshots)
+      MavenRepository("sonatype-snapshots", Resolver.SonatypeRepositoryRoot + "/snapshots").some
     else
       sonatypePublishToBundle.value
   }

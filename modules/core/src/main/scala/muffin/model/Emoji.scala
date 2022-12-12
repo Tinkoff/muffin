@@ -2,17 +2,13 @@ package muffin.model
 
 import java.io.File
 import java.time.LocalDateTime
-
 import cats.Show
 import fs2.Stream
-
 import muffin.api.*
+import muffin.internal.NewType
 
-opaque type EmojiId = String
-
-object EmojiId {
-  def apply(id: String): EmojiId = id
-}
+type EmojiId = EmojiId.Type
+object EmojiId extends NewType[String]
 
 case class EmojiInfo(
     id: EmojiId,

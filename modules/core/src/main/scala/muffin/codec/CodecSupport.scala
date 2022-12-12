@@ -5,11 +5,13 @@ import scala.collection.StringParsers
 import scala.deriving.Mirror
 import scala.reflect.ClassTag
 
+import cats.Show
 import cats.arrow.FunctionK
 import cats.syntax.all.{*, given}
 
 import muffin.api.*
 import muffin.http.Body
+import muffin.internal.*
 import muffin.model.*
 
 trait Encode[A] {
@@ -65,38 +67,13 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given MapFrom[A: From]: From[Map[String, A]]
 
-  given LoginTo: To[Login] = json(_.toString)
-
-  given UserIdTo: To[UserId] = json(_.toString)
-
-  given GroupIdTo: To[GroupId] = json(_.toString)
-
-  given TeamIdTo: To[TeamId] = json(_.toString)
-
-  given ChannelIdTo: To[ChannelId] = json(_.toString)
-
-  given MessageIdTo: To[MessageId] = json(_.toString)
-
-  given EmojiIdTo: To[EmojiId] = json(_.toString)
-
-  given LoginFrom: From[Login] = parsing[String, Login](Login(_))
-
-  given UserIdFrom: From[UserId] = parsing[String, UserId](UserId(_))
-
-  given GroupIdFrom: From[GroupId] = parsing[String, GroupId](GroupId(_))
-
-  given TeamIdFrom: From[TeamId] = parsing[String, TeamId](TeamId(_))
-
-  given ChannelIdFrom: From[ChannelId] = parsing[String, ChannelId](ChannelId(_))
-
-  given MessageIdFrom: From[MessageId] = parsing[String, MessageId](MessageId(_))
-
-  given EmojiIdFrom: From[EmojiId] = parsing[String, EmojiId](EmojiId(_))
-
   // Channels
   given NotifyOptionFrom: From[NotifyOption] = parsing[String, NotifyOption](op => NotifyOption.valueOf(op.capitalize))
 
   given UnreadOptionFrom: From[UnreadOption] = parsing[String, UnreadOption](op => UnreadOption.valueOf(op.capitalize))
+
+  val xx = StringTo
+  val x  = implicitly[To[UserId]]
 
   given NotifyPropsFrom: From[NotifyProps] =
     parsing
@@ -634,7 +611,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
 }
 
-trait PrimitivesSupport[To[_], From[_]] {
+trait PrimitivesSupport[To[_], From[_]] extends NewTypeSupport[To, From] {
   given StringTo: To[String]
 
   given StringFrom: From[String]
@@ -672,4 +649,12 @@ trait PrimitivesSupport[To[_], From[_]] {
   given AnyFrom: From[Any]
 
   given MapTo[K: To, V: To]: To[Map[K, V]]
+}
+
+trait NewTypeSupport[To[_], From[_]] {
+  given NewTypeTo[A, B](using cc: Coercible[To[A], To[B]], to: To[A]): To[B] = cc(to)
+
+  given NewTypeFrom[A, B](using cc: Coercible[From[A], From[B]], from: From[A]): From[B] = cc(from)
+
+  given NewTypeShow[A, B](using cc: Coercible[Show[A], Show[B]], show: Show[A]): Show[B] = cc(show)
 }

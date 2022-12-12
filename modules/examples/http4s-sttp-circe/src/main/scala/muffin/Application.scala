@@ -14,8 +14,6 @@ import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 
 import muffin.api.*
 import muffin.dsl.*
-import muffin.internal.router.*
-import muffin.internal.router.Handle
 import muffin.interop.http.http4s.Http4sRoute
 import muffin.interop.http.sttp.SttpClient
 import muffin.interop.json.circe.codec

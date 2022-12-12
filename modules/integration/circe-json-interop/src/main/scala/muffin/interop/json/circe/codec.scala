@@ -21,9 +21,7 @@ object codec extends CodecSupport[Encoder, Decoder] {
 
   given EncoderTo: FunctionK[Encoder, Encode] =
     new FunctionK[Encoder, Encode] {
-
       def apply[A](fa: Encoder[A]): Encode[A] = (obj: A) => fa.apply(obj).dropNullValues.noSpaces
-
     }
 
   given DecoderFrom: FunctionK[Decoder, Decode] =

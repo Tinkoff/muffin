@@ -1,29 +1,22 @@
 package muffin.model
 
 import cats.Show
+import muffin.internal.NewType
 
-trait ApplyOpaque[T, U <: T] {
-  def apply(value: U): T = value
-}
+type Login = Login.Type
+object Login extends NewType[String]
 
-trait StringShowOpaque[U <: String] {
-  given Show[U] = identity(_)
-}
+type UserId = UserId.Type
+object UserId extends NewType[String]
 
-opaque type Login = String
-object Login extends ApplyOpaque[Login, String] with StringShowOpaque[Login]
+type GroupId = GroupId.Type
+object GroupId extends NewType[String]
 
-opaque type UserId = String
-object UserId extends ApplyOpaque[UserId, String] with StringShowOpaque[UserId]
+type TeamId = TeamId.Type
+object TeamId extends NewType[String]
 
-opaque type GroupId = String
-object GroupId extends ApplyOpaque[GroupId, String] with StringShowOpaque[GroupId]
+type ChannelId = ChannelId.Type
+object ChannelId extends NewType[String]
 
-opaque type TeamId = String
-object TeamId extends ApplyOpaque[TeamId, String] with StringShowOpaque[TeamId]
-
-opaque type ChannelId = String
-object ChannelId extends ApplyOpaque[ChannelId, String] with StringShowOpaque[ChannelId]
-
-opaque type MessageId = String
-object MessageId extends ApplyOpaque[MessageId, String] with StringShowOpaque[MessageId]
+type MessageId = MessageId.Type
+object MessageId extends NewType[String]
