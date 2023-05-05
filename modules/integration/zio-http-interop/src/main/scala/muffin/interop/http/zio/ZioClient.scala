@@ -4,14 +4,13 @@ import java.nio.charset.Charset
 
 import cats.effect.Sync
 
-import zhttp.http.{Body as ZBody, Headers, Method as ZMethod}
-import zhttp.service.{ChannelFactory, Client, EventLoopGroup}
 import zio.*
+import zio.http.{Body as ZBody, Method as ZMethod, *}
 
 import muffin.codec.*
 import muffin.http.*
 
-class ZClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpClient[RHttp[R], To, From] {
+class ZioClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpClient[RHttp[R with Client], To, From] {
 
   import codec.given
 
@@ -21,7 +20,7 @@ class ZClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpClie
       body: Body[In],
       headers: Map[String, String],
       params: Params => Params
-  ): ZRHttp[R, Out] =
+  ): RIO[R with Client, Out] =
     Client
       .request(
         url + params(Params.Empty).mkString,
@@ -32,7 +31,7 @@ class ZClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpClie
           case Method.Put    => ZMethod.PUT
           case Method.Patch  => ZMethod.PATCH
         },
-        Headers(headers.toList),
+        Headers(headers.map(Header.Custom.apply).toList),
         content =
           body match {
             case Body.Empty          => ZBody.empty
@@ -51,11 +50,11 @@ class ZClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpClie
 
 }
 
-object ZClient {
+object ZioClient {
 
-  def apply[R, I[_]: Sync, To[_], From[_]](codec: CodecSupport[To, From]): I[ZClient[R, To, From]] =
+  def apply[R, I[_]: Sync, To[_], From[_]](codec: CodecSupport[To, From]): I[ZioClient[R, To, From]] =
     Sync[I].delay(
-      new ZClient[R, To, From](codec)
+      new ZioClient[R, To, From](codec)
     )
 
 }
