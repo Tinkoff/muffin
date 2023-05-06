@@ -4,10 +4,8 @@ import java.time.{LocalDateTime, ZoneId}
 
 import cats.effect.*
 
-import zhttp.http.{Http, Request, Response}
-import zhttp.service.{ChannelFactory, EventLoopGroup, Server, ServerChannelFactory}
-import zhttp.service.server.ServerChannelFactory
 import zio.*
+import zio.http.*
 import zio.interop.catz.given
 import zio.json.{JsonDecoder, JsonEncoder}
 
@@ -21,7 +19,7 @@ import muffin.router.Router
 
 class SimpleCommandHandler[R](api: ApiClient[RHttp[R], JsonEncoder, JsonDecoder]) {
 
-  def time(command: CommandAction): ZRHttp[R, AppResponse[Nothing]] =
+  def time(command: CommandAction): RIO[R, AppResponse[Nothing]] =
     api.postToChannel(command.channelId, Some(s"Current time:${LocalDateTime.now()}")).as(ok)
 
 }
@@ -29,8 +27,8 @@ class SimpleCommandHandler[R](api: ApiClient[RHttp[R], JsonEncoder, JsonDecoder]
 object Application extends ZIOAppDefault {
 
   def run: ZIO[Environment with ZIOAppArgs with Scope, Any, Any] =
-    for {
-      client <- ZClient[Any, Task, JsonEncoder, JsonDecoder](codec)
+    (for {
+      client <- ZioClient[Any, Task, JsonEncoder, JsonDecoder](codec)
 
       cfg = ClientConfig("url", "token", "botname", "url")
 
@@ -40,12 +38,11 @@ object Application extends ZIOAppDefault {
 
       handler = SimpleCommandHandler(api)
 
-      router <- handle(handler, "kek").command(_.time).in[RHttp[Any], Task]()
+      router <- handle(handler, "kek").command(_.time).in[RHttp[Client], Task]()
 
-      routes = ZRoutes.routes(router, codec)
-      _ <- Server.app(routes)
-        .startDefault
-        .provide(EventLoopGroup.auto(0) ++ ChannelFactory.auto)
-    } yield _root_.zio.ExitCode.success
+      routes = ZioRoutes.routes(router, codec)
+      _ <- Server.serve(routes)
+    } yield _root_.zio.ExitCode.success)
+      .provide(Server.default, Client.default)
 
 }

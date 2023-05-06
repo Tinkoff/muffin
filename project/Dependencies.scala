@@ -3,26 +3,26 @@ import sbt._
 object Dependencies {
 
   object Version {
-    val sttp = "3.8.3"
+    val sttp = "3.8.15"
 
-    val circe = "0.15.0-M1"
+    val circe = "0.14.3"
 
-    val http4s = "1.0.0-M37"
+    val http4s = "1.0.0-M39"
 
     object zio {
-      val zhttp = "2.0.0-RC11"
-      val json  = "0.3.0"
-      val core  = "2.0.2"
+      val http = "3.0.0-RC1"
+      val json = "0.5.0"
+      val core = "2.0.13"
     }
 
-    val fs2 = "3.3.0"
+    val fs2 = "3.6.1"
 
     object cats {
-      val core   = "2.8.0"
-      val effect = "3.3.14"
+      val core   = "2.9.0"
+      val effect = "3.4.10"
     }
 
-    val scalatest = "3.2.14"
+    val scalatest = "3.2.15"
   }
 
   val sttp = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
@@ -39,7 +39,7 @@ object Dependencies {
 
   object zio {
     val json = "dev.zio" %% "zio-json" % Version.zio.json
-    val http = "io.d11"  %% "zhttp"    % Version.zio.zhttp
+    val http = "dev.zio" %% "zio-http" % Version.zio.http
     val core = "dev.zio" %% "zio"      % Version.zio.core
   }
 
