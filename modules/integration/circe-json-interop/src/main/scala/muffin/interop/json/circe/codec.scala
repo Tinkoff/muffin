@@ -64,6 +64,10 @@ object codec extends CodecSupport[Encoder, Decoder] {
       LocalDateTime.ofInstant(Instant.ofEpochSecond(t), zone)
     )
 
+  given IntTo: io.circe.Encoder[Int] = Encoder.encodeInt
+
+  given IntFrom: io.circe.Decoder[Int] = Decoder.decodeInt
+
   given LongTo: io.circe.Encoder[Long] = Encoder.encodeLong
 
   given LongFrom: io.circe.Decoder[Long] = Decoder.decodeLong

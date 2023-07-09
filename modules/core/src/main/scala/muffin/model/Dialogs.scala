@@ -2,26 +2,17 @@ package muffin.model
 
 import muffin.codec.{Decode, Encode}
 
-class Dialog private[muffin] (
-    val title: String,
-    val callbackId: Option[String] = None,
-    val introductionText: Option[String] = None,
-    val elements: List[Element] = Nil,
-    val submitLabel: Option[String] = None,
-    val notifyOnCancel: Boolean = false
+case class Dialog private[muffin] (
+    title: String,
+    callbackId: Option[String] = None,
+    introductionText: Option[String] = None,
+    elements: List[Element] = Nil,
+    submitLabel: Option[String] = None,
+    notifyOnCancel: Boolean = false
 )(private[muffin] val state: String) {
 
-  def copy(
-      title: String = this.title,
-      callbackId: Option[String] = this.callbackId,
-      introductionText: Option[String] = this.callbackId,
-      elements: List[Element] = this.elements,
-      submitLabel: Option[String] = this.submitLabel,
-      notifyOnCancel: Boolean = this.notifyOnCancel
-  ): Dialog = new Dialog(title, callbackId, introductionText, elements, submitLabel, notifyOnCancel)(state)
-
   def copyState[T: Encode](state: T) =
-    new Dialog(title, callbackId, introductionText, elements, submitLabel, notifyOnCancel)(Encode[T].apply(state))
+    Dialog(title, callbackId, introductionText, elements, submitLabel, notifyOnCancel)(Encode[T].apply(state))
 
   def state[T: Decode]: Option[T] = Decode[T].apply(state).toOption
 }
@@ -44,8 +35,8 @@ object Element {
       name: String,
       subtype: TextSubtype = TextSubtype.Text,
       optional: Boolean = false,
-      minLength: Option[Long] = None,
-      maxLength: Option[Long] = None,
+      minLength: Option[Int] = None,
+      maxLength: Option[Int] = None,
       helpText: Option[String] = None,
       default: Option[String] = None
   ) extends Element
@@ -55,8 +46,8 @@ object Element {
       name: String,
       subtype: TextSubtype = TextSubtype.Text,
       optional: Boolean = false,
-      minLength: Option[Long] = None,
-      maxLength: Option[Long] = None,
+      minLength: Option[Int] = None,
+      maxLength: Option[Int] = None,
       helpText: Option[String] = None,
       default: Option[String] = None
   ) extends Element

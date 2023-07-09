@@ -56,8 +56,8 @@ trait MessageSyntax {
       id: Option[String] = None
   ): Action.Button =
     Action.Button(id.getOrElse(name), name, style)(integration(Integration) match {
-      case Integration.Url(url)          => RawIntegration.Url(url)
-      case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+      case Integration.Url(url)          => RawIntegration(url, None)
+      case Integration.Context(url, ctx) => RawIntegration(url, Encode[T].apply(ctx).some)
     })
 
   def selectOptions[T: Encode](
@@ -67,8 +67,8 @@ trait MessageSyntax {
       id: Option[String] = None
   ): Action.Select =
     Action.Select(id.getOrElse(name), name, options)(integration(Integration) match {
-      case Integration.Url(url)          => RawIntegration.Url(url)
-      case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+      case Integration.Url(url)          => RawIntegration(url, None)
+      case Integration.Context(url, ctx) => RawIntegration(url, Encode[T].apply(ctx).some)
     })
 
   def selectSource[T: Encode](
@@ -78,8 +78,8 @@ trait MessageSyntax {
       id: Option[String] = None
   ): Action.Select =
     Action.Select(id.getOrElse(name), name, dataSource = source(DataSource).some)(integration(Integration) match {
-      case Integration.Url(url)          => RawIntegration.Url(url)
-      case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+      case Integration.Url(url)          => RawIntegration(url, None)
+      case Integration.Context(url, ctx) => RawIntegration(url, Encode[T].apply(ctx).some)
     })
 
   def attachment: AttachmentQuery = AttachmentQuery()
@@ -109,7 +109,7 @@ trait MessageSyntax {
     def action(action: Action): AttachmentQuery =
       new AttachmentQuery(attachment.copy(actions = action :: attachment.actions))
 
-    def make: Attachment = attachment
+    def make: Attachment = attachment.copy(actions = attachment.actions.reverse)
   }
 
   object AttachmentQuery {
@@ -124,20 +124,19 @@ trait DialogSyntax {
 
   def dialog[T: Encode](title: String, state: T): DialogQuery = DialogQuery(title, state)
 
-  class DialogQuery private (dialog: Dialog) {
+  class DialogQuery private (d: Dialog) {
 
-    def callbackId(id: String): DialogQuery = new DialogQuery(dialog.copy(callbackId = id.some))
+    def callback(id: String): DialogQuery = new DialogQuery(d.copy(callbackId = id.some)(d.state))
 
-    def introduction(text: String): DialogQuery = new DialogQuery(dialog.copy(introductionText = text.some))
+    def introduction(text: String): DialogQuery = new DialogQuery(d.copy(introductionText = text.some)(d.state))
 
-    def submitLabel(label: String): DialogQuery = new DialogQuery(dialog.copy(submitLabel = label.some))
+    def submitLabel(label: String): DialogQuery = new DialogQuery(d.copy(submitLabel = label.some)(d.state))
 
-    def notifyOnCancel: DialogQuery = new DialogQuery(dialog.copy(notifyOnCancel = true))
+    def notifyOnCancel: DialogQuery = new DialogQuery(d.copy(notifyOnCancel = true)(d.state))
 
-    def element(element: Element): DialogQuery = new DialogQuery(dialog.copy(elements = element :: dialog.elements))
+    def element(element: Element): DialogQuery = new DialogQuery(d.copy(elements = element :: d.elements)(d.state))
 
-    def make: Dialog = dialog
-
+    def make: Dialog = d.copy(elements = d.elements.reverse)(d.state)
   }
 
   object DialogQuery {

@@ -523,14 +523,14 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given IntegrationTo: To[RawIntegration] =
     seal[RawIntegration] {
-      case RawIntegration.Url(url)          =>
-        json[RawIntegration]
-          .field("url", _ => url)
-          .build
-      case RawIntegration.Context(url, ctx) =>
+      case RawIntegration(url, Some(ctx)) =>
         json[RawIntegration]
           .field("url", _ => url)
           .rawField("context", _ => ctx)
+          .build
+      case RawIntegration(url, _)         =>
+        json[RawIntegration]
+          .field("url", _ => url)
           .build
     }
 
@@ -539,8 +539,7 @@ trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .rawField("context")
       .field[String]("url")
       .build {
-        case url *: Some(integration) *: EmptyTuple => RawIntegration.Context(url, integration)
-        case url *: _ *: EmptyTuple                 => RawIntegration.Url(url)
+        case url *: integration *: EmptyTuple => RawIntegration(url, integration)
       }
 
   given StyleTo: To[Style] = json[Style, String](_.toString.toLowerCase)
@@ -638,6 +637,10 @@ trait PrimitivesSupport[To[_], From[_]] extends NewTypeSupport[To, From] {
   given LongTo: To[Long]
 
   given LongFrom: From[Long]
+
+  given IntTo: To[Int]
+
+  given IntFrom: From[Int]
 
   given ListTo[A: To]: To[List[A]]
 

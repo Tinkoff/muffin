@@ -66,72 +66,42 @@ sealed trait Action {
 
 object Action {
 
-  class Button private[muffin] (
-      val id: String,
-      val name: String,
-      val style: Style = Style.Default
+  case class Button private[muffin] (
+      id: String,
+      name: String,
+      style: Style = Style.Default
   )(private[muffin] val raw: RawIntegration)
     extends Action {
 
-    def integrationUrl: String =
-      raw match {
-        case RawIntegration.Url(url)        => url
-        case RawIntegration.Context(url, _) => url
-      }
+    def integrationUrl: String = raw.url
 
-    def integrationContext[T: Decode]: Option[T] =
-      raw match {
-        case RawIntegration.Url(_)          => None
-        case RawIntegration.Context(_, ctx) => Decode[T].apply(ctx).toOption
-      }
+    def integrationContext[T: Decode]: Option[T] = raw.ctx.flatMap(Decode[T].apply(_).toOption)
 
-    def copy(id: String = this.id, name: String = this.name, style: Style = this.style): Button =
-      new Button(id, name, style)(raw)
-
-    def copyIntegration[T: Encode](integration: Integration[T]): Button =
-      new Button(id, name, style)(integration match {
-        case Integration.Url(url)          => RawIntegration.Url(url)
-        case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+    def setIntegration[T: Encode](integration: Integration[T]): Button =
+      Button(id, name, style)(integration match {
+        case Integration.Url(url)          => RawIntegration(url, None)
+        case Integration.Context(url, ctx) => RawIntegration(url, Encode[T].apply(ctx).some)
       })
 
-    override def toString = s"Action.Button(id: $id, name: $name, style: $style, integration: $raw)"
   }
 
-  class Select private[muffin] (
-      val id: String,
-      val name: String,
-      val options: List[SelectOption] = Nil,
-      val dataSource: Option[DataSource] = None
+  case class Select private[muffin] (
+      id: String,
+      name: String,
+      options: List[SelectOption] = Nil,
+      dataSource: Option[DataSource] = None
   )(private[muffin] val raw: RawIntegration)
     extends Action {
 
-    def integrationUrl: String =
-      raw match {
-        case RawIntegration.Url(url)        => url
-        case RawIntegration.Context(url, _) => url
-      }
+    def integrationUrl: String = raw.url
 
-    def integrationContext[T: Decode]: Option[T] =
-      raw match {
-        case RawIntegration.Url(_)          => None
-        case RawIntegration.Context(_, ctx) => Decode[T].apply(ctx).toOption
-      }
+    def integrationContext[T: Decode]: Option[T] = raw.ctx.flatMap(Decode[T].apply(_).toOption)
 
-    def copy(
-        id: String = this.id,
-        name: String = this.name,
-        options: List[SelectOption] = this.options,
-        dataSource: Option[DataSource] = this.dataSource
-    ): Select = new Select(id, name, options, dataSource)(raw)
-
-    def copyIntegration[T: Encode](integration: Integration[T]): Select =
-      new Select(id, name, options, dataSource)(integration match {
-        case Integration.Url(url)          => RawIntegration.Url(url)
-        case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+    def setIntegration[T: Encode](integration: Integration[T]): Select =
+      Select(id, name, options, dataSource)(integration match {
+        case Integration.Url(url)          => RawIntegration(url, None)
+        case Integration.Context(url, ctx) => RawIntegration(url, Encode[T].apply(ctx).some)
       })
-
-    override def toString =
-      s"Action.Select(id: $id, name: $name, options: $options, dataSource: $dataSource, integration: $raw)"
 
   }
 
@@ -139,13 +109,10 @@ object Action {
 
 enum Integration[+T] {
   case Url(url: String) extends Integration[Nothing]
-  case Context[T](url: String, ctx: T) extends Integration[T]
+  case Context[A](url: String, ctx: A) extends Integration[A]
 }
 
-private[muffin] enum RawIntegration(url: String) {
-  case Url(url: String) extends RawIntegration(url)
-  case Context(url: String, ctx: String) extends RawIntegration(url)
-}
+private[muffin] case class RawIntegration(url: String, ctx: Option[String])
 
 enum Style {
   case Good

@@ -152,12 +152,12 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
               "Duis aute irure dolor in reprehenderit".some
             )
             .color("#00FF00")
-            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
             .action(selectOptions(
               "select",
               _.Context("url2", AppContext(123, "str")),
               SelectOption("Зеленый", "green") :: SelectOption("Синий", "blue") :: Nil
             ))
+            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
             .make :: Nil
         )
       ).map(post => assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879")))
@@ -177,12 +177,12 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
               "Duis aute irure dolor in reprehenderit".some
             )
             .color("#00FF00")
-            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
             .action(selectOptions(
               "select",
               _.Context("url2", AppContext(123, "str")),
               SelectOption("Зеленый", "green") :: SelectOption("Синий", "blue") :: Nil
             ))
+            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
             .make :: Nil
         )
       ).map(post => assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879")))
@@ -202,22 +202,15 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
               "Duis aute irure dolor in reprehenderit".some
             )
             .color("#00FF00")
-            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
             .action(selectOptions(
               "select",
               _.Context("url2", AppContext(123, "str")),
               SelectOption("Зеленый", "green") :: SelectOption("Синий", "blue") :: Nil
             ))
+            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
             .make :: Nil
         )
-      ).map { post =>
-        post.props.attachments.head.actions.foreach {
-          action =>
-            println(action.integrationContext[AppContext])
-        }
-
-        assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879"))
-      }
+      ).map(post => assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879")))
     }
 
     Scenario(s"get post by id in $integration") {
