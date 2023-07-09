@@ -10,8 +10,8 @@ object Dependencies {
     val http4s = "1.0.0-M39"
 
     object zio {
-      val http = "3.0.0-RC1"
-      val json = "0.5.0"
+      val http = "3.0.0-RC2"
+      val json = "0.6.0"
       val core = "2.0.13"
     }
 

@@ -23,11 +23,11 @@ object ZioRoutes {
     Http
       .collectZIO[Request]
       .apply[R, Response, Response] {
-        case req @ Method.POST -> !! / "commands" / handler / command =>
+        case req @ Method.POST -> Path.root / "commands" / handler / command =>
           handleEvent[R](req)(data => router.handleCommand(s"$handler::$command", decodeFormData(data)))
-        case req @ Method.POST -> !! / "actions" / handler / actions  =>
+        case req @ Method.POST -> Path.root / "actions" / handler / actions  =>
           handleEvent[R](req)(data => router.handleAction(s"$handler::$actions", HttpAction(data)))
-        case req @ Method.POST -> !! / "dialogs" / handler / dialogs  =>
+        case req @ Method.POST -> Path.root / "dialogs" / handler / dialogs  =>
           handleEvent[R](req)(data => router.handleDialog(s"$handler::$dialogs", HttpAction(data)))
       }
   }

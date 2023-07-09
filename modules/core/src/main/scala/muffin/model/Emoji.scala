@@ -35,4 +35,4 @@ object EmojiSorting {
 
 }
 
-case class CreateEmojiRequest(image: File, emojiName: String, creatorId: UserId)
+case class CreateEmojiRequest(image: Array[Byte], emojiName: String, creatorId: UserId)

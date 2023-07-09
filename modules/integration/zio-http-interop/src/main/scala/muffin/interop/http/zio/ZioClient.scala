@@ -21,32 +21,50 @@ class ZioClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpCl
       headers: Map[String, String],
       params: Params => Params
   ): RIO[R with Client, Out] =
-    Client
-      .request(
-        url + params(Params.Empty).mkString,
-        method match {
-          case Method.Get    => ZMethod.GET
-          case Method.Post   => ZMethod.POST
-          case Method.Delete => ZMethod.DELETE
-          case Method.Put    => ZMethod.PUT
-          case Method.Patch  => ZMethod.PATCH
-        },
-        Headers(headers.map(Header.Custom.apply).toList),
-        content =
-          body match {
-            case Body.Empty          => ZBody.empty
-            case Body.Json(value)    => ZBody.fromString(Encode[In].apply(value))
-            case Body.RawJson(value) => ZBody.fromString(value)
-            case Body.Multipart(_)   => throw new Exception("ZIO Backend don't support multipart")
-          }
-      )
-      .flatMap(_.body.asString(Charset.defaultCharset()))
-      .flatMap {
-        Decode[Out].apply(_) match {
+    for {
+      requestBody <-
+        body match {
+          case Body.Empty            => ZIO.attempt(ZBody.empty)
+          case Body.Json(value)      => ZIO.attempt(ZBody.fromString(Encode[In].apply(value)))
+          case Body.RawJson(value)   => ZIO.attempt(ZBody.fromString(value))
+          case Body.Multipart(parts) =>
+            for {
+              boundary <- Boundary.randomUUID
+              form = Form.apply(Chunk.fromIterable(
+                parts.map {
+                  case MultipartElement.StringElement(name, value) => FormField.textField(name, value)
+                  case MultipartElement.FileElement(name, value)   =>
+                    FormField.binaryField(
+                      name,
+                      Chunk.fromArray(value),
+                      MediaType.apply("application", "octet-stream", false, true)
+                    )
+                }
+              ))
+            } yield ZBody.fromMultipartForm(form, boundary)
+        }
+
+      response <- Client
+        .request(
+          url + params(Params.Empty).mkString,
+          method match {
+            case Method.Get    => ZMethod.GET
+            case Method.Post   => ZMethod.POST
+            case Method.Delete => ZMethod.DELETE
+            case Method.Put    => ZMethod.PUT
+            case Method.Patch  => ZMethod.PATCH
+          },
+          Headers(headers.map(Header.Custom.apply).toList),
+          content = requestBody
+        )
+
+      stringResponse <- response.body.asString(Charset.defaultCharset())
+      res            <-
+        Decode[Out].apply(stringResponse) match {
           case Left(value)  => ZIO.fail(value)
           case Right(value) => ZIO.succeed(value)
         }
-      }
+    } yield res
 
 }
 

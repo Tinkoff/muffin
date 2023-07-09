@@ -56,7 +56,7 @@ class SttpClient[F[_]: MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any],
                 .multipartBody(
                   parts.map {
                     case MultipartElement.StringElement(name, value) => multipart(name, value)
-                    case MultipartElement.FileElement(name, value)   => multipartFile(name, value)
+                    case MultipartElement.FileElement(name, value)   => multipart(name, value)
                   }
                 )
                 .header("Content-Type", "multipart/form-data")
