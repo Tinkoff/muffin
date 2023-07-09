@@ -1,11 +1,9 @@
 package muffin.api
 
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
 import java.time.ZoneId
 
-import cats.effect.{IO, Resource}
-import cats.syntax.all.{*, given}
+import cats.effect.IO
+import cats.syntax.all.*
 
 import org.scalatest.{Assertion, Succeeded, Tag}
 import org.scalatest.featurespec.AsyncFeatureSpec

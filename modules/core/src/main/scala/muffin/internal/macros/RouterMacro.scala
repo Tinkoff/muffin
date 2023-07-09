@@ -1,5 +1,6 @@
 package muffin.internal.macros
 
+import scala.annotation.nowarn
 import scala.quoted.*
 
 import cats.MonadThrow
@@ -9,6 +10,7 @@ import muffin.internal.router.*
 import muffin.model.*
 import muffin.router.*
 
+@nowarn
 class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
     tree: Expr[T],
     monadThrowF: Expr[MonadThrow[F]],

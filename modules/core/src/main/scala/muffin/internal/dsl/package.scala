@@ -3,7 +3,6 @@ package muffin.internal.dsl
 import cats.MonadThrow
 import cats.syntax.all.given
 
-import muffin.api.*
 import muffin.codec.Encode
 import muffin.internal.macros.RouterMacro
 import muffin.internal.router.*

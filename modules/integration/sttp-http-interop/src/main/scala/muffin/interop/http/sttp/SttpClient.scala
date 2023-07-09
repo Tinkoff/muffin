@@ -1,14 +1,11 @@
 package muffin.interop.http.sttp
 
-import java.io.File
-
-import cats.{~>, Applicative, MonadThrow}
+import cats.MonadThrow
 import cats.effect.Sync
 import cats.syntax.all.given
 
 import sttp.client3.*
-import sttp.client3.given
-import sttp.model.{Header, Method as SMethod, Uri}
+import sttp.model.{Method as SMethod, Uri}
 
 import muffin.codec.*
 import muffin.error.MuffinError

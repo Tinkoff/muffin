@@ -2,7 +2,6 @@ package muffin.api
 
 import java.time.*
 
-import cats.Monad
 import cats.effect.Concurrent
 import cats.syntax.all.given
 import fs2.*

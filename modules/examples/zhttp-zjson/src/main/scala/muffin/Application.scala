@@ -40,7 +40,7 @@ object Application extends ZIOAppDefault {
 
       router <- handle(handler, "kek").command(_.time).in[RHttp[Client], Task]()
 
-      routes = ZioRoutes.routes(router, codec)
+      routes = ZioRoutes.routes(router)
       _ <- Server.serve(routes)
     } yield _root_.zio.ExitCode.success)
       .provide(Server.default, Client.default)

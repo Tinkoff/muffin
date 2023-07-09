@@ -4,8 +4,6 @@ import java.time.LocalDateTime
 
 import cats.syntax.all.given
 
-import muffin.api.*
-
 case class UserStatus(
     userId: UserId,
     status: StatusUser,

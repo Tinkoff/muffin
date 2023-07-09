@@ -1,22 +1,15 @@
 package muffin.interop.json.zio
 
 import java.time.{Instant, LocalDateTime, ZoneId}
-import scala.collection.mutable
-import scala.deriving.Mirror
-import scala.util.Right
 
-import cats.Id
-
-import zio.json.{*, given}
-import zio.json.DeriveJsonDecoder.ArraySeq
+import zio.json.*
 import zio.json.JsonDecoder.{JsonError, UnsafeJson}
-import zio.json.ast.{Json, JsonCursor}
+import zio.json.ast.Json
 import zio.json.internal.*
 
 import muffin.codec.*
 import muffin.error.MuffinError
 import muffin.http.Body
-import muffin.model.{Preference, RoleInfo}
 
 object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
 

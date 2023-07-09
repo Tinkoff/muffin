@@ -3,10 +3,8 @@ package muffin.model
 import scala.collection.immutable.List
 
 import cats.syntax.all.given
-import fs2.Stream
 
 import muffin.*
-import muffin.api.*
 import muffin.codec.*
 
 case class Post(

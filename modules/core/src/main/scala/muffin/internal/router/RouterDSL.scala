@@ -3,7 +3,6 @@ package muffin.internal.router
 import scala.quoted.*
 
 import muffin.model.{CommandAction, *}
-import muffin.router.HttpAction
 
 sealed trait RouterDSL
 

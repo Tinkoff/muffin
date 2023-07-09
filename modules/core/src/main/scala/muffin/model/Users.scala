@@ -1,9 +1,5 @@
 package muffin.model
 
-import fs2.Stream
-
-import muffin.api.*
-
 case class User(
     id: UserId,
     username: String,

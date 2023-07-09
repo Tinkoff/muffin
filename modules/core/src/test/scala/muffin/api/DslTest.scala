@@ -4,14 +4,13 @@ import cats.syntax.all.given
 
 import org.scalatest.Tag
 
-import muffin.api.ApiTestSupport
 import muffin.codec.{CodecSupport, Decode, Encode}
 import muffin.dsl.*
 import muffin.model.*
 
 trait DslTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To, From]) extends ApiTestSupport {
 
-  import codecSupport.{*, given}
+  import codecSupport.*
 
   given Encoder: Encode[State]
   given Decoder: Decode[State]
@@ -74,7 +73,7 @@ trait DslTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
       assert(dialogDsl.state[State].contains(state))
 
       val dialogRaw =
-        new Dialog(
+        Dialog(
           title = "Dialog",
           callbackId = "Callback".some,
           introductionText = "introduction".some,
