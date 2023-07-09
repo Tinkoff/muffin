@@ -11,7 +11,9 @@ import sttp.client3.given
 import sttp.model.{Header, Method as SMethod, Uri}
 
 import muffin.codec.*
+import muffin.error.MuffinError
 import muffin.http.*
+import muffin.internal.syntax.*
 
 class SttpClient[F[_]: MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any], codec: CodecSupport[To, From])
   extends HttpClient[F, To, From] {
@@ -37,31 +39,36 @@ class SttpClient[F[_]: MonadThrow, To[_], From[_]](backend: SttpBackend[F, Any],
         Uri.unsafeParse(url + params(Params.Empty).mkString)
       )
       .headers(headers)
-      .mapResponse(_.flatMap(response => summon[Decode[Out]].apply(response).left.map(_.getMessage)))
-
-    (
-      body match {
-        case body: Body.RawJson    =>
-          backend.send(req.body(body.value, "UTF-8").header("Content-Type", "application/json"))
-        case body: Body.Json[?]    =>
-          backend
-            .send(req.body(summon[Encode[In]].apply(body.value), "UTF-8").header("Content-Type", "application/json"))
-        case Body.Multipart(parts) =>
-          backend.send(
-            req
-              .multipartBody(
-                parts.map {
-                  case MultipartElement.StringElement(name, value) => multipart(name, value)
-                  case MultipartElement.FileElement(name, value)   => multipartFile(name, value)
-                }
-              )
-              .header("Content-Type", "multipart/form-data")
-          )
-        case Body.Empty            => backend.send(req)
+      .tap {
+        req =>
+          body match {
+            case Body.Empty            => req
+            case Body.Json(value)      =>
+              req
+                .body(Encode[In].apply(value), "UTF-8")
+                .header("Content-Type", "application/json")
+            case Body.RawJson(value)   =>
+              req
+                .body(value, "UTF-8")
+                .header("Content-Type", "application/json")
+            case Body.Multipart(parts) =>
+              req
+                .multipartBody(
+                  parts.map {
+                    case MultipartElement.StringElement(name, value) => multipart(name, value)
+                    case MultipartElement.FileElement(name, value)   => multipartFile(name, value)
+                  }
+                )
+                .header("Content-Type", "multipart/form-data")
+          }
       }
-    ).map(_.body)
+      .response(asString.mapLeft(MuffinError.Http.apply))
+      .mapResponse(_.flatMap(Decode[Out].apply))
+
+    backend.send(req)
+      .map(_.body)
       .flatMap {
-        case Left(value)  => MonadThrow[F].raiseError(new Exception(value))
+        case Left(error)  => MonadThrow[F].raiseError(error)
         case Right(value) => value.pure[F]
       }
   }

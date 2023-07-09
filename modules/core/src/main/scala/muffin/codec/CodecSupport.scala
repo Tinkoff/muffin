@@ -10,6 +10,7 @@ import cats.arrow.FunctionK
 import cats.syntax.all.{*, given}
 
 import muffin.api.*
+import muffin.error.MuffinError
 import muffin.http.*
 import muffin.internal.*
 import muffin.model.*
@@ -23,7 +24,7 @@ object Encode {
 }
 
 trait Decode[A] {
-  def apply(from: String): Either[Throwable, A]
+  def apply(from: String): Either[MuffinError.Decoding, A]
 }
 
 object Decode {

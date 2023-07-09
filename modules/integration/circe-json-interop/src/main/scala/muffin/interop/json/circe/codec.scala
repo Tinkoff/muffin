@@ -14,6 +14,7 @@ import io.circe.syntax.given
 
 import muffin.api.*
 import muffin.codec.*
+import muffin.error.MuffinError
 import muffin.http.Body
 import muffin.router.*
 
@@ -21,19 +22,19 @@ object codec extends CodecSupport[Encoder, Decoder] {
 
   given EncoderTo: FunctionK[Encoder, Encode] =
     new FunctionK[Encoder, Encode] {
-      def apply[A](fa: Encoder[A]): Encode[A] = (obj: A) => fa.apply(obj).dropNullValues.noSpaces
+      def apply[A](fa: Encoder[A]): Encode[A] = fa.apply(_).dropNullValues.noSpaces
     }
 
   given DecoderFrom: FunctionK[Decoder, Decode] =
     new FunctionK[Decoder, Decode] {
 
-      def apply[A](fa: Decoder[A]): Decode[A] = (str: String) => parse(str).flatMap(_.as(fa))
+      def apply[A](fa: Decoder[A]): Decode[A] = decode[A](_)(fa).leftMap(err => MuffinError.Decoding(err.getMessage))
 
     }
 
   given EncodeTo[A: Encoder]: Encode[A] = Encoder[A].apply(_).dropNullValues.noSpaces
 
-  given DecodeFrom[A: Decoder]: Decode[A] = (str: String) => parse(str).flatMap(_.as[A])
+  given DecodeFrom[A: Decoder]: Decode[A] = decode[A](_).leftMap(err => MuffinError.Decoding(err.getMessage))
 
   given UnitTo: Encoder[Unit] = Encoder.encodeUnit
 
