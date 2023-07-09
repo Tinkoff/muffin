@@ -32,7 +32,7 @@ sealed trait MultipartElement
 
 object MultipartElement {
   case class StringElement(name: String, value: String) extends MultipartElement
-  case class FileElement(name: String, value: File) extends MultipartElement
+  case class FileElement(name: String, value: Array[Byte]) extends MultipartElement
 }
 
 enum Method {
