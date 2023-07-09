@@ -35,14 +35,14 @@ class ZioClient[R, To[_], From[_]](codec: CodecSupport[To, From]) extends HttpCl
         content =
           body match {
             case Body.Empty          => ZBody.empty
-            case Body.Json(value)    => ZBody.fromString(summon[Encode[In]].apply(value))
+            case Body.Json(value)    => ZBody.fromString(Encode[In].apply(value))
             case Body.RawJson(value) => ZBody.fromString(value)
             case Body.Multipart(_)   => throw new Exception("ZIO Backend don't support multipart")
           }
       )
       .flatMap(_.body.asString(Charset.defaultCharset()))
       .flatMap {
-        summon[Decode[Out]].apply(_) match {
+        Decode[Out].apply(_) match {
           case Left(value)  => ZIO.fail(value)
           case Right(value) => ZIO.succeed(value)
         }

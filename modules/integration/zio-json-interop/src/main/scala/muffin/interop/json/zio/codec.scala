@@ -11,9 +11,10 @@ import zio.json.{*, given}
 import zio.json.DeriveJsonDecoder.ArraySeq
 import zio.json.JsonDecoder.{JsonError, UnsafeJson}
 import zio.json.ast.{Json, JsonCursor}
-import zio.json.internal.{Lexer, RecordingReader, RetractReader, StringMatrix, WithRetractReader, Write}
+import zio.json.internal.*
 
 import muffin.codec.*
+import muffin.error.MuffinError
 import muffin.http.Body
 import muffin.model.{Preference, RoleInfo}
 
@@ -21,7 +22,7 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
 
   given EncodeTo[A: JsonEncoder]: Encode[A] = _.toJson
 
-  given DecodeFrom[A: JsonDecoder]: Decode[A] = _.fromJson.left.map(new Throwable(_))
+  given DecodeFrom[A: JsonDecoder]: Decode[A] = _.fromJson.left.map(MuffinError.Decoding(_))
 
   given UnitTo: JsonEncoder[Unit] = (_, _, _) => ()
 
