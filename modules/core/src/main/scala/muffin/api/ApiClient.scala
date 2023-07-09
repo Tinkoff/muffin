@@ -25,33 +25,33 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
 
   private def botId: F[UserId] = userByUsername(cfg.botName).map(_.id)
 
-  def postToDirect[T: To: From](
+  def postToDirect(
       userId: UserId,
       message: Option[String] = None,
-      props: Props[T] = Props.empty
-  ): F[Post[T]] =
+      props: Props = Props.empty
+  ): F[Post] =
     for {
       id   <- botId
       info <- channel(id :: userId :: Nil)
       res  <- postToChannel(info.id, message, props)
     } yield res
 
-  def postToChat[T: To: From](
+  def postToChat(
       userIds: List[UserId],
       message: Option[String] = None,
-      props: Props[T] = Props.empty
-  ): F[Post[T]] =
+      props: Props = Props.empty
+  ): F[Post] =
     for {
       id   <- botId
       info <- channel(id :: userIds)
       res  <- postToChannel(info.id, message, props)
     } yield res
 
-  def postToChannel[T: To: From](
+  def postToChannel(
       channelId: ChannelId,
       message: Option[String] = None,
-      props: Props[T] = Props.empty
-  ): F[Post[T]] =
+      props: Props = Props.empty
+  ): F[Post] =
     http.request(
       cfg.baseUrl + "/posts",
       Method.Post,
@@ -75,16 +75,16 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
         Map("Authorization" -> s"Bearer ${cfg.auth}")
       )
 
-  def createEphemeralPost(userId: UserId, channelId: ChannelId, message: String): F[Post[Nothing]] =
-    http.request[String, Post[Nothing]](
+  def createEphemeralPost(userId: UserId, channelId: ChannelId, message: String): F[Post] =
+    http.request[String, Post](
       cfg.baseUrl + "/posts/ephemeral",
       Method.Post,
       jsonRaw.field("user_id", userId).field("channel_id", channelId).field("message", message).build,
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def getPost[T: From](postId: MessageId): F[Post[T]] =
-    http.request[Nothing, Post[T]](
+  def getPost(postId: MessageId): F[Post] =
+    http.request[Nothing, Post](
       cfg.baseUrl + s"/posts/$postId",
       Method.Get,
       Body.Empty,
@@ -99,11 +99,11 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def updatePost[T: To: From](
+  def updatePost(
       postId: MessageId,
       message: Option[String] = None,
-      props: Props[T] = Props.empty
-  ): F[Post[T]] =
+      props: Props = Props.empty
+  ): F[Post] =
     http.request(
       cfg.baseUrl + s"/posts/$postId",
       Method.Put,
@@ -111,11 +111,11 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def patchPost[T: To: From](
+  def patchPost(
       postId: MessageId,
       message: Option[String] = None,
-      props: Props[T] = Props.empty
-  ): F[Post[T]] =
+      props: Props = Props.empty
+  ): F[Post] =
     http.request(
       cfg.baseUrl + s"/posts/$postId/patch",
       Method.Put,
@@ -123,8 +123,8 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
       Map("Authorization" -> s"Bearer ${cfg.auth}")
     )
 
-  def getPostsByIds(messageId: List[MessageId]): F[List[Post[Nothing]]] =
-    http.request[List[MessageId], List[Post[Nothing]]](
+  def getPostsByIds(messageId: List[MessageId]): F[List[Post]] =
+    http.request[List[MessageId], List[Post]](
       cfg.baseUrl + s"/posts/ids",
       Method.Put,
       Body.Json(messageId),
@@ -140,7 +140,7 @@ class ApiClient[F[_]: Concurrent, To[_], From[_]](http: HttpClient[F, To, From],
     )
 
   ////////////////////////////////////////////////
-  def openDialog[T: To](triggerId: String, url: String, dialog: Dialog[T]): F[Unit] =
+  def openDialog(triggerId: String, url: String, dialog: Dialog): F[Unit] =
     http.request(
       cfg.baseUrl + "/actions/dialogs/open",
       Method.Post,

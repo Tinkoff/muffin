@@ -1,14 +1,30 @@
 package muffin.model
 
-case class Dialog[T](
-    title: String,
-    state: T,
-    callbackId: Option[String] = None,
-    introductionText: Option[String] = None,
-    elements: List[Element] = Nil,
-    submitLabel: Option[String] = None,
-    notifyOnCancel: Boolean = false
-)
+import muffin.codec.{Decode, Encode}
+
+class Dialog private[muffin] (
+    val title: String,
+    val callbackId: Option[String] = None,
+    val introductionText: Option[String] = None,
+    val elements: List[Element] = Nil,
+    val submitLabel: Option[String] = None,
+    val notifyOnCancel: Boolean = false
+)(private[muffin] val state: String) {
+
+  def copy(
+      title: String = this.title,
+      callbackId: Option[String] = this.callbackId,
+      introductionText: Option[String] = this.callbackId,
+      elements: List[Element] = this.elements,
+      submitLabel: Option[String] = this.submitLabel,
+      notifyOnCancel: Boolean = this.notifyOnCancel
+  ): Dialog = new Dialog(title, callbackId, introductionText, elements, submitLabel, notifyOnCancel)(state)
+
+  def copyState[T: Encode](state: T) =
+    new Dialog(title, callbackId, introductionText, elements, submitLabel, notifyOnCancel)(Encode[T].apply(state))
+
+  def state[T: Decode]: Option[T] = Decode[T].apply(state).toOption
+}
 
 enum TextSubtype {
   case Text

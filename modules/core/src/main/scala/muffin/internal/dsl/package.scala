@@ -4,6 +4,7 @@ import cats.MonadThrow
 import cats.syntax.all.given
 
 import muffin.api.*
+import muffin.codec.Encode
 import muffin.internal.macros.RouterMacro
 import muffin.internal.router.*
 import muffin.model.*
@@ -11,36 +12,36 @@ import muffin.router.*
 
 trait AppResponseSyntax {
 
-  def ok: AppResponse[Nothing] = AppResponse.Ok()
+  def ok: AppResponse = AppResponse.Ok()
 
-  def errors(errs: Map[String, String]): AppResponse[Nothing] = AppResponse.Errors(errs)
+  def errors(errs: Map[String, String]): AppResponse = AppResponse.Errors(errs)
 
-  def errors(errs: (String, String)*): AppResponse[Nothing] = errors(errs.toMap)
+  def errors(errs: (String, String)*): AppResponse = errors(errs.toMap)
 
-  def ephemeral: AppResponseMessageQuery[Nothing] = AppResponseMessageQuery.ephemeral
+  def ephemeral: AppResponseMessageQuery = AppResponseMessageQuery.ephemeral
 
-  def inChannel: AppResponseMessageQuery[Nothing] = AppResponseMessageQuery.inChannel
+  def inChannel: AppResponseMessageQuery = AppResponseMessageQuery.inChannel
 
-  class AppResponseMessageQuery[T] private (message: AppResponse.Message[T]) {
+  class AppResponseMessageQuery private (message: AppResponse.Message) {
 
-    def text(text: String): AppResponseMessageQuery[T] = AppResponseMessageQuery(message.copy(text = text.some))
+    def text(text: String): AppResponseMessageQuery = AppResponseMessageQuery(message.copy(text = text.some))
 
-    def attachments[X >: T](attachments: List[Attachment[X]]): AppResponseMessageQuery[X] =
+    def attachments(attachments: List[Attachment]): AppResponseMessageQuery =
       AppResponseMessageQuery(
         message.copy(attachments = attachments)
       )
 
-    def make: AppResponse[T] = message
+    def make: AppResponse = message
 
   }
 
   object AppResponseMessageQuery {
 
-    def ephemeral: AppResponseMessageQuery[Nothing] =
-      AppResponseMessageQuery[Nothing](AppResponse.Message(responseType = ResponseType.Ephemeral))
+    def ephemeral: AppResponseMessageQuery =
+      AppResponseMessageQuery(AppResponse.Message(responseType = ResponseType.Ephemeral))
 
-    def inChannel: AppResponseMessageQuery[Nothing] =
-      AppResponseMessageQuery[Nothing](AppResponse.Message(responseType = ResponseType.InChannel))
+    def inChannel: AppResponseMessageQuery =
+      AppResponseMessageQuery(AppResponse.Message(responseType = ResponseType.InChannel))
 
   }
 
@@ -48,92 +49,102 @@ trait AppResponseSyntax {
 
 trait MessageSyntax {
 
-  def actionButton[T](
+  def button[T: Encode](
       name: String,
       integration: Integration.type => Integration[T],
       style: Style = Style.Default,
       id: Option[String] = None
-  ): Action[T] = Action.Button(id.getOrElse(name), name, integration(Integration), style)
+  ): Action.Button =
+    Action.Button(id.getOrElse(name), name, style)(integration(Integration) match {
+      case Integration.Url(url)          => RawIntegration.Url(url)
+      case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+    })
 
-  def actionSelectOptions[T](
+  def selectOptions[T: Encode](
       name: String,
       integration: Integration.type => Integration[T],
       options: List[SelectOption],
       id: Option[String] = None
-  ): Action[T] = Action.Select(id.getOrElse(name), name, integration(Integration), options)
+  ): Action.Select =
+    Action.Select(id.getOrElse(name), name, options)(integration(Integration) match {
+      case Integration.Url(url)          => RawIntegration.Url(url)
+      case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+    })
 
-  def actionSelectSource[T](
+  def selectSource[T: Encode](
       name: String,
       integration: Integration.type => Integration[T],
       source: DataSource.type => DataSource,
       id: Option[String] = None
-  ): Action[T] = Action.Select(id.getOrElse(name), name, integration(Integration), dataSource = source(DataSource).some)
+  ): Action.Select =
+    Action.Select(id.getOrElse(name), name, dataSource = source(DataSource).some)(integration(Integration) match {
+      case Integration.Url(url)          => RawIntegration.Url(url)
+      case Integration.Context(url, ctx) => RawIntegration.Context(url, Encode[T].apply(ctx))
+    })
 
-  def attachment: AttachmentQuery[Nothing] = AttachmentQuery()
+  def attachment: AttachmentQuery = AttachmentQuery()
 
-  class AttachmentQuery[T] private (attachment: Attachment[T]) {
+  class AttachmentQuery private (attachment: Attachment) {
 
-    def title(title: String, link: Option[String]): AttachmentQuery[T] =
+    def title(title: String, link: Option[String]): AttachmentQuery =
       new AttachmentQuery(attachment.copy(title = title.some, titleLink = link))
 
-    def footer(footer: String, icon: Option[String]): AttachmentQuery[T] =
+    def footer(footer: String, icon: Option[String]): AttachmentQuery =
       new AttachmentQuery(attachment.copy(footer = footer.some, footerIcon = icon))
 
-    def author(name: String, link: Option[String], icon: Option[String]): AttachmentQuery[T] =
+    def author(name: String, link: Option[String], icon: Option[String]): AttachmentQuery =
       new AttachmentQuery(attachment.copy(authorName = name.some, authorLink = link, authorIcon = icon))
 
-    def color(color: String): AttachmentQuery[T] = new AttachmentQuery(attachment.copy(color = color.some))
+    def color(color: String): AttachmentQuery = new AttachmentQuery(attachment.copy(color = color.some))
 
-    def text(text: String, pretext: Option[String] = None, fallback: Option[String] = None): AttachmentQuery[T] =
+    def text(text: String, pretext: Option[String] = None, fallback: Option[String] = None): AttachmentQuery =
       new AttachmentQuery(attachment.copy(text = text.some, pretext = pretext, fallback = fallback.orElse(text.some)))
 
-    def image(img: String): AttachmentQuery[T] =
-      new AttachmentQuery(attachment.copy(imageUrl = img.some, thumbUrl = None))
+    def image(img: String): AttachmentQuery = new AttachmentQuery(attachment.copy(imageUrl = img.some, thumbUrl = None))
 
-    def thumb(img: String): AttachmentQuery[T] =
-      new AttachmentQuery(attachment.copy(thumbUrl = img.some, imageUrl = None))
+    def thumb(img: String): AttachmentQuery = new AttachmentQuery(attachment.copy(thumbUrl = img.some, imageUrl = None))
 
-    def fields(fields: List[AttachmentField]): AttachmentQuery[T] =
-      new AttachmentQuery(attachment.copy(fields = fields))
+    def fields(fields: List[AttachmentField]): AttachmentQuery = new AttachmentQuery(attachment.copy(fields = fields))
 
-    def action[X >: T](action: Action[X]): AttachmentQuery[X] =
-      new AttachmentQuery[X](attachment.copy(actions = action :: attachment.actions).asInstanceOf[Attachment[X]])
+    def action(action: Action): AttachmentQuery =
+      new AttachmentQuery(attachment.copy(actions = action :: attachment.actions))
 
-    def make: Attachment[T] = attachment
-
+    def make: Attachment = attachment
   }
 
   object AttachmentQuery {
-    def apply(): AttachmentQuery[Nothing] = new AttachmentQuery(Attachment[Nothing]())
+    private[muffin] def apply(): AttachmentQuery = new AttachmentQuery(Attachment())
   }
 
 }
 
 trait DialogSyntax {
 
-  def dialog(title: String): DialogQuery[Nothing] = DialogQuery(title, ().asInstanceOf[Nothing])
+  def dialog(title: String)(using Encode[Unit]): DialogQuery = DialogQuery(title, ())
 
-  def dialog[T](title: String, state: T): DialogQuery[T] = DialogQuery(title, state)
+  def dialog[T: Encode](title: String, state: T): DialogQuery = DialogQuery(title, state)
 
-  class DialogQuery[T] private (dialog: Dialog[T]) {
+  class DialogQuery private (dialog: Dialog) {
 
-    def callbackId(id: String): DialogQuery[T] = new DialogQuery(dialog.copy(callbackId = id.some))
+    def callbackId(id: String): DialogQuery = new DialogQuery(dialog.copy(callbackId = id.some))
 
-    def introduction(text: String): DialogQuery[T] = new DialogQuery(dialog.copy(introductionText = text.some))
+    def introduction(text: String): DialogQuery = new DialogQuery(dialog.copy(introductionText = text.some))
 
-    def submitLabel(label: String): DialogQuery[T] = new DialogQuery(dialog.copy(submitLabel = label.some))
+    def submitLabel(label: String): DialogQuery = new DialogQuery(dialog.copy(submitLabel = label.some))
 
-    def notifyOnCancel: DialogQuery[T] = new DialogQuery(dialog.copy(notifyOnCancel = true))
+    def notifyOnCancel: DialogQuery = new DialogQuery(dialog.copy(notifyOnCancel = true))
 
-    def element(element: Element): DialogQuery[T] =
-      new DialogQuery[T](dialog.copy(elements = element :: dialog.elements))
+    def element(element: Element): DialogQuery = new DialogQuery(dialog.copy(elements = element :: dialog.elements))
 
-    def make: Dialog[T] = dialog
+    def make: Dialog = dialog
 
   }
 
   object DialogQuery {
-    def apply[T](title: String, state: T): DialogQuery[T] = new DialogQuery(Dialog(title = title, state = state))
+
+    private[muffin] def apply[T: Encode](title: String, state: T): DialogQuery =
+      new DialogQuery(Dialog(title = title)(Encode[T].apply(state)))
+
   }
 
 }
@@ -143,8 +154,8 @@ trait RouterSyntax {
   inline def handle[F[_], H, N <: Singleton](
       inline handle: H,
       name: N
-  ): Handle[F, H, N, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple] =
-    Handle[F, H, N, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple](
+  ): Handle[F, H, N, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple] =
+    Handle[F, H, N, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple, EmptyTuple](
       handle
     )
 
@@ -153,13 +164,13 @@ trait RouterSyntax {
     def <~>[R <: RouterDSL](right: R) = <>(left, right)
 
     inline def in[F[_], G[_]](
-        onDialogMissing: HttpAction => AppResponse[Nothing] = _ => AppResponse.Ok(),
-        onActionMissing: HttpAction => AppResponse[Nothing] = _ => AppResponse.Ok(),
-        onCommandMissing: CommandAction => AppResponse[Nothing] = _ => AppResponse.Ok()
-    )(using monadThrowF: MonadThrow[F], monadThrowG: MonadThrow[G]): G[Router[F]] =
+        onDialogMissing: HttpAction => AppResponse = _ => AppResponse.Ok(),
+        onActionMissing: HttpAction => AppResponse = _ => AppResponse.Ok(),
+        onCommandMissing: CommandAction => AppResponse = _ => AppResponse.Ok()
+    )(using syncF: MonadThrow[F], syncG: MonadThrow[G]): G[Router[F]] =
       ${
         RouterMacro
-          .router[F, G, L]('left, 'monadThrowF, 'monadThrowG, 'onDialogMissing, 'onActionMissing, 'onCommandMissing)
+          .router[F, G, L]('left, 'syncF, 'syncG, 'onDialogMissing, 'onActionMissing, 'onCommandMissing)
       }
 
   }

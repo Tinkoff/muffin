@@ -13,9 +13,9 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
     tree: Expr[T],
     monadThrowF: Expr[MonadThrow[F]],
     monadThrowG: Expr[MonadThrow[G]],
-    onDialogMissing: Expr[HttpAction => AppResponse[Nothing]],
-    onActionMissing: Expr[HttpAction => AppResponse[Nothing]],
-    onCommandMissing: Expr[CommandAction => AppResponse[Nothing]]
+    onDialogMissing: Expr[HttpAction => AppResponse],
+    onActionMissing: Expr[HttpAction => AppResponse],
+    onCommandMissing: Expr[CommandAction => AppResponse]
 )(using q: Quotes)
   extends MacroUtils {
 
@@ -47,7 +47,7 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
               '{
                 ${
                   monadThrowF
-                }.pure[AppResponse[Nothing]](AppResponse.Ok())
+                }.pure[AppResponse](AppResponse.Ok())
               }.asTerm
             else {
 
@@ -78,26 +78,20 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
             h,
             n,
             commandName,
-            commandOut,
             actionName,
             actionIn,
-            actionOut,
             dialogName,
-            dialogIn,
-            dialogOut
+            dialogIn
           ]] =>
         val handle = getSymbolFromType[T]("h")
         flatTypeTreeHandle[
           h,
           n,
           commandName,
-          commandOut,
           actionName,
           actionIn,
-          actionOut,
           dialogName,
-          dialogIn,
-          dialogOut
+          dialogIn
         ](path, handle)
     }
 
@@ -105,13 +99,10 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
       H: Type,
       N: Type,
       CommandName <: Tuple: Type,
-      CommandOut <: Tuple: Type,
       ActionName <: Tuple: Type,
       ActionIn <: Tuple: Type,
-      ActionOut <: Tuple: Type,
       DialogName <: Tuple: Type,
-      DialogIn <: Tuple: Type,
-      DialogOut <: Tuple: Type
+      DialogIn <: Tuple: Type
   ](path: Term, handle: Symbol): List[HandleDef] = {
 
     val handlerName = summonValue[N].toString()
@@ -122,32 +113,32 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
     val actionCases =
       (rawAction: Term) =>
         actions
-          .zip(summonActionCases[H, ActionIn, ActionOut](path.select(handle), actions, rawAction))
+          .zip(summonActionCases[H, ActionIn](path.select(handle), actions, rawAction))
           .map(MatchCase.apply(handlerName, _, _))
 
     val commandCases =
       (rawAction: Term) =>
-        commands.zip(summonCommandCases[H, CommandOut](path.select(handle), commands, rawAction))
+        commands.zip(summonCommandCases[H](path.select(handle), commands, rawAction))
           .map(MatchCase.apply(handlerName, _, _))
 
     val dialogCases =
       (rawAction: Term) =>
         dialogs
-          .zip(summonDialogCases[H, DialogIn, DialogOut](path.select(handle), dialogs, rawAction))
+          .zip(summonDialogCases[H, DialogIn](path.select(handle), dialogs, rawAction))
           .map(MatchCase.apply(handlerName, _, _))
 
     HandleDef(actionCases, commandCases, dialogCases) :: Nil
   }
 
-  private def summonActionCases[H: Type, In <: Tuple: Type, Out <: Tuple: Type](
+  private def summonActionCases[H: Type, In <: Tuple: Type](
       handler: Term,
       names: List[String],
       rawAction: Term
   ): List[Term] =
-    (Type.of[In], Type.of[Out]) match {
-      case ('[headIn *: tailIn], '[headOut *: tailOut]) =>
+    Type.of[In] match {
+      case '[headIn *: tailIn] =>
         val decoder = summonGiven[Decode[MessageAction[headIn]]]
-        val encoder = summonGiven[Encode[AppResponse[headOut]]]
+        val encoder = summonGiven[Encode[AppResponse]]
 
         val method = getMethodSymbol[H](names.head)
 
@@ -164,24 +155,24 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
                       action
                     }.asTerm
                   )
-                  .asExprOf[F[AppResponse[headOut]]]
+                  .asExprOf[F[AppResponse]]
               }
             }
           }(res => HttpResponse($encoder.apply(res)))
-        }.asTerm :: summonActionCases[H, tailIn, tailOut](handler, names.tail, rawAction)
+        }.asTerm :: summonActionCases[H, tailIn](handler, names.tail, rawAction)
 
       case _ => Nil
     }
 
-  private def summonDialogCases[H: Type, In <: Tuple: Type, Out <: Tuple: Type](
+  private def summonDialogCases[H: Type, In <: Tuple: Type](
       handler: Term,
       names: List[String],
       rawAction: Term
   ): List[Term] =
-    (Type.of[In], Type.of[Out]) match {
-      case ('[headIn *: tailIn], '[headOut *: tailOut]) =>
+    Type.of[In] match {
+      case '[headIn *: tailIn] =>
         val decoder = summonGiven[Decode[DialogAction[headIn]]]
-        val encoder = summonGiven[Encode[AppResponse[headOut]]]
+        val encoder = summonGiven[Encode[AppResponse]]
 
         val method = getMethodSymbol[H](names.head)
 
@@ -198,35 +189,34 @@ class RouterMacro[F[_]: Type, G[_]: Type, T: Type](
                       dialog
                     }.asTerm
                   )
-                  .asExprOf[F[AppResponse[headOut]]]
+                  .asExprOf[F[AppResponse]]
               }
             }
           }(res => HttpResponse($encoder.apply(res)))
-        }.asTerm :: summonDialogCases[H, tailIn, tailOut](handler, names.tail, rawAction)
+        }.asTerm :: summonDialogCases[H, tailIn](handler, names.tail, rawAction)
 
       case _ => Nil
     }
 
-  private def summonCommandCases[H: Type, Out <: Tuple: Type](
+  private def summonCommandCases[H: Type](
       handler: Term,
       names: List[String],
       rawAction: Term
   ): List[Term] =
-    Type.of[Out] match {
-      case '[headOut *: tailOut] =>
-        val encoder = summonGiven[Encode[AppResponse[headOut]]]
+    names match {
+      case head :: tail =>
+        val encoder = summonGiven[Encode[AppResponse]]
 
-        val method = getMethodSymbol[H](names.head)
+        val method = getMethodSymbol[H](head)
 
         '{
           $monadThrowF.map(
             ${
-              handler.select(method).appliedTo(rawAction).asExprOf[F[AppResponse[headOut]]]
+              handler.select(method).appliedTo(rawAction).asExprOf[F[AppResponse]]
             }
           )(res => HttpResponse($encoder.apply(res)))
-        }.asTerm :: summonCommandCases[H, tailOut](handler, names.tail, rawAction)
-
-      case _ => Nil
+        }.asTerm :: summonCommandCases[H](handler, tail, rawAction)
+      case Nil          => Nil
     }
 
   def createRouter: Expr[G[Router[F]]] = {
@@ -280,9 +270,9 @@ object RouterMacro {
       tree: Expr[T],
       monadThrowF: Expr[MonadThrow[F]],
       monadThrowG: Expr[MonadThrow[G]],
-      onDialogMissing: Expr[HttpAction => AppResponse[Nothing]],
-      onActionMissing: Expr[HttpAction => AppResponse[Nothing]],
-      onCommandMissing: Expr[CommandAction => AppResponse[Nothing]]
+      onDialogMissing: Expr[HttpAction => AppResponse],
+      onActionMissing: Expr[HttpAction => AppResponse],
+      onCommandMissing: Expr[CommandAction => AppResponse]
   )(using Quotes): Expr[G[Router[F]]] =
     new RouterMacro[F, G, T](tree, monadThrowF, monadThrowG, onDialogMissing, onActionMissing, onCommandMissing)
       .createRouter

@@ -10,7 +10,7 @@ import cats.arrow.FunctionK
 import cats.syntax.all.{*, given}
 
 import muffin.api.*
-import muffin.http.Body
+import muffin.http.*
 import muffin.internal.*
 import muffin.model.*
 
@@ -18,8 +18,16 @@ trait Encode[A] {
   def apply(obj: A): String
 }
 
+object Encode {
+  def apply[A](using encode: Encode[A]): Encode[A] = encode
+}
+
 trait Decode[A] {
   def apply(from: String): Either[Throwable, A]
+}
+
+object Decode {
+  def apply[A](using decode: Decode[A]): Decode[A] = decode
 }
 
 trait JsonRequestRawBuilder[To[_], Build]() { self =>
@@ -35,7 +43,7 @@ trait JsonRequestRawBuilder[To[_], Build]() { self =>
 }
 
 trait JsonRequestBuilder[T, To[_]]() { self =>
-  def field[X: To](fieldName: String, fieldValue: X): JsonRequestBuilder[T, To]
+  def rawField(fieldName: String, fieldValue: T => String): JsonRequestBuilder[T, To]
 
   def field[X: To](fieldName: String, fieldValue: T => X): JsonRequestBuilder[T, To]
 
@@ -45,22 +53,24 @@ trait JsonRequestBuilder[T, To[_]]() { self =>
 trait JsonResponseBuilder[From[_], Params <: Tuple] {
   def field[X: From](name: String): JsonResponseBuilder[From, X *: Params]
 
+  def rawField(name: String): JsonResponseBuilder[From, Option[String] *: Params]
+
+  def internal[X: From](name: String): JsonResponseBuilder[From, X *: Params]
+
+  def select[X](f: PartialFunction[Params, From[X]]): From[X]
+
   def build[X](f: PartialFunction[Params, X]): From[X]
+
+  def build[X](f: Params => X): From[X] = build(PartialFunction.fromFunction(f))
 }
 
-trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
-  def jsonRaw: JsonRequestRawBuilder[To, Body.RawJson]
+trait CodecSupport[To[_], From[_]] extends CodecSupportLow[To, From] {
+  given NothingTo: To[Nothing]
 
-  def seal[T](f: T => To[T]): To[T]
+  given NothingFrom: From[Nothing]
+}
 
-  def json[T, X: To](f: T => X): To[T]
-
-  def json[T]: JsonRequestBuilder[T, To]
-
-  def parsing[X: From, T](f: X => T): From[T]
-
-  def parsing: JsonResponseBuilder[From, EmptyTuple]
-
+trait CodecSupportLow[To[_], From[_]] extends PrimitivesSupport[To, From] {
   given EncodeTo[A: To]: Encode[A]
 
   given DecodeFrom[A: From]: Decode[A]
@@ -72,18 +82,13 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
 
   given UnreadOptionFrom: From[UnreadOption] = parsing[String, UnreadOption](op => UnreadOption.valueOf(op.capitalize))
 
-  val xx = StringTo
-  val x  = implicitly[To[UserId]]
-
   given NotifyPropsFrom: From[NotifyProps] =
     parsing
       .field[UnreadOption]("mark_unread")
       .field[NotifyOption]("desktop")
       .field[NotifyOption]("push")
       .field[NotifyOption]("email")
-      .build {
-        case t => NotifyProps.apply.tupled(t)
-      }
+      .build(NotifyProps.apply.tupled)
 
   given ChannelMemberFrom(using zone: ZoneId): From[ChannelMember] =
     parsing
@@ -98,9 +103,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[String]("roles")
       .field[UserId]("user_id")
       .field[ChannelId]("channel_id")
-      .build {
-        case t => ChannelMember.apply.tupled(t)
-      }
+      .build(ChannelMember.apply.tupled)
 
   given ChannelInfoFrom(using zone: ZoneId): From[ChannelInfo] =
     parsing
@@ -117,9 +120,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[LocalDateTime]("update_at")
       .field[LocalDateTime]("create_at")
       .field[ChannelId]("id")
-      .build {
-        case t => ChannelInfo.apply.tupled(t)
-      }
+      .build(ChannelInfo.apply.tupled)
   // Channels
 
   // Emoji
@@ -131,9 +132,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[String]("name")
       .field[UserId]("creator_id")
       .field[EmojiId]("id")
-      .build {
-        case t => EmojiInfo.apply.tupled(t)
-      }
+      .build(EmojiInfo.apply.tupled)
   // Emoji
 
   // Preferences
@@ -151,9 +150,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[String]("name")
       .field[String]("category")
       .field[UserId]("user_id")
-      .build {
-        case t => Preference.apply.tupled(t)
-      }
+      .build(Preference.apply.tupled)
   // Preferences
 
   // Status
@@ -278,9 +275,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
     parsing
       .field[Long]("count")
       .field[String]("emoji_name")
-      .build {
-        case t => ReactionInsight.apply.tupled(t)
-      }
+      .build(ReactionInsight.apply.tupled)
 
   given ChannelInsightDecode: From[ChannelInsight] =
     parsing
@@ -289,17 +284,13 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[String]("name")
       .field[String]("type")
       .field[ChannelId]("id")
-      .build {
-        case t => ChannelInsight.apply.tupled(t)
-      }
+      .build(ChannelInsight.apply.tupled)
 
   given ListWrapperDecode[T: From]: From[ListWrapper[T]] =
     parsing
       .field[List[T]]("items")
       .field[Boolean]("has_next")
-      .build {
-        case t => ListWrapper[T].apply.tupled(t)
-      }
+      .build(ListWrapper[T].apply.tupled)
   // Insights
 
   // Roles
@@ -311,19 +302,17 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[String]("display_name")
       .field[String]("name")
       .field[String]("id")
-      .build {
-        case t => RoleInfo.apply.tupled(t)
-      }
+      .build(RoleInfo.apply.tupled)
   // Roles
 
-  given DialogTo[T: To]: To[Dialog[T]] =
-    json[Dialog[T]]
+  given DialogTo: To[Dialog] =
+    json[Dialog]
       .field("callback_id", _.callbackId)
       .field("title", _.title)
       .field("introduction_text", _.introductionText)
       .field("submit_label", _.submitLabel)
       .field("notify_on_cancel", _.notifyOnCancel)
-      .field[String]("state", d => summon[Encode[T]].apply(d.state))
+      .rawField("state", _.state)
       .field("elements", _.elements)
       .build
 
@@ -331,58 +320,58 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
     seal[Element] {
       case value: Element.Text     =>
         json[Element]
-          .field("display_name", value.displayName)
-          .field("name", value.name)
-          .field("subtype", value.subtype)
-          .field("optional", value.optional)
-          .field("min_length", value.minLength)
-          .field("max_length", value.maxLength)
-          .field("help_text", value.helpText)
-          .field("default", value.default)
-          .field("type", "text")
+          .field("display_name", _ => value.displayName)
+          .field("name", _ => value.name)
+          .field("subtype", _ => value.subtype)
+          .field("optional", _ => value.optional)
+          .field("min_length", _ => value.minLength)
+          .field("max_length", _ => value.maxLength)
+          .field("help_text", _ => value.helpText)
+          .field("default", _ => value.default)
+          .field("type", _ => "text")
           .build
       case value: Element.Textarea =>
         json[Element]
-          .field("display_name", value.displayName)
-          .field("name", value.name)
-          .field("subtype", value.subtype)
-          .field("optional", value.optional)
-          .field("min_length", value.minLength)
-          .field("max_length", value.maxLength)
-          .field("help_text", value.helpText)
-          .field("default", value.default)
-          .field("type", "textarea")
+          .field("display_name", _ => value.displayName)
+          .field("name", _ => value.name)
+          .field("subtype", _ => value.subtype)
+          .field("optional", _ => value.optional)
+          .field("min_length", _ => value.minLength)
+          .field("max_length", _ => value.maxLength)
+          .field("help_text", _ => value.helpText)
+          .field("default", _ => value.default)
+          .field("type", _ => "textarea")
           .build
       case value: Element.Select   =>
         json[Element]
-          .field("display_name", value.displayName)
-          .field("name", value.name)
-          .field("data_source", value.dataSource)
-          .field("options", value.options)
-          .field("optional", value.optional)
-          .field("help_text", value.helpText)
-          .field("default", value.default)
-          .field("placeholder", value.placeholder)
-          .field("type", "select")
+          .field("display_name", _ => value.displayName)
+          .field("name", _ => value.name)
+          .field("data_source", _ => value.dataSource)
+          .field("options", _ => value.options)
+          .field("optional", _ => value.optional)
+          .field("help_text", _ => value.helpText)
+          .field("default", _ => value.default)
+          .field("placeholder", _ => value.placeholder)
+          .field("type", _ => "select")
           .build
       case value: Element.Checkbox =>
         json[Element]
-          .field("display_name", value.displayName)
-          .field("name", value.name)
-          .field("optional", value.optional)
-          .field("help_text", value.helpText)
-          .field("default", value.default)
-          .field("placeholder", value.placeholder)
-          .field("type", "bool")
+          .field("display_name", _ => value.displayName)
+          .field("name", _ => value.name)
+          .field("optional", _ => value.optional)
+          .field("help_text", _ => value.helpText)
+          .field("default", _ => value.default)
+          .field("placeholder", _ => value.placeholder)
+          .field("type", _ => "bool")
           .build
       case value: Element.Radio    =>
         json[Element]
-          .field("display_name", value.displayName)
-          .field("name", value.name)
-          .field("options", value.options)
-          .field("help_text", value.helpText)
-          .field("default", value.default)
-          .field("type", "radio")
+          .field("display_name", _ => value.displayName)
+          .field("name", _ => value.name)
+          .field("options", _ => value.options)
+          .field("help_text", _ => value.helpText)
+          .field("default", _ => value.default)
+          .field("type", _ => "radio")
           .build
     }
 
@@ -404,9 +393,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
     parsing
       .field[String]("value")
       .field[String]("text")
-      .build {
-        case t => SelectOption.apply.tupled(t)
-      }
+      .build(SelectOption.apply.tupled)
 
   given TextSubtypeTo: To[TextSubtype] =
     json[TextSubtype, String] {
@@ -424,9 +411,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[String]("emoji_name")
       .field[MessageId]("post_id")
       .field[UserId]("user_id")
-      .build {
-        case t => ReactionInfo.apply.tupled(t)
-      }
+      .build(ReactionInfo.apply.tupled)
 
   //  input
   given DialogContextFrom[T: From]: From[DialogAction[T]] =
@@ -438,9 +423,7 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[UserId]("user_id")
       .field[T]("state")
       .field[Option[String]]("callback_id")
-      .build {
-        case t => DialogAction[T].apply.tupled(t)
-      }
+      .build(DialogAction[T].apply.tupled)
 
   given MessageActionFrom[T: From]: From[MessageAction[T]] =
     parsing
@@ -455,20 +438,23 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[ChannelId]("channel_id")
       .field[Login]("user_name")
       .field[UserId]("user_id")
-      .build {
-        case t => MessageAction[T].apply.tupled(t)
-      }
+      .build(MessageAction[T].apply.tupled)
 
-  given AppResponseTo[T: To]: To[AppResponse[T]] =
+  given AppResponseTo: To[AppResponse] =
     seal {
-      case AppResponse.Ok()                                     => json.build
-      case AppResponse.Message(text, responseType, attachments) =>
-        json
-          .field("text", text)
-          .field("response_type", responseType)
-          .field[List[Attachment[T]]]("attachments", attachments)
+      case AppResponse.Ok()                                     =>
+        json[AppResponse]
           .build
-      case AppResponse.Errors(map)                              => json[AppResponse[T]].field("errors", map).build
+      case AppResponse.Message(text, responseType, attachments) =>
+        json[AppResponse]
+          .field("text", _ => text)
+          .field("response_type", _ => responseType)
+          .field[List[Attachment]]("attachments", _ => attachments)
+          .build
+      case AppResponse.Errors(map)                              =>
+        json[AppResponse]
+          .field("errors", _ => map)
+          .build
     }
 
   given ResponseTypeTo: To[ResponseType] =
@@ -488,70 +474,89 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[Option[String]]("first_name")
       .field[String]("username")
       .field[UserId]("id")
-      .build {
-        case t => User.apply.tupled(t)
-      }
+      .build(User.apply.tupled)
 
-  given ActionTo[T: To]: To[Action[T]] =
-    seal[Action[T]] {
-      case Action.Button(id, name, integration, style)               =>
-        json[Action[T]]
-          .field("id", id)
-          .field("name", name)
-          .field[Integration[T]]("integration", integration)
-          .field("style", style)
-          .field("type", "button")
+  given ActionTo: To[Action] =
+    seal[Action] {
+      case button: Action.Button =>
+        json[Action]
+          .field("id", _ => button.id)
+          .field("name", _ => button.name)
+          .field[RawIntegration]("integration", _ => button.raw)
+          .field("style", _ => button.style)
+          .field("type", _ => "button")
           .build
-      case Action.Select(id, name, integration, options, dataSource) =>
-        json[Action[T]]
-          .field("id", id)
-          .field("name", name)
-          .field[Integration[T]]("integration", integration)
-          .field("options", options)
-          .field("data_source", dataSource)
-          .field("type", "select")
+      case select: Action.Select =>
+        json[Action]
+          .field("id", _ => select.id)
+          .field("name", _ => select.name)
+          .field[RawIntegration]("integration", _ => select.raw)
+          .field("options", _ => select.options)
+          .field("data_source", _ => select.dataSource)
+          .field("type", _ => "select")
           .build
     }
 
-  given ActionFrom[T: From]: From[Action[T]] =
+  given ActionFrom: From[Action] =
     parsing
-      .field[Integration[T]]("integration")
+      .field[RawIntegration]("integration")
       .field[String]("name")
       .field[String]("id")
-      .field[Option[Style]]("style")
-      .field[Option[DataSource]]("data_source")
-      .field[Option[List[SelectOption]]]("options")
       .field[String]("type")
-      .build {
-        case "select" *: Some(options) *: dataSource *: None *: id *: name *: integration *: EmptyTuple =>
-          Action.Select(id, name, integration, options, dataSource)
-        case "button" *: _ *: _ *: Some(style) *: id *: name *: integration *: EmptyTuple               =>
-          Action.Button(id, name, integration, style)
+      .select {
+        case "select" *: id *: name *: integration *: EmptyTuple =>
+          parsing
+            .field[Option[DataSource]]("data_source")
+            .field[Option[List[SelectOption]]]("options")
+            .build {
+              case options *: dataSource *: EmptyTuple =>
+                Action.Select(id, name, options.toList.flatten, dataSource)(integration)
+            }
+        case "button" *: id *: name *: integration *: EmptyTuple =>
+          parsing
+            .field[Option[Style]]("style")
+            .build {
+              case style *: EmptyTuple => Action.Button(id, name, style.getOrElse(Style.Default))(integration)
+            }
       }
 
-  given IntegrationTo[T: To]: To[Integration[T]] =
-    seal[Integration[T]] {
-      case Integration.Url(url)          => json[Integration[T]].field("url", url).build
-      case Integration.Context(url, ctx) => json[Integration[T]].field("url", url).field[T]("context", ctx).build
+  given IntegrationTo: To[RawIntegration] =
+    seal[RawIntegration] {
+      case RawIntegration.Url(url)          =>
+        json[RawIntegration]
+          .field("url", _ => url)
+          .build
+      case RawIntegration.Context(url, ctx) =>
+        json[RawIntegration]
+          .field("url", _ => url)
+          .rawField("context", _ => ctx)
+          .build
     }
 
-  given IntegrationFrom[T: From]: From[Integration[T]] =
+  given IntegrationFrom: From[RawIntegration] =
     parsing
-      .field[Option[T]]("integration")
+      .rawField("context")
       .field[String]("url")
       .build {
-        case url *: Some(integration) *: EmptyTuple => Integration.Context(url, integration)
-        case url *: _ *: EmptyTuple                 => Integration.Url(url)
+        case url *: Some(integration) *: EmptyTuple => RawIntegration.Context(url, integration)
+        case url *: _ *: EmptyTuple                 => RawIntegration.Url(url)
       }
 
   given StyleTo: To[Style] = json[Style, String](_.toString.toLowerCase)
 
   given StyleFrom: From[Style] = parsing[String, Style](s => Style.valueOf(s.capitalize))
 
-  given PropsTo[T: To]: To[Props[T]] = json[Props[T]].field[List[Attachment[T]]]("attachments", _.attachments).build
+  given PropsTo: To[Props] = json[Props].field[List[Attachment]]("attachments", _.attachments).build
 
-  given AttachmentTo[T: To]: To[Attachment[T]] =
-    json[Attachment[T]]
+  given PropsFrom: From[Props] =
+    parsing
+      .field[Option[List[Attachment]]]("attachments")
+      .build {
+        case attachments *: EmptyTuple => Props(attachments.getOrElse(List.empty))
+      }
+
+  given AttachmentTo: To[Attachment] =
+    json[Attachment]
       .field("fallback", _.fallback)
       .field("color", _.color)
       .field("pretext", _.pretext)
@@ -566,12 +571,12 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field("thumb_url", _.thumbUrl)
       .field("footer", _.footer)
       .field("footer_icon", _.footerIcon)
-      .field[List[Action[T]]]("actions", _.actions)
+      .field[List[Action]]("actions", _.actions)
       .build
 
-  given AttachmentFrom[T: From]: From[Attachment[T]] =
+  given AttachmentFrom: From[Attachment] =
     parsing
-      .field[List[Action[T]]]("actions")
+      .field[List[Action]]("actions")
       .field[Option[String]]("footer_icon")
       .field[Option[String]]("footer")
       .field[Option[String]]("thumb_url")
@@ -586,27 +591,28 @@ trait CodecSupport[To[_], From[_]] extends PrimitivesSupport[To, From] {
       .field[Option[String]]("pretext")
       .field[Option[String]]("color")
       .field[Option[String]]("fallback")
-      .build {
-        case t => Attachment[T].apply.tupled(t)
-      }
+      .build(Attachment.apply.tupled)
 
-  protected given AttachmentFieldTo: To[AttachmentField] =
-    json[AttachmentField].field("title", _.title).field("value", _.value).field("short", _.short).build
+  given AttachmentFieldTo: To[AttachmentField] =
+    json[AttachmentField].field("title", _.title)
+      .field("value", _.value)
+      .field("short", _.short)
+      .build
 
-  protected given AttachmentFieldFrom: From[AttachmentField] =
+  given AttachmentFieldFrom: From[AttachmentField] =
     parsing
       .field[Boolean]("short")
       .field[String]("value")
       .field[String]("title")
-      .build {
-        case t => AttachmentField.apply.tupled(t)
-      }
+      .build(AttachmentField.apply.tupled)
 
-  given PostFrom[T: From]: From[Post[T]] =
+  given PostFrom: From[Post] =
     parsing
+      .field[Option[Props]]("props")
+      .field[String]("message")
       .field[MessageId]("id")
       .build {
-        case t *: EmptyTuple => Post[T].apply(t)
+        case id *: message *: props *: EmptyTuple => Post(id, message, props.getOrElse(Props.empty))
       }
 
 }
@@ -640,10 +646,6 @@ trait PrimitivesSupport[To[_], From[_]] extends NewTypeSupport[To, From] {
 
   given UnitFrom: From[Unit]
 
-  given NothingTo: To[Nothing]
-
-  given NothingFrom: From[Nothing]
-
   given AnyTo: To[Any]
 
   given AnyFrom: From[Any]
@@ -651,10 +653,24 @@ trait PrimitivesSupport[To[_], From[_]] extends NewTypeSupport[To, From] {
   given MapTo[K: To, V: To]: To[Map[K, V]]
 }
 
-trait NewTypeSupport[To[_], From[_]] {
+trait NewTypeSupport[To[_], From[_]] extends CodecSyntax[To, From] {
   given NewTypeTo[A, B](using cc: Coercible[To[A], To[B]], to: To[A]): To[B] = cc(to)
 
   given NewTypeFrom[A, B](using cc: Coercible[From[A], From[B]], from: From[A]): From[B] = cc(from)
 
   given NewTypeShow[A, B](using cc: Coercible[Show[A], Show[B]], show: Show[A]): Show[B] = cc(show)
+}
+
+trait CodecSyntax[To[_], From[_]] {
+  def jsonRaw: JsonRequestRawBuilder[To, Body.RawJson]
+
+  def seal[T](f: T => To[T]): To[T]
+
+  def json[T, X: To](f: T => X): To[T]
+
+  def json[T]: JsonRequestBuilder[T, To]
+
+  def parsing[X: From, T](f: X => T): From[T]
+
+  def parsing: JsonResponseBuilder[From, EmptyTuple]
 }

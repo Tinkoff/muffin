@@ -1,0 +1,59 @@
+[
+  {
+    "response": {
+      "id": "34b52dfdd69f485bb0e70d1879",
+      "message": "text",
+      "props": {
+        "attachments": [
+          {
+            "actions": [
+              {
+                "type": "select",
+                "data_source": null,
+                "options": [
+                  {
+                    "value": "green",
+                    "text": "Зеленый"
+                  },
+                  {
+                    "value": "blue",
+                    "text": "Синий"
+                  }
+                ],
+                "integration": {
+                  "url": "url2"
+                },
+                "name": "select",
+                "id": "select"
+              },
+              {
+                "type": "button",
+                "style": "danger",
+                "integration": {
+                  "url": "url"
+                },
+                "name": "button",
+                "id": "customId"
+              }
+            ],
+            "footer_icon": null,
+            "footer": null,
+            "thumb_url": null,
+            "image_url": null,
+            "fields": [
+            ],
+            "title_link": null,
+            "title": null,
+            "author_icon": null,
+            "author_link": null,
+            "author_name": null,
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
+            "pretext": "Excepteur sint occaecat cupidatat non proident",
+            "color": "#00FF00",
+            "fallback": "Duis aute irure dolor in reprehenderit"
+          }
+        ]
+      }
+    }
+  }
+]
