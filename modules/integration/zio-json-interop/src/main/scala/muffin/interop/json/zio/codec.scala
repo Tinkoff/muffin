@@ -52,6 +52,10 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
       LocalDateTime.ofInstant(Instant.ofEpochSecond(t), zone)
     )
 
+  given IntTo: JsonEncoder[Int] = JsonEncoder.int
+
+  given IntFrom: JsonDecoder[Int] = JsonDecoder.int
+
   given LongTo: JsonEncoder[Long] = JsonEncoder.long
 
   given LongFrom: JsonDecoder[Long] = JsonDecoder.long
