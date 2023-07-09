@@ -19,7 +19,7 @@ import muffin.router.Router
 
 class SimpleCommandHandler[R](api: ApiClient[RHttp[R], JsonEncoder, JsonDecoder]) {
 
-  def time(command: CommandAction): RIO[R, AppResponse[Nothing]] =
+  def time(command: CommandAction): RIO[R, AppResponse] =
     api.postToChannel(command.channelId, Some(s"Current time:${LocalDateTime.now()}")).as(ok)
 
 }

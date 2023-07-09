@@ -11,7 +11,7 @@ import zio.json.{*, given}
 import zio.json.DeriveJsonDecoder.ArraySeq
 import zio.json.JsonDecoder.{JsonError, UnsafeJson}
 import zio.json.ast.{Json, JsonCursor}
-import zio.json.internal.{Lexer, RetractReader, StringMatrix, Write}
+import zio.json.internal.{Lexer, RecordingReader, RetractReader, StringMatrix, WithRetractReader, Write}
 
 import muffin.codec.*
 import muffin.http.Body
@@ -91,22 +91,18 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
 
   private class ZioJsonBuilder[T](funs: List[T => String]) extends JsonRequestBuilder[T, JsonEncoder] {
 
-    def single[X: JsonEncoder](value: X): String = value.toJson
-
-    def field[X: JsonEncoder](fieldName: String, fieldValue: X): JsonRequestBuilder[T, JsonEncoder] = {
-      val fun = (_: T) => s""""$fieldName":${fieldValue.toJson}"""
-
+    def field[X: JsonEncoder](fieldName: String, fieldValue: T => X): JsonRequestBuilder[T, JsonEncoder] = {
+      val fun = (st: T) => s""""$fieldName": ${fieldValue(st).toJson}"""
       ZioJsonBuilder(fun :: funs)
     }
 
-    def field[X: JsonEncoder](fieldName: String, fieldValue: T => X): JsonRequestBuilder[T, JsonEncoder] = {
-      val fun = (st: T) => s""""$fieldName": ${fieldValue(st).toJson}"""
-
+    def rawField(fieldName: String, fieldValue: T => String): JsonRequestBuilder[T, JsonEncoder] = {
+      val fun = (st: T) => s""""$fieldName": ${fieldValue(st)}"""
       ZioJsonBuilder(fun :: funs)
     }
 
     def build: JsonEncoder[T] =
-      (a: T, _: Option[Int], out: Write) => out.write(funs.map(_.apply(a.asInstanceOf[T])).mkString("{", ",", "}"))
+      (a: T, _: Option[Int], out: Write) => out.write(funs.map(_.apply(a)).mkString("{", ",", "}"))
 
   }
 
@@ -128,7 +124,29 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
         summon[JsonDecoder[X]].asInstanceOf[JsonDecoder[Any]] :: decoders
       )
 
+    override def internal[X: JsonDecoder](name: String): JsonResponseBuilder[JsonDecoder, X *: Params] =
+      new ZioResponseBuilder[X *: Params](
+        name :: stateNames,
+        JsonDecoder.string.mapOrFail(_.fromJson).asInstanceOf[JsonDecoder[Any]] :: decoders
+      )
+
+    override def rawField(name: String): JsonResponseBuilder[JsonDecoder, Option[String] *: Params] =
+      new ZioResponseBuilder[Option[String] *: Params](
+        name :: stateNames,
+        JsonDecoder[Option[zio.json.ast.Json]].map(_.map(_.toJson)).asInstanceOf[JsonDecoder[Any]] :: decoders
+      )
+
+    override def select[X](f: PartialFunction[Params, JsonDecoder[X]]): JsonDecoder[X] =
+      decoder[X](rewind = true) {
+        (x, trace, in) => f(x).unsafeDecode(trace, in)
+      }
+
     override def build[X](f: PartialFunction[Params, X]): JsonDecoder[X] =
+      decoder[X](rewind = false) {
+        (x, _, _) => f(x)
+      }
+
+    private def decoder[X](rewind: Boolean)(f: (Params, List[JsonError], zio.MuffinRetract.Reader) => X) =
       new JsonDecoder[X] {
 
         val names: Array[String] = stateNames.toArray
@@ -141,9 +159,9 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
 
         lazy val tcs: Array[JsonDecoder[Any]] = decoders.toArray
 
-        lazy val namesMap: Map[String, Int] = names.zipWithIndex.toMap
+        def unsafeDecode(trace: List[JsonError], _in: RetractReader): X = {
+          val in = zio.MuffinRetract.reader(_in)
 
-        def unsafeDecode(trace: List[JsonError], in: RetractReader): X = {
           Lexer.char(trace, in, '{')
 
           val ps: Array[Any] = Array.ofDim(len)
@@ -172,9 +190,15 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
             i += 1
           }
 
-          val x = Tuple.fromArray(ps).asInstanceOf[Params]
+          val x = Tuple.fromArray(ps.map {
+            case null => None
+            case x    => x
+          }).asInstanceOf[Params]
 
-          f(x)
+          if (rewind)
+            in.rewind()
+
+          f(x, trace, in)
         }
 
       }

@@ -19,6 +19,9 @@ import muffin.model.*
 
 class ZioApiTest extends ApiTest[JsonEncoder, JsonDecoder]("zio", codec) {
 
+  protected def toContext: JsonEncoder[AppContext]   = JsonEncoder.derived[AppContext]
+  protected def fromContext: JsonDecoder[AppContext] = JsonDecoder.derived[AppContext]
+
   protected def httpClient: HttpClient[IO, JsonEncoder, JsonDecoder] =
     new HttpClient[IO, JsonEncoder, JsonDecoder] {
 

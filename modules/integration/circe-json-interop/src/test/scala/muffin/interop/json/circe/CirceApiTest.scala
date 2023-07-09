@@ -21,6 +21,9 @@ import muffin.model.*
 
 class CirceApiTest extends ApiTest[Encoder, Decoder]("circe", codec) {
 
+  protected def toContext: Encoder[AppContext]   = io.circe.Derivation.summonEncoder[AppContext]
+  protected def fromContext: Decoder[AppContext] = io.circe.Derivation.summonDecoder[AppContext]
+
   protected def httpClient: HttpClient[IO, Encoder, Decoder] =
     new HttpClient[IO, Encoder, Decoder] {
 

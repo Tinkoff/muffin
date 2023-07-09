@@ -104,21 +104,17 @@ object codec extends CodecSupport[Encoder, Decoder] {
 
   private class CirceJsonBuilder[T](funs: List[(T, JsonObject) => JsonObject]) extends JsonRequestBuilder[T, Encoder] {
 
-    def field[X: Encoder](fieldName: String, fieldValue: X): JsonRequestBuilder[T, Encoder] = {
-      val fun = (_: T, js: JsonObject) => js.add(fieldName, Encoder[X].apply(fieldValue))
-
-      CirceJsonBuilder(fun :: funs)
-    }
-
     def field[X: Encoder](fieldName: String, fieldValue: T => X): JsonRequestBuilder[T, Encoder] = {
       val fun = (st: T, js: JsonObject) => js.add(fieldName, Encoder[X].apply(fieldValue(st)))
       CirceJsonBuilder(fun :: funs)
     }
 
-    def build: Encoder[T] =
-      (a: T) =>
-        Json.fromJsonObject(funs.foldLeft(JsonObject.empty)((acc, i) => i(a, acc)))
+    def rawField(fieldName: String, fieldValue: T => String): JsonRequestBuilder[T, Encoder] = {
+      val fun = (st: T, js: JsonObject) => js.add(fieldName, parse(fieldValue(st)).getOrElse(Json.Null))
+      CirceJsonBuilder(fun :: funs)
+    }
 
+    def build: Encoder[T] = (a: T) => Json.fromJsonObject(funs.foldLeft(JsonObject.empty)((acc, i) => i(a, acc)))
   }
 
   private class CirceBodyBuilder(state: JsonObject) extends JsonRequestRawBuilder[Encoder, Body.RawJson] {
@@ -133,15 +129,33 @@ object codec extends CodecSupport[Encoder, Decoder] {
   private class CirceResponseBuilder[Decoders <: Tuple](decoders: Decoder[Decoders])
     extends JsonResponseBuilder[Decoder, Decoders] {
 
-    def field[X: Decoder](name: String): JsonResponseBuilder[Decoder, X *: Decoders] = {
-      val x = decoders.flatMap(all => Decoder[X].at(name).map(_ *: all))
+    def field[X: Decoder](name: String): JsonResponseBuilder[Decoder, X *: Decoders] =
+      CirceResponseBuilder[X *: Decoders](decoders.flatMap(all => Decoder[X].at(name).map(_ *: all)))
 
-      CirceResponseBuilder[X *: Decoders](x)
-    }
+    def rawField(name: String): JsonResponseBuilder[Decoder, Option[String] *: Decoders] =
+      CirceResponseBuilder[Option[String] *: Decoders] {
+        decoders.flatMap(all =>
+          Decoder[Option[Json]].at(name).map(_.map(_.noSpaces) *: all)
+        )
+      }
 
-    def build[X](f: PartialFunction[Decoders, X]): Decoder[X] = { (c: HCursor) =>
-      decoders.apply(c).map(f)
-    }
+    def internal[X: Decoder](name: String): JsonResponseBuilder[Decoder, X *: Decoders] =
+      CirceResponseBuilder[X *: Decoders](
+        decoders.flatMap(all =>
+          Decoder[String].at(name).flatMap(s =>
+            (_: HCursor) =>
+              decode[X](s).left.map {
+                case ParsingFailure(message, _) => DecodingFailure(message, Nil)
+                case failure: DecodingFailure   => failure
+              }
+          ).map(_ *: all)
+        )
+      )
+
+    def select[X](f: PartialFunction[Decoders, Decoder[X]]): Decoder[X] =
+      (c: HCursor) => decoders.apply(c).map(f).flatMap(_.apply(c))
+
+    def build[X](f: PartialFunction[Decoders, X]): Decoder[X] = (c: HCursor) => decoders.apply(c).map(f)
 
   }
 

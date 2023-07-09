@@ -11,7 +11,7 @@ case class <>[Left <: RouterDSL, Right <: RouterDSL](left: Left, right: Right) e
 
 case class Handle[F[
     _
-], H, N <: Singleton, CommandName <: Tuple, CommandOut <: Tuple, ActionName <: Tuple, ActionIn <: Tuple, ActionOut <: Tuple, DialogName <: Tuple, DialogIn <: Tuple, DialogOut <: Tuple](
+], H, N <: Singleton, CommandName <: Tuple, ActionName <: Tuple, ActionIn <: Tuple, DialogName <: Tuple, DialogIn <: Tuple](
     h: H
 ) extends RouterDSL
 
@@ -19,27 +19,23 @@ object Handle {
 
   extension [F[
       _
-  ], H, N <: Singleton, CommandName <: Tuple, CommandOut <: Tuple, ActionName <: Tuple, ActionIn <: Tuple, ActionOut <: Tuple, DialogName <: Tuple, DialogIn <: Tuple, DialogOut <: Tuple](
-      h: Handle[F, H, N, CommandName, CommandOut, ActionName, ActionIn, ActionOut, DialogName, DialogIn, DialogOut]
+  ], H, N <: Singleton, CommandName <: Tuple, ActionName <: Tuple, ActionIn <: Tuple, DialogName <: Tuple, DialogIn <: Tuple](
+      h: Handle[F, H, N, CommandName, ActionName, ActionIn, DialogName, DialogIn]
   ) {
 
-    transparent inline def command[Out](
-        inline value: H => CommandAction => F[AppResponse[Out]]
-    ): Handle[F, H, N, ? <: Tuple, Out *: CommandOut, ActionName, ActionIn, ActionOut, DialogName, DialogIn, DialogOut] =
+    transparent inline def command(
+        inline value: H => CommandAction => F[AppResponse]
+    ): Handle[F, H, N, ? <: Tuple, ActionName, ActionIn, DialogName, DialogIn] =
       ${
         Handle.command[
           F,
           H,
           N,
-          Out,
           CommandName,
-          CommandOut,
           ActionName,
           ActionIn,
-          ActionOut,
           DialogName,
           DialogIn,
-          DialogOut
         ](
           'value,
           '{
@@ -48,24 +44,20 @@ object Handle {
         )
       }
 
-    transparent inline def action[In, Out](
-        inline value: H => MessageAction[In] => F[AppResponse[Out]]
-    ): Handle[F, H, N, CommandName, CommandOut, ? <: Tuple, In *: ActionIn, Out *: ActionOut, DialogName, DialogIn, DialogOut] =
+    transparent inline def action[In](
+        inline value: H => MessageAction[In] => F[AppResponse]
+    ): Handle[F, H, N, CommandName, ? <: Tuple, In *: ActionIn, DialogName, DialogIn] =
       ${
         Handle.action[
           F,
           H,
           N,
           In,
-          Out,
           CommandName,
-          CommandOut,
           ActionName,
           ActionIn,
-          ActionOut,
           DialogName,
           DialogIn,
-          DialogOut
         ](
           'value,
           '{
@@ -74,24 +66,20 @@ object Handle {
         )
       }
 
-    transparent inline def dialog[In, Out](
-        inline value: H => DialogAction[In] => F[AppResponse[Out]]
-    ): Handle[F, H, N, CommandName, CommandOut, ActionName, ActionIn, ActionOut, ? <: Tuple, In *: DialogIn, Out *: DialogOut] =
+    transparent inline def dialog[In](
+        inline value: H => DialogAction[In] => F[AppResponse]
+    ): Handle[F, H, N, CommandName, ActionName, ActionIn, ? <: Tuple, In *: DialogIn] =
       ${
         Handle.dialog[
           F,
           H,
           N,
           In,
-          Out,
           CommandName,
-          CommandOut,
           ActionName,
           ActionIn,
-          ActionOut,
           DialogName,
           DialogIn,
-          DialogOut
         ](
           'value,
           '{
@@ -115,8 +103,8 @@ object Handle {
   }
 
   def command[F[_]
-    : Type, H: Type, N <: Singleton: Type, Out: Type, CommandName <: Tuple: Type, CommandOut <: Tuple: Type, ActionName <: Tuple: Type, ActionIn <: Tuple: Type, ActionOut <: Tuple: Type, DialogName <: Tuple: Type, DialogIn <: Tuple: Type, DialogOut <: Tuple: Type](
-      fun: Expr[H => CommandAction => F[AppResponse[Out]]],
+    : Type, H: Type, N <: Singleton: Type, CommandName <: Tuple: Type, ActionName <: Tuple: Type, ActionIn <: Tuple: Type, DialogName <: Tuple: Type, DialogIn <: Tuple: Type](
+      fun: Expr[H => CommandAction => F[AppResponse]],
       handle: Expr[H]
   )(using Quotes) = {
     import quotes.reflect.*
@@ -129,23 +117,19 @@ object Handle {
             H,
             N,
             name *: CommandName,
-            Out *: CommandOut,
             ActionName,
             ActionIn,
-            ActionOut,
             DialogName,
             DialogIn,
-            DialogOut
           ]($handle)
         }
     }
   }
 
   def action[F[_]
-    : Type, H: Type, N <: Singleton: Type, In: Type, Out: Type, CommandName <: Tuple: Type, CommandOut <: Tuple: Type, ActionName <: Tuple: Type, ActionIn <: Tuple: Type, ActionOut <: Tuple: Type, DialogName <: Tuple: Type, DialogIn <: Tuple: Type, DialogOut <: Tuple: Type](
-      fun: Expr[H => MessageAction[In] => F[AppResponse[Out]]],
+    : Type, H: Type, N <: Singleton: Type, In: Type, CommandName <: Tuple: Type, ActionName <: Tuple: Type, ActionIn <: Tuple: Type, DialogName <: Tuple: Type, DialogIn <: Tuple: Type](
+      fun: Expr[H => MessageAction[In] => F[AppResponse]],
       handle: Expr[H]
-//      name: Expr[N]
   )(using Quotes) = {
     import quotes.reflect.*
 
@@ -157,23 +141,19 @@ object Handle {
             H,
             N,
             CommandName,
-            CommandOut,
             name *: ActionName,
             In *: ActionIn,
-            Out *: ActionOut,
             DialogName,
             DialogIn,
-            DialogOut
           ]($handle)
         }
     }
   }
 
   def dialog[F[_]
-    : Type, H: Type, N <: Singleton: Type, In: Type, Out: Type, CommandName <: Tuple: Type, CommandOut <: Tuple: Type, ActionName <: Tuple: Type, ActionIn <: Tuple: Type, ActionOut <: Tuple: Type, DialogName <: Tuple: Type, DialogIn <: Tuple: Type, DialogOut <: Tuple: Type](
-      fun: Expr[H => DialogAction[In] => F[AppResponse[Out]]],
+    : Type, H: Type, N <: Singleton: Type, In: Type, CommandName <: Tuple: Type, ActionName <: Tuple: Type, ActionIn <: Tuple: Type, DialogName <: Tuple: Type, DialogIn <: Tuple: Type](
+      fun: Expr[H => DialogAction[In] => F[AppResponse]],
       handle: Expr[H]
-//      name: Expr[N]
   )(using Quotes) = {
     import quotes.reflect.*
 
@@ -185,13 +165,10 @@ object Handle {
             H,
             N,
             CommandName,
-            CommandOut,
             ActionName,
             ActionIn,
-            ActionOut,
             name *: DialogName,
-            In *: DialogIn,
-            Out *: DialogOut
+            In *: DialogIn
           ]($handle)
         }
     }

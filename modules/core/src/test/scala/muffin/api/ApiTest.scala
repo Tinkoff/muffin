@@ -10,7 +10,7 @@ import cats.syntax.all.{*, given}
 import org.scalatest.{Assertion, Succeeded, Tag}
 import org.scalatest.featurespec.AsyncFeatureSpec
 
-import muffin.codec.CodecSupport
+import muffin.codec.*
 import muffin.dsl.*
 import muffin.http.*
 import muffin.model.*
@@ -20,10 +20,20 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
 
   import codecSupport.{*, given}
 
+  case class AppContext(int: Int, str: String)
+
+  protected def toContext: To[AppContext]
+  protected def fromContext: From[AppContext]
+
+  object AppContext {
+    given Encode[AppContext] = EncodeTo(toContext)
+    given Decode[AppContext] = DecodeFrom(fromContext)
+  }
+
   private given ZoneId = ZoneId.of("UTC")
 
   private val config = ClientConfig(
-    baseUrl = "test",
+    baseUrl = "http/test",
     auth = "auth",
     botName = "testbot",
     serviceUrl = "service",
@@ -134,7 +144,7 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
       apiClient.postToChannel(
         ChannelId("w9s6bs5hs7yj5dcwbrdbw137dh"),
         "message".some,
-        Props[Nothing](
+        Props(
           attachment
             .text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
@@ -142,10 +152,10 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
               "Duis aute irure dolor in reprehenderit".some
             )
             .color("#00FF00")
-            .action(actionButton("button", _.Url("url"), Style.Danger, "customId".some))
-            .action(actionSelectOptions(
+            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
+            .action(selectOptions(
               "select",
-              _.Url("url2"),
+              _.Context("url2", AppContext(123, "str")),
               SelectOption("Зеленый", "green") :: SelectOption("Синий", "blue") :: Nil
             ))
             .make :: Nil
@@ -159,7 +169,7 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
           UserId("y6hu6uafnbrgjce68sos88xorr") ::
           UserId("6bic3idfo387xg55o4dgzzp9xe") :: Nil,
         "message".some,
-        Props[Nothing](
+        Props(
           attachment
             .text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
@@ -167,10 +177,10 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
               "Duis aute irure dolor in reprehenderit".some
             )
             .color("#00FF00")
-            .action(actionButton("button", _.Url("url"), Style.Danger, "customId".some))
-            .action(actionSelectOptions(
+            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
+            .action(selectOptions(
               "select",
-              _.Url("url2"),
+              _.Context("url2", AppContext(123, "str")),
               SelectOption("Зеленый", "green") :: SelectOption("Синий", "blue") :: Nil
             ))
             .make :: Nil
@@ -184,7 +194,7 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
       apiClient.postToDirect(
         user,
         "message".some,
-        Props[Nothing](
+        Props(
           attachment
             .text(
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
@@ -192,19 +202,26 @@ trait ApiTest[To[_], From[_]](integration: String, codecSupport: CodecSupport[To
               "Duis aute irure dolor in reprehenderit".some
             )
             .color("#00FF00")
-            .action(actionButton("button", _.Url("url"), Style.Danger, "customId".some))
-            .action(actionSelectOptions(
+            .action(button("button", _.Url("url"), Style.Danger, "customId".some))
+            .action(selectOptions(
               "select",
-              _.Url("url2"),
+              _.Context("url2", AppContext(123, "str")),
               SelectOption("Зеленый", "green") :: SelectOption("Синий", "blue") :: Nil
             ))
             .make :: Nil
         )
-      ).map(post => assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879")))
+      ).map { post =>
+        post.props.attachments.head.actions.foreach {
+          action =>
+            println(action.integrationContext[AppContext])
+        }
+
+        assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879"))
+      }
     }
 
     Scenario(s"get post by id in $integration") {
-      apiClient.getPost[Nothing](MessageId("34b52dfdd69f485bb0e70d1879")).map(post =>
+      apiClient.getPost(MessageId("34b52dfdd69f485bb0e70d1879")).map(post =>
         assert(post.id == MessageId("34b52dfdd69f485bb0e70d1879"))
       )
     }

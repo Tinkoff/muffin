@@ -24,7 +24,7 @@ type Api = ApiClient[IO, Encoder, Decoder]
 
 class SimpleCommandHandler(api: Api) {
 
-  def time(command: CommandAction): IO[AppResponse[Nothing]] =
+  def time(command: CommandAction): IO[AppResponse] =
     api.postToChannel(command.channelId, Some(s"Current time:${LocalDateTime.now()}")).as(ok)
 
 }

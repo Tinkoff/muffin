@@ -23,6 +23,7 @@ inThisBuild(
 )
 
 addCommandAlias("fixCheck", "scalafmtCheckAll")
+addCommandAlias("fix", "scalafmtAll")
 
 val commonSettings = Seq(
   version := "0.2.1",

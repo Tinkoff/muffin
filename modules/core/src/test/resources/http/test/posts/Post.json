@@ -1,0 +1,124 @@
+[
+  {
+    "request": {
+      "body": {
+        "channel_id": "w9s6bs5hs7yj5dcwbrdbw137dh",
+        "message": "message",
+        "props": {
+          "attachments": [
+            {
+              "actions": [
+                {
+                  "type": "select",
+                  "data_source": null,
+                  "options": [
+                    {
+                      "value": "green",
+                      "text": "Зеленый"
+                    },
+                    {
+                      "value": "blue",
+                      "text": "Синий"
+                    }
+                  ],
+                  "integration": {
+                    "context": {
+                      "int": 123,
+                      "str": "str"
+                    },
+                    "url": "url2"
+                  },
+                  "name": "select",
+                  "id": "select"
+                },
+                {
+                  "type": "button",
+                  "style": "danger",
+                  "integration": {
+                    "url": "url"
+                  },
+                  "name": "button",
+                  "id": "customId"
+                }
+              ],
+              "footer_icon": null,
+              "footer": null,
+              "thumb_url": null,
+              "image_url": null,
+              "fields": [
+              ],
+              "title_link": null,
+              "title": null,
+              "author_icon": null,
+              "author_link": null,
+              "author_name": null,
+              "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
+              "pretext": "Excepteur sint occaecat cupidatat non proident",
+              "color": "#00FF00",
+              "fallback": "Duis aute irure dolor in reprehenderit"
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "id": "34b52dfdd69f485bb0e70d1879",
+      "message": "message",
+      "props": {
+        "attachments": [
+          {
+            "actions": [
+              {
+                "type": "select",
+                "data_source": null,
+                "options": [
+                  {
+                    "value": "green",
+                    "text": "Зеленый"
+                  },
+                  {
+                    "value": "blue",
+                    "text": "Синий"
+                  }
+                ],
+                "integration": {
+                  "context": {
+                    "int": 123,
+                    "str": "str"
+                  },
+                  "url": "url2"
+                },
+                "name": "select",
+                "id": "select"
+              },
+              {
+                "type": "button",
+                "style": "danger",
+                "integration": {
+                  "url": "url"
+                },
+                "name": "button",
+                "id": "customId"
+              }
+            ],
+            "footer_icon": null,
+            "footer": null,
+            "thumb_url": null,
+            "image_url": null,
+            "fields": [
+            ],
+            "title_link": null,
+            "title": null,
+            "author_icon": null,
+            "author_link": null,
+            "author_name": null,
+            "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod",
+            "pretext": "Excepteur sint occaecat cupidatat non proident",
+            "color": "#00FF00",
+            "fallback": "Duis aute irure dolor in reprehenderit"
+          }
+        ]
+      }
+    }
+  }
+]
