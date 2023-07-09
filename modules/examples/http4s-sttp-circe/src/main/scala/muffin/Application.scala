@@ -4,7 +4,6 @@ import java.time.{LocalDateTime, ZoneId}
 
 import cats.effect.*
 import cats.effect.IO.given
-import cats.effect.syntax.all.given
 
 import com.comcast.ip4s.*
 import io.circe.{Decoder, Encoder}
@@ -45,7 +44,7 @@ object Application extends IOApp {
 
       router <- timeHandle.in[IO, IO]()
 
-      routes = Http4sRoute.routes(router, codec)
+      routes = Http4sRoute.routes(router)
 
       _ <- EmberServerBuilder.default[IO].withHost(ipv4"0.0.0.0").withPort(port"8080")
         .withHttpApp(Router("/" -> routes).orNotFound).build.use(_ => IO.never)

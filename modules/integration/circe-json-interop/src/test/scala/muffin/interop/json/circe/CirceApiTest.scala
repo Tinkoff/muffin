@@ -1,23 +1,14 @@
 package muffin.interop.json.circe
 
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
-import java.time.ZoneId
+import cats.effect.IO
+import cats.syntax.all.*
 
-import cats.effect.{IO, Resource}
-import cats.syntax.all.{*, given}
-
-import codec.{*, given}
 import io.circe.*
-import io.circe.syntax.{*, given}
 import org.scalatest.*
 import org.scalatest.featurespec.AsyncFeatureSpec
 
-import muffin.api.{ApiClient, ApiTest, ClientConfig}
-import muffin.codec.CodecSupport
-import muffin.dsl.*
+import muffin.api.ApiTest
 import muffin.http.{Body, HttpClient, Method, Params}
-import muffin.model.*
 
 class CirceApiTest extends ApiTest[Encoder, Decoder]("circe", codec) {
 

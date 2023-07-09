@@ -2,10 +2,6 @@ package muffin.model
 
 import java.time.LocalDateTime
 
-import fs2.Stream
-
-import muffin.api.*
-
 enum NotifyOption {
   case All
   case Mention

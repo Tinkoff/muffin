@@ -1,7 +1,5 @@
 package muffin.model
 
-import muffin.api.*
-
 case class RoleInfo(
     id: String,
     name: String,

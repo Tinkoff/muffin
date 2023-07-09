@@ -1,15 +1,10 @@
 package muffin.codec
 
 import java.time.*
-import scala.collection.StringParsers
-import scala.deriving.Mirror
-import scala.reflect.ClassTag
 
 import cats.Show
-import cats.arrow.FunctionK
-import cats.syntax.all.{*, given}
+import cats.syntax.all.*
 
-import muffin.api.*
 import muffin.error.MuffinError
 import muffin.http.*
 import muffin.internal.*

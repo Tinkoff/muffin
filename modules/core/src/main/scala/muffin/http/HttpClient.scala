@@ -1,11 +1,7 @@
 package muffin.http
 
-import java.io.File
-
 import cats.Show
 import cats.syntax.all.given
-
-import muffin.codec.*
 
 trait HttpClient[F[_], To[_], From[_]] {
 

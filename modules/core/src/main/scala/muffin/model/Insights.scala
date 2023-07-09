@@ -1,9 +1,6 @@
 package muffin.model
 
 import cats.Show
-import fs2.Stream
-
-import muffin.api.*
 
 case class ReactionInsight(emojiName: String, count: Long)
 

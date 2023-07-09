@@ -1,9 +1,7 @@
 package muffin.interop.json.circe
 
 import java.time.*
-import scala.deriving.Mirror
 
-import cats.{~>, catsParallelForId}
 import cats.arrow.FunctionK
 import cats.syntax.all.given
 
@@ -12,11 +10,9 @@ import io.circe.Decoder.Result
 import io.circe.parser.*
 import io.circe.syntax.given
 
-import muffin.api.*
 import muffin.codec.*
 import muffin.error.MuffinError
 import muffin.http.Body
-import muffin.router.*
 
 object codec extends CodecSupport[Encoder, Decoder] {
 

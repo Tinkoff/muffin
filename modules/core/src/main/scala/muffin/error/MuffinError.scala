@@ -1,6 +1,6 @@
 package muffin.error
 
-sealed trait MuffinError(message: String) extends Throwable
+sealed abstract class MuffinError(message: String) extends Throwable(message)
 
 object MuffinError {
 

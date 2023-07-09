@@ -1,9 +1,5 @@
 package muffin.model
 
-import fs2.Stream
-
-import muffin.api.*
-
 case class Group(
     id: GroupId,
     name: String,

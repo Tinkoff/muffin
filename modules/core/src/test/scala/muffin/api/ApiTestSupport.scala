@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.Future
 
 import cats.effect.{IO, Resource}
-import cats.syntax.all.{*, given}
+import cats.syntax.all.*
 
 import io.circe.{parser, Decoder, HCursor, Json}
 import org.scalactic.source.Position

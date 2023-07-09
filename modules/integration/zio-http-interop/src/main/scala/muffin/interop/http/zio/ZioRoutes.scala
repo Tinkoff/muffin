@@ -2,24 +2,17 @@ package muffin.interop.http.zio
 
 import java.nio.charset.Charset
 
-import cats.effect.Sync
-
 import zio.*
 import zio.http.*
 
-import muffin.api.*
-import muffin.codec.*
-import muffin.codec.CodecSupport
 import muffin.model.*
 import muffin.router.*
 
 object ZioRoutes {
 
-  def routes[R, To[_], From[_]](
-      router: Router[RHttp[R]],
-      codec: CodecSupport[To, From]
-  ): HttpApp[R, Response] = {
-    import codec.given
+  def routes[R](
+      router: Router[RHttp[R]]
+  ): HttpApp[R, Response] =
     Http
       .collectZIO[Request]
       .apply[R, Response, Response] {
@@ -30,18 +23,13 @@ object ZioRoutes {
         case req @ Method.POST -> Path.root / "dialogs" / handler / dialogs  =>
           handleEvent[R](req)(data => router.handleDialog(s"$handler::$dialogs", HttpAction(data)))
       }
-  }
 
   def handleEvent[R](
       request: Request
-  )(fun: String => RIO[R, HttpResponse])(using decoder: Decode[String]): ZIO[R, Response, Response] =
+  )(fun: String => RIO[R, HttpResponse]): ZIO[R, Response, Response] =
     (for {
       buf      <- request.body.asString(Charset.forName("UTF-8"))
-      response <-
-        decoder.apply(buf) match {
-          case Left(error)  => ZIO.fail(error)
-          case Right(value) => fun(value)
-        }
+      response <- fun(buf)
     } yield Response.json(response.data)).mapError { err =>
       Response.fromHttpError(HttpError.InternalServerError(err.getMessage, Some(err)))
     }

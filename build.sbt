@@ -27,12 +27,16 @@ addCommandAlias("fix", "scalafmtAll")
 
 val commonSettings = Seq(
   version := "0.2.1",
-  scalaVersion := "3.2.2",
+  scalaVersion := "3.3.0",
   scalacOptions ++= Seq(
     "-explain",
     "-deprecation",
     "-no-indent",
-    "-old-syntax"
+    "-old-syntax",
+    "-Wunused:all",
+    "-Werror",
+    "-language:implicitConversions",
+    "-feature"
   ),
   publishMavenStyle := true,
   publishTo := {
