@@ -63,7 +63,7 @@ object Http4sRoute {
       res     <- fun(req)
     } yield Response(
       headers = Headers(Header.Raw(CIString("Content-Type"), "application/json")),
-      entity = Entity.strict(scodec.bits.ByteVector(res.data.getBytes))
+      body = EntityEncoder.byteArrayEncoder[F].toEntity(res.data.getBytes).body
     )
 
   private given [F[_]: Concurrent]: EntityDecoder[F, HttpAction] =

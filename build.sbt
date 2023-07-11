@@ -26,7 +26,7 @@ addCommandAlias("fixCheck", "scalafmtCheckAll")
 addCommandAlias("fix", "scalafmtAll")
 
 val commonSettings = Seq(
-  version := "0.2.1",
+  version := "0.2.1-SNAPSHOT-001",
   scalaVersion := "3.3.0",
   scalacOptions ++= Seq(
     "-explain",
@@ -64,7 +64,7 @@ lazy val root = (project in file("."))
     `muffin-zio-json-interop`,
     `muffin-zio-http-interop`,
     `muffin-http4s-http-interop`,
-    `muffin-http4s-sttp-circe-example`,
+//    `muffin-http4s-sttp-circe-example`,
     `muffin-zhttp-zjson-example`
   )
 
@@ -106,11 +106,11 @@ lazy val `muffin-zio-json-interop` = project
 
 lazy val examples = modules / "examples"
 
-lazy val `muffin-http4s-sttp-circe-example` = project
-  .in(examples / "http4s-sttp-circe")
-  .settings(commonSettings)
-  .dependsOn(`muffin-core`, `muffin-sttp-http-interop`, `muffin-http4s-http-interop`, `muffin-circe-json-interop`)
-  .settings(skipPublish)
+//lazy val `muffin-http4s-sttp-circe-example` = project
+//  .in(examples / "http4s-sttp-circe")
+//  .settings(commonSettings)
+//  .dependsOn(`muffin-core`, `muffin-sttp-http-interop`, `muffin-http4s-http-interop`, `muffin-circe-json-interop`)
+//  .settings(skipPublish)
 
 lazy val `muffin-zhttp-zjson-example` = project
   .in(examples / "zhttp-zjson")

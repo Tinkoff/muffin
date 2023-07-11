@@ -7,7 +7,7 @@ object Dependencies {
 
     val circe = "0.14.3"
 
-    val http4s = "1.0.0-M39"
+    val http4s = "0.23.22"
 
     object zio {
       val http = "3.0.0-RC2"
@@ -28,8 +28,8 @@ object Dependencies {
   val sttp = "com.softwaremill.sttp.client3" %% "core" % Version.sttp
 
   object http4s {
-    val core = "org.http4s" %% "http4s-core" % Version.http4s
-    val dsl  = "org.http4s" %% "http4s-dsl"  % Version.http4s
+    val core = "org.http4s" %% "http4s-core" % "0.23.22"
+    val dsl  = "org.http4s" %% "http4s-dsl"  % "0.23.22"
   }
 
   object circe {
