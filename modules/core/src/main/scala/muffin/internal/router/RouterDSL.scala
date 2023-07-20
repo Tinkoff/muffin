@@ -16,7 +16,7 @@ case class Handle[F[
 
 object Handle {
 
-  extension [F[
+  implicit class RouterOps[F[
       _
   ], H, N <: Singleton, CommandName <: Tuple, ActionName <: Tuple, ActionIn <: Tuple, DialogName <: Tuple, DialogIn <: Tuple](
       h: Handle[F, H, N, CommandName, ActionName, ActionIn, DialogName, DialogIn]
