@@ -11,7 +11,13 @@ import muffin.codec.*
 import muffin.error.MuffinError
 import muffin.http.Body
 
-object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
+object codec extends CodecLow {
+  given NothingTo: JsonEncoder[Nothing] = UnitTo.asInstanceOf[JsonEncoder[Nothing]]
+
+  given NothingFrom: JsonDecoder[Nothing] = UnitFrom.asInstanceOf[JsonDecoder[Nothing]]
+}
+
+trait CodecLow extends CodecSupport[JsonEncoder, JsonDecoder] {
 
   given EncodeTo[A: JsonEncoder]: Encode[A] = _.toJson
 
@@ -52,10 +58,6 @@ object codec extends CodecSupport[JsonEncoder, JsonDecoder] {
   given LongTo: JsonEncoder[Long] = JsonEncoder.long
 
   given LongFrom: JsonDecoder[Long] = JsonDecoder.long
-
-  given NothingTo: JsonEncoder[Nothing] = UnitTo.asInstanceOf[JsonEncoder[Nothing]]
-
-  given NothingFrom: JsonDecoder[Nothing] = UnitFrom.asInstanceOf[JsonDecoder[Nothing]]
 
   given AnyTo: JsonEncoder[Any] = UnitTo.asInstanceOf[JsonEncoder[Any]]
 

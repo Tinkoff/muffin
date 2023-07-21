@@ -26,7 +26,7 @@ addCommandAlias("fixCheck", "scalafmtCheckAll")
 addCommandAlias("fix", "scalafmtAll")
 
 val commonSettings = Seq(
-  version := "0.2.1",
+  version := "0.3.0",
   scalaVersion := "3.3.0",
   scalacOptions ++= Seq(
     "-explain",

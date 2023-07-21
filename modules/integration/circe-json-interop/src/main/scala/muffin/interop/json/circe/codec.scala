@@ -14,7 +14,15 @@ import muffin.codec.*
 import muffin.error.MuffinError
 import muffin.http.Body
 
-object codec extends CodecSupport[Encoder, Decoder] {
+object codec extends codecLow1
+
+trait codecLow1 extends CodecLow2 {
+  given NothingTo: io.circe.Encoder[Nothing] = UnitTo.asInstanceOf[Encoder[Nothing]]
+
+  given NothingFrom: io.circe.Decoder[Nothing] = UnitFrom.asInstanceOf[Decoder[Nothing]]
+}
+
+trait CodecLow2 extends CodecSupport[Encoder, Decoder] {
 
   given EncoderTo: FunctionK[Encoder, Encode] =
     new FunctionK[Encoder, Encode] {
@@ -67,10 +75,6 @@ object codec extends CodecSupport[Encoder, Decoder] {
   given LongTo: io.circe.Encoder[Long] = Encoder.encodeLong
 
   given LongFrom: io.circe.Decoder[Long] = Decoder.decodeLong
-
-  given NothingTo: io.circe.Encoder[Nothing] = UnitTo.asInstanceOf[Encoder[Nothing]]
-
-  given NothingFrom: io.circe.Decoder[Nothing] = UnitFrom.asInstanceOf[Decoder[Nothing]]
 
   given AnyTo: io.circe.Encoder[Any] = UnitTo.asInstanceOf[Encoder[Any]]
 
